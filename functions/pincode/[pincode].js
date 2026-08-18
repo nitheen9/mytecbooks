@@ -235,11 +235,13 @@ function createPage(title, content) {
 <html lang="en">
 
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+    <meta name="robots" content="index, follow">
+   <meta name="description" content="${escapeHtml(`${pincode} Pincode - Find post office names, district, state, delivery status and other postal information.`)}">
+    <link rel="icon" type="image/png" href="/favicon.png">
+   
 
     <title>${escapeHtml(title)}</title>
 
