@@ -1,10 +1,16 @@
 export async function onRequestGet(context) {
 
-    const pincode = context.params.pincode;
+    const pincode = String(context.params.pincode || "")
+        .trim();
 
     if (!/^\d{6}$/.test(pincode)) {
+
         return new Response(
-            "<h1>Invalid Pincode</h1><p>Please enter a valid 6-digit pincode.</p>",
+            createPage(
+                "Invalid Pincode",
+                "Invalid Indian pincode. Please enter a valid 6-digit pincode.",
+                "<h1>Invalid Pincode</h1><p>Please enter a valid 6-digit pincode.</p>"
+            ),
             {
                 status: 400,
                 headers: {
@@ -35,10 +41,14 @@ export async function onRequestGet(context) {
             !Array.isArray(data[0].PostOffice) ||
             data[0].PostOffice.length === 0
         ) {
+
             return new Response(
                 createPage(
                     "Pincode Not Found",
-                    `<p>No post office information was found for pincode <strong>${escapeHtml(pincode)}</strong>.</p>`
+                    `No post office information was found for pincode ${pincode}.`,
+                    `<h1>Pincode Not Found</h1>
+                     <p>No post office information was found for pincode
+                     <strong>${escapeHtml(pincode)}</strong>.</p>`
                 ),
                 {
                     status: 404,
@@ -194,9 +204,14 @@ export async function onRequestGet(context) {
         `;
 
 
+        // Unique description for this pincode page
+        const description =
+            `${pincode} Pincode - Find post office names, ${first.District || "district"}, ${first.State || "state"}, delivery status and postal information.`;
+
         return new Response(
             createPage(
                 `${pincode} Pincode - Post Office Details`,
+                description,
                 content
             ),
             {
@@ -215,7 +230,8 @@ export async function onRequestGet(context) {
         return new Response(
             createPage(
                 "Pincode Error",
-                "<p>Unable to retrieve pincode information right now. Please try again.</p>"
+                "Unable to retrieve Indian pincode and post office information right now. Please try again later.",
+                "<h1>Pincode Error</h1><p>Unable to retrieve pincode information right now. Please try again.</p>"
             ),
             {
                 status: 500,
@@ -228,19 +244,31 @@ export async function onRequestGet(context) {
 }
 
 
-function createPage(title, content) {
+function createPage(title, description, content) {
 
     return `<!DOCTYPE html>
 
 <html lang="en">
 
 <head>
- <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
-    <meta name="robots" content="index, follow">
-   <meta name="description" content="${escapeHtml(`${pincode} Pincode - Find post office names, district, state, delivery status and other postal information.`)}">
-    <link rel="icon" type="image/png" href="/favicon.png">  
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="google-site-verification"
+          content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+    <meta name="robots"
+          content="index, follow">
+
+    <meta name="description"
+          content="${escapeHtml(description)}">
+
+    <link rel="icon"
+          type="image/png"
+          href="/favicon.png">
 
     <title>${escapeHtml(title)}</title>
 
@@ -380,7 +408,7 @@ function createPage(title, content) {
 
 function escapeHtml(value) {
 
-    return String(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
