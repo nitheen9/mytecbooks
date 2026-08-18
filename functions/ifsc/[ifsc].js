@@ -10,6 +10,7 @@ export async function onRequestGet(context) {
         return new Response(
             createPage(
                 "Invalid IFSC Code",
+                "Invalid IFSC code. Please enter a valid 11-character Indian bank IFSC code.",
                 `<h1>Invalid IFSC Code</h1>
                  <p>Please enter a valid 11-character IFSC code.</p>`
             ),
@@ -35,6 +36,7 @@ export async function onRequestGet(context) {
             return new Response(
                 createPage(
                     "IFSC Code Not Found",
+                    `No bank branch information was found for IFSC code ${ifsc}.`,
                     `<h1>IFSC Code Not Found</h1>
                      <p>No bank branch information was found for
                      <strong>${escapeHtml(ifsc)}</strong>.</p>`
@@ -55,6 +57,7 @@ export async function onRequestGet(context) {
             return new Response(
                 createPage(
                     "IFSC Code Not Found",
+                    `No bank information was found for IFSC code ${ifsc}.`,
                     `<h1>IFSC Code Not Found</h1>
                      <p>No information was found for
                      <strong>${escapeHtml(ifsc)}</strong>.</p>`
@@ -67,6 +70,13 @@ export async function onRequestGet(context) {
                 }
             );
         }
+
+        const bankName = bank.BANK || "Bank";
+        const branchName = bank.BRANCH || "Bank Branch";
+
+        // Unique description for this IFSC page
+        const description =
+            `${bankName} ${ifsc} IFSC Code - Find ${branchName} bank branch details, address, city, district and state.`;
 
         const content = `
 
@@ -172,6 +182,7 @@ export async function onRequestGet(context) {
         return new Response(
             createPage(
                 `${ifsc} IFSC Code - Bank Branch Details`,
+                description,
                 content
             ),
             {
@@ -190,8 +201,9 @@ export async function onRequestGet(context) {
         return new Response(
             createPage(
                 "IFSC Error",
+                "Unable to retrieve bank IFSC information right now. Please try again later.",
                 `<h1>IFSC Error</h1>
-                 <p>Unable to retrieve bank information right now.</p>`
+                 <p>Unable to retrieve bank information right now. Please try again.</p>`
             ),
             {
                 status: 500,
@@ -204,7 +216,7 @@ export async function onRequestGet(context) {
 }
 
 
-function createPage(title, content) {
+function createPage(title, description, content) {
 
     return `<!DOCTYPE html>
 
@@ -213,11 +225,22 @@ function createPage(title, content) {
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
-    <meta name="robots" content="index, follow">
-   <meta name="description" content="${escapeHtml(`${bankName} IFSC Code ${ifsc} - Find bank branch, address, city, district, state and IFSC details.`)}">
-    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="google-site-verification"
+          content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+    <meta name="robots"
+          content="index, follow">
+
+    <meta name="description"
+          content="${escapeHtml(description)}">
+
+    <link rel="icon"
+          type="image/png"
+          href="/favicon.png">
 
     <title>${escapeHtml(title)}</title>
 
@@ -324,7 +347,7 @@ function createPage(title, content) {
 
 function escapeHtml(value) {
 
-    return String(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
