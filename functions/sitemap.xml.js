@@ -1,96 +1,52 @@
-const API = "https://api.postalpincode.in/pincode/";
 const BASE_URL = "https://mytecbooks.pages.dev";
-
 const PER_PAGE = 800;
 
-// Cache valid pincodes in memory
-let cachedPincodes = null;
-let cacheTime = 0;
+// Valid Pincode list will be loaded here
+// Example format:
+// const pincodes = ["521161", "521162", "521163"];
 
-// Keep cache for 24 hours
-const CACHE_TIME = 24 * 60 * 60 * 1000;
+const pincodes = [];
 
+// Other pages
+const pages = [
+    "/"
+];
 
-// Find valid Indian Pincodes from API
-async function getValidPincodes() {
-
-    // Use existing cache
-    if (
-        cachedPincodes &&
-        Date.now() - cacheTime < CACHE_TIME
-    ) {
-        return cachedPincodes;
-    }
-
-    const valid = [];
-
-    /*
-     * Indian PIN codes are 6 digits.
-     *
-     * We check every possible PIN.
-     */
-    for (let pin = 100000; pin <= 999999; pin++) {
-
-        try {
-
-            const response = await fetch(
-                `${API}${pin}`,
-                {
-                    headers: {
-                        "Accept": "application/json"
-                    }
-                }
-            );
-
-            if (!response.ok) {
-                continue;
-            }
-
-            const data = await response.json();
-
-            if (
-                data &&
-                data.Status === "Success" &&
-                Array.isArray(data.PostOffice) &&
-                data.PostOffice.length > 0
-            ) {
-                valid.push(String(pin));
-            }
-
-        } catch (error) {
-            // Ignore failed API requests
-        }
-    }
-
-    cachedPincodes = valid;
-    cacheTime = Date.now();
-
-    return valid;
-}
+// Future bank/IFSC URLs can be added here
+const bankPages = [];
 
 
 export async function onRequestGet(context) {
 
     const requestUrl = new URL(context.request.url);
-
     const pageParam = requestUrl.searchParams.get("page");
 
-    /*
-     * Get valid Pincodes
-     */
-    const pincodes = await getValidPincodes();
 
-    const totalPages = Math.ceil(
-        pincodes.length / PER_PAGE
-    );
+    // Combine all URLs
+    const urls = [
+        ...pages,
+
+        ...pincodes
+            .filter(pin => /^\d{6}$/.test(pin))
+            .map(pin => `/pincode/${pin}/`),
+
+        ...bankPages
+    ];
 
 
-    /*
-     * MAIN SITEMAP
-     *
-     * /sitemap.xml
-     */
+    // Remove duplicates
+    const uniqueUrls = [...new Set(urls)];
+
+
+    // MAIN SITEMAP
+    // /sitemap.xml
+
     if (!pageParam) {
+
+        const totalPages = Math.max(
+            1,
+            Math.ceil(uniqueUrls.length / PER_PAGE)
+        );
 
         let xml =
             `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -98,11 +54,7 @@ export async function onRequestGet(context) {
         xml +=
             `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-        for (
-            let page = 1;
-            page <= totalPages;
-            page++
-        ) {
+        for (let page = 1; page <= totalPages; page++) {
 
             xml += `  <sitemap>\n`;
 
@@ -113,6 +65,7 @@ export async function onRequestGet(context) {
         }
 
         xml += `</sitemapindex>`;
+
 
         return new Response(xml, {
             headers: {
@@ -126,44 +79,40 @@ export async function onRequestGet(context) {
     }
 
 
-    /*
-     * INDIVIDUAL SITEMAP PAGE
-     *
-     * /sitemap.xml?page=1
-     */
+    // INDIVIDUAL PAGE
+
     const page = parseInt(pageParam, 10);
 
-    if (
-        !Number.isInteger(page) ||
-        page < 1 ||
-        page > totalPages
-    ) {
+    if (!Number.isInteger(page) || page < 1) {
 
         return new Response(
-            "Sitemap page not found",
-            {
-                status: 404
-            }
+            "Invalid sitemap page",
+            { status: 404 }
         );
     }
 
 
-    /*
-     * Get maximum 800 Pincodes
-     */
     const start =
         (page - 1) * PER_PAGE;
 
-    const pagePincodes =
-        pincodes.slice(
+    const pageUrls =
+        uniqueUrls.slice(
             start,
             start + PER_PAGE
         );
 
 
-    /*
-     * Create XML
-     */
+    if (pageUrls.length === 0) {
+
+        return new Response(
+            "Sitemap page not found",
+            { status: 404 }
+        );
+    }
+
+
+    // XML
+
     let xml =
         `<?xml version="1.0" encoding="UTF-8"?>\n`;
 
@@ -171,31 +120,12 @@ export async function onRequestGet(context) {
         `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
 
-    /*
-     * Homepage
-     *
-     * Put homepage on page 1
-     */
-    if (page === 1) {
+    for (const path of pageUrls) {
 
         xml += `  <url>\n`;
 
         xml +=
-            `    <loc>${BASE_URL}/</loc>\n`;
-
-        xml += `  </url>\n`;
-    }
-
-
-    /*
-     * Pincode URLs
-     */
-    for (const pin of pagePincodes) {
-
-        xml += `  <url>\n`;
-
-        xml +=
-            `    <loc>${BASE_URL}/pincode/${pin}/</loc>\n`;
+            `    <loc>${BASE_URL}${path}</loc>\n`;
 
         xml += `  </url>\n`;
     }
