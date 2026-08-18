@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>India Pincode & Bank IFSC Finder</title>
+
+    <meta name="description"
+          content="Free India Pincode and Bank IFSC Finder. Search post office details, districts, states, bank branches, addresses, IFSC, NEFT, RTGS, IMPS and UPI information.">
+
+    <meta name="google-site-verification"
+          content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+    <style>
+        :root {
+            --primary: #f48120;
+            --dark: #1e1e24;
+            --light: #f9f9fb;
+            --border: #e0e0e6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, Arial, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--dark);
+            margin: 10px 0 30px;
+            font-size: 30px;
+        }
+
+        .intro {
+            text-align: center;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 25px;
+        }
+
+        /* TABS */
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            font-weight: bold;
+            border: none;
+            background: #e0e0e6;
+            color: #333;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #d3d3d9;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* CARD */
+
+        .search-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .search-card h2,
+        .search-card h3 {
+            margin-top: 0;
+        }
+
+        .search-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* SEARCH */
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            min-width: 0;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button.search-submit {
+            padding: 14px 28px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button.search-submit:hover {
+            background: #333;
+        }
+
+        /* PANELS */
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* RESULTS */
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f1f1f6;
+            display: none;
+            border-left: 5px solid var(--primary);
+        }
+
+        .results h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        /* ERROR */
+
+        .error {
+            color: #d9383a;
+            font-weight: bold;
+            background: #fde8e8;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            margin-top: 20px;
+        }
+
+        /* DATA */
+
+        .data-row {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .data-row:last-child {
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .badge {
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        /* LOADING */
+
+        .loading {
+            color: #555;
+            font-weight: bold;
+        }
+
+        /* FOOTER */
+
+        footer {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin: 30px 0 10px;
+            line-height: 1.6;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            button.search-submit {
+                width: 100%;
+            }
+
+            .search-card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🇮🇳 India Pincode & Bank IFSC Finder</h1>
+
+    <p class="intro">
+        Search Indian post offices, pincodes and bank branch IFSC details.
+    </p>
+
+
+    <!-- ========================= -->
+    <!-- TABS -->
+    <!-- ========================= -->
+
+    <div class="tabs">
+
+        <button class="tab-btn active"
+                onclick="switchTab('pincode', this)">
+            📍 Pincode Lookup
+        </button>
+
+        <button class="tab-btn"
+                onclick="switchTab('bank', this)">
+            🏦 Bank IFSC Finder
+        </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- PINCODE PANEL -->
+    <!-- ========================= -->
+
+    <div id="pincode-panel"
+         class="panel active search-card">
+
+        <h3>Search Post Office & Address via Pincode</h3>
+
+        <p>
+            Enter any 6-digit Indian postal pincode to find
+            post office names, districts, states, regions and
+            delivery status.
+        </p>
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="pinInput"
+                placeholder="Enter 6-digit pincode e.g. 521161"
+                maxlength="6"
+                inputmode="numeric"
+                autocomplete="off">
+
+            <button class="search-submit"
+                    onclick="fetchPincode()">
+                Search
+            </button>
+
+        </div>
+
+        <div id="pin-error" class="error"></div>
+
+        <div id="pin-results" class="results"></div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- BANK PANEL -->
+    <!-- ========================= -->
+
+    <div id="bank-panel"
+         class="panel search-card">
+
+        <h3>Find Bank Branch Details & IFSC</h3>
+
+        <p>
+            Enter an 11-character Indian bank IFSC code to find
+            bank name, branch, address, city, state and available
+            payment services.
+        </p>
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="ifscInput"
+                placeholder="Enter IFSC e.g. SBIN0062107"
+                maxlength="11"
+                autocomplete="off"
+                style="text-transform:uppercase;">
+
+            <button class="search-submit"
+                    onclick="fetchBankData()">
+                Search
+            </button>
+
+        </div>
+
+        <div id="bank-error" class="error"></div>
+
+        <div id="bank-results" class="results"></div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- FOOTER -->
+    <!-- ========================= -->
+
+    <footer>
+
+        India Pincode & IFSC Finder<br>
+
+        Data is retrieved from external public APIs.
+        Please verify important banking information with the bank
+        before making financial transactions.
+
+    </footer>
+
+</div>
+
+
+<script>
+
+    /* =========================================
+       TAB SWITCH
+    ========================================= */
+
+    function switchTab(tabName, button) {
+
+        document.querySelectorAll('.panel').forEach(function(panel) {
+
+            panel.classList.remove('active');
+
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(function(btn) {
+
+            btn.classList.remove('active');
+
+        });
+
+        document
+            .getElementById(tabName + '-panel')
+            .classList.add('active');
+
+        button.classList.add('active');
+    }
+
+
+    /* =========================================
+       PINCODE LOOKUP
+    ========================================= */
+
+    async function fetchPincode() {
+
+        const pin =
+            document.getElementById('pinInput').value.trim();
+
+        const resultsDiv =
+            document.getElementById('pin-results');
+
+        const errorDiv =
+            document.getElementById('pin-error');
+
+
+        resultsDiv.style.display = "none";
+        errorDiv.style.display = "none";
+
+
+        /* Validate pincode */
+
+        if (!/^\d{6}$/.test(pin)) {
+
+            errorDiv.innerText =
+                "Please enter a valid 6-digit Indian pincode.";
+
+            errorDiv.style.display = "block";
+
+            return;
+        }
+
+
+        /* Loading */
+
+        resultsDiv.innerHTML =
+            '<div class="loading">🔄 Searching pincode...</div>';
+
+        resultsDiv.style.display = "block";
+
+
+        try {
+
+            /*
+                Official API endpoint format
+            */
+
+            const response = await fetch(
+                "https://api.postalpincode.in/pincode/" +
+                encodeURIComponent(pin)
+            );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Pincode API returned HTTP " +
+                    response.status
+                );
+            }
+
+
+            const data = await response.json();
+
+
+            if (
+                !data ||
+                !Array.isArray(data) ||
+                data.length === 0
+            ) {
+
+                throw new Error(
+                    "Invalid API response"
+                );
+            }
+
+
+            const result = data[0];
+
+
+            if (
+                result.Status === "Success" &&
+                Array.isArray(result.PostOffice) &&
+                result.PostOffice.length > 0
+            ) {
+
+                const offices = result.PostOffice;
+
+
+                let html = "";
+
+                html +=
+                    "<h4>📍 Found " +
+                    offices.length +
+                    " Post Office(s) for " +
+                    escapeHtml(pin) +
+                    "</h4>";
+
+
+                offices.forEach(function(office) {
+
+                    html += `
+                        <div class="data-row">
+
+                            <strong>🏬 Office Name:</strong>
+                            ${escapeHtml(office.Name || "N/A")}
+
+                            <span class="badge">
+                                ${escapeHtml(office.BranchType || "N/A")}
+                            </span>
+
+                            <br>
+
+                            <strong>📍 District:</strong>
+                            ${escapeHtml(office.District || "N/A")}
+
+                            <br>
+
+                            <strong>State:</strong>
+                            ${escapeHtml(office.State || "N/A")}
+
+                            <br>
+
+                            <strong>Delivery Status:</strong>
+                            ${escapeHtml(office.DeliveryStatus || "N/A")}
+
+                            <br>
+
+                            <strong>Circle:</strong>
+                            ${escapeHtml(office.Circle || "N/A")}
+
+                            <br>
+
+                            <strong>Region:</strong>
+                            ${escapeHtml(office.Region || "N/A")}
+
+                            <br>
+
+                            <strong>Division:</strong>
+                            ${escapeHtml(office.Division || "N/A")}
+
+                            <br>
+
+                            <strong>Block:</strong>
+                            ${escapeHtml(office.Block || "N/A")}
+
+                        </div>
+                    `;
+
+                });
+
+
+                resultsDiv.innerHTML = html;
+
+                resultsDiv.style.display = "block";
+
+            }
+            else {
+
+                resultsDiv.style.display = "none";
+
+                errorDiv.innerText =
+                    "No post office records found for pincode " +
+                    pin +
+                    ".";
+
+                errorDiv.style.display = "block";
+            }
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "Pincode lookup error:",
+                error
+            );
+
+            resultsDiv.style.display = "none";
+
+            errorDiv.innerText =
+                "Unable to connect to the Pincode API. Please try again.";
+
+            errorDiv.style.display = "block";
+        }
+    }
+
+
+    /* =========================================
+       BANK IFSC LOOKUP
+    ========================================= */
+
+    async function fetchBankData() {
+
+        const ifsc =
+            document
+                .getElementById('ifscInput')
+                .value
+                .trim()
+                .toUpperCase();
+
+
+        const resultsDiv =
+            document.getElementById('bank-results');
+
+        const errorDiv =
+            document.getElementById('bank-error');
+
+
+        resultsDiv.style.display = "none";
+        errorDiv.style.display = "none";
+
+
+        /* Validate IFSC */
+
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+
+            errorDiv.innerText =
+                "Please enter a valid 11-character IFSC code. Example: SBIN0062107";
+
+            errorDiv.style.display = "block";
+
+            return;
+        }
+
+
+        /* Loading */
+
+        resultsDiv.innerHTML =
+            '<div class="loading">🔄 Searching bank branch...</div>';
+
+        resultsDiv.style.display = "block";
+
+
+        try {
+
+            /*
+                Razorpay IFSC API
+            */
+
+            const response = await fetch(
+                "https://ifsc.razorpay.com/" +
+                encodeURIComponent(ifsc)
+            );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "IFSC API returned HTTP " +
+                    response.status
+                );
+            }
+
+
+            const data = await response.json();
+
+
+            if (!data || !data.BANK) {
+
+                throw new Error(
+                    "Invalid IFSC response"
+                );
+            }
+
+
+            renderBankView(
+                data,
+                resultsDiv
+            );
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "IFSC lookup error:",
+                error
+            );
+
+            resultsDiv.style.display = "none";
+
+            errorDiv.innerText =
+                "Unable to find a bank branch for IFSC " +
+                ifsc +
+                ".";
+
+            errorDiv.style.display = "block";
+        }
+    }
+
+
+    /* =========================================
+       DISPLAY BANK DATA
+    ========================================= */
+
+    function renderBankView(data, resultsDiv) {
+
+        const bank =
+            escapeHtml(data.BANK || "N/A");
+
+        const branch =
+            escapeHtml(data.BRANCH || "N/A");
+
+        const ifsc =
+            escapeHtml(data.IFSC || "N/A");
+
+        const address =
+            escapeHtml(data.ADDRESS || "N/A");
+
+        const city =
+            escapeHtml(data.CITY || "N/A");
+
+        const district =
+            escapeHtml(data.DISTRICT || "N/A");
+
+        const state =
+            escapeHtml(data.STATE || "N/A");
+
+
+        resultsDiv.innerHTML = `
+
+            <h4>
+                🏦 ${bank}
+            </h4>
+
+            <div class="data-row">
+
+                <strong>Branch:</strong>
+
+                ${branch}
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>IFSC:</strong>
+
+                <span class="badge">
+                    ${ifsc}
+                </span>
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>Physical Address:</strong>
+
+                ${address}
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>City:</strong>
+
+                ${city}
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>District:</strong>
+
+                ${district}
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>State:</strong>
+
+                ${state}
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>NEFT:</strong>
+
+                ${
+                    data.NEFT
+                    ? "✅ Available"
+                    : "❌ Not Available"
+                }
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>RTGS:</strong>
+
+                ${
+                    data.RTGS
+                    ? "✅ Available"
+                    : "❌ Not Available"
+                }
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>IMPS:</strong>
+
+                ${
+                    data.IMPS
+                    ? "✅ Available"
+                    : "❌ Not Available"
+                }
+
+            </div>
+
+
+            <div class="data-row">
+
+                <strong>UPI:</strong>
+
+                ${
+                    data.UPI
+                    ? "✅ Available"
+                    : "❌ Not Available"
+                }
+
+            </div>
+
+        `;
+
+
+        resultsDiv.style.display = "block";
+    }
+
+
+    /* =========================================
+       HTML ESCAPE
+    ========================================= */
+
+    function escapeHtml(value) {
+
+        return String(value)
+
+            .replace(/&/g, "&amp;")
+
+            .replace(/</g, "&lt;")
+
+            .replace(/>/g, "&gt;")
+
+            .replace(/"/g, "&quot;")
+
+            .replace(/'/g, "&#039;");
+    }
+
+
+    /* =========================================
+       ENTER KEY - PINCODE
+    ========================================= */
+
+    document
+        .getElementById("pinInput")
+        .addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter") {
+
+                fetchPincode();
+
+            }
+
+        });
+
+
+    /* =========================================
+       ENTER KEY - IFSC
+    ========================================= */
+
+    document
+        .getElementById("ifscInput")
+        .addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter") {
+
+                fetchBankData();
+
+            }
+
+        });
+
+</script>
+
+</body>
+</html>
