@@ -122,9 +122,11 @@ function createPage(title, content) {
 <head>
 
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+    <meta name="robots" content="index, follow">
+   <meta name="description" content="${escapeHtml(`${station.station_name} Railway Station (${station.station_code}) - Find station code, division, railway zone, district and state information.`)}">
+    <link rel="icon" type="image/png" href="/favicon.png">
 
     <title>${escapeHtml(title)}</title>
 
