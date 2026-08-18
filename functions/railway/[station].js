@@ -1,18 +1,30 @@
+import railwayData from "../data/RailwayStationCode.json";
+
 export async function onRequestGet(context) {
 
-    const station = String(context.params.station || "")
+    const code = String(context.params.station || "")
         .trim()
         .toUpperCase();
 
-    if (!/^[A-Z0-9]{1,10}$/.test(station)) {
+    const station = railwayData.find(function (item) {
+        return String(item.station_code || "").toUpperCase() === code;
+    });
+
+    if (!station) {
         return new Response(
             createPage(
-                "Invalid Railway Station Code",
-                `<h1>Invalid Railway Station Code</h1>
-                 <p>Please enter a valid Indian Railway station code.</p>`
+                "Railway Station Not Found",
+                `
+                <h1>Railway Station Not Found</h1>
+
+                <p>
+                    No railway station information was found for
+                    <strong>${escapeHtml(code)}</strong>.
+                </p>
+                `
             ),
             {
-                status: 400,
+                status: 404,
                 headers: {
                     "content-type": "text/html;charset=UTF-8"
                 }
@@ -20,155 +32,84 @@ export async function onRequestGet(context) {
         );
     }
 
-    try {
+    const content = `
 
-        const API_KEY = "YOUR_API_KEY";
+        <h1>🚉 ${escapeHtml(station.station_name)}</h1>
 
-        const apiUrl =
-            "https://indianrailapi.com/api/v2/StationCodeOrName/apikey/" +
-            encodeURIComponent(API_KEY) +
-            "/SearchText/" +
-            encodeURIComponent(station) +
-            "/";
+        <p>
+            Railway station information for
+            <strong>${escapeHtml(station.station_code)}</strong>.
+        </p>
 
-        const response = await fetch(apiUrl);
+        <div class="summary">
 
-        if (!response.ok) {
-            throw new Error("Railway API error");
-        }
-
-        const data = await response.json();
-
-        if (
-            !data ||
-            data.ResponseCode !== "200" ||
-            data.Status !== "SUCCESS" ||
-            !Array.isArray(data.Station) ||
-            data.Station.length === 0
-        ) {
-            return new Response(
-                createPage(
-                    "Railway Station Not Found",
-                    `<h1>Railway Station Not Found</h1>
-                     <p>No railway station information was found for
-                     <strong>${escapeHtml(station)}</strong>.</p>`
-                ),
-                {
-                    status: 404,
-                    headers: {
-                        "content-type": "text/html;charset=UTF-8"
-                    }
-                }
-            );
-        }
-
-        const results = data.Station;
-
-        let stationsHtml = "";
-
-        results.forEach(function (item) {
-
-            stationsHtml += `
-                <div class="station">
-
-                    <h2>
-                        🚉 ${escapeHtml(item.NameEn || "Railway Station")}
-                    </h2>
-
-                    <p>
-                        <strong>Station Code:</strong>
-                        ${escapeHtml(item.StationCode || "N/A")}
-                    </p>
-
-                    <p>
-                        <strong>Latitude:</strong>
-                        ${escapeHtml(item.Latitude || "N/A")}
-                    </p>
-
-                    <p>
-                        <strong>Longitude:</strong>
-                        ${escapeHtml(item.Longitude || "N/A")}
-                    </p>
-
-                </div>
-            `;
-        });
-
-        const first = results[0];
-
-        const content = `
-
-            <h1>
-                🚉 ${escapeHtml(first.NameEn || station)}
-            </h1>
-
-            <p>
-                Indian Railway station information for
-                <strong>${escapeHtml(station)}</strong>.
-            </p>
-
-            <div class="summary">
-
-                <div>
-                    <strong>Station Name</strong><br>
-                    ${escapeHtml(first.NameEn || "N/A")}
-                </div>
-
-                <div>
-                    <strong>Station Code</strong><br>
-                    ${escapeHtml(first.StationCode || "N/A")}
-                </div>
-
-                <div>
-                    <strong>Latitude</strong><br>
-                    ${escapeHtml(first.Latitude || "N/A")}
-                </div>
-
-                <div>
-                    <strong>Longitude</strong><br>
-                    ${escapeHtml(first.Longitude || "N/A")}
-                </div>
-
+            <div>
+                <strong>Station Name</strong><br>
+                ${escapeHtml(station.station_name)}
             </div>
 
-            <h2>Railway Station Details</h2>
+            <div>
+                <strong>Station Code</strong><br>
+                ${escapeHtml(station.station_code)}
+            </div>
 
-            ${stationsHtml}
+            <div>
+                <strong>Division</strong><br>
+                ${escapeHtml(station.division)}
+            </div>
 
-        `;
+            <div>
+                <strong>Division Code</strong><br>
+                ${escapeHtml(station.division_code)}
+            </div>
 
-        return new Response(
-            createPage(
-                `${first.NameEn || station} Railway Station - ${first.StationCode || station}`,
-                content
-            ),
-            {
-                status: 200,
-                headers: {
-                    "content-type": "text/html;charset=UTF-8",
-                    "cache-control": "public, max-age=3600"
-                }
+            <div>
+                <strong>Zone</strong><br>
+                ${escapeHtml(station.zone)}
+            </div>
+
+            <div>
+                <strong>Zone Code</strong><br>
+                ${escapeHtml(station.zone_code)}
+            </div>
+
+            <div>
+                <strong>District</strong><br>
+                ${escapeHtml(station.district)}
+            </div>
+
+            <div>
+                <strong>State</strong><br>
+                ${escapeHtml(station.state)}
+            </div>
+
+        </div>
+
+        <h2>${escapeHtml(station.station_name)} Railway Station</h2>
+
+        <p>
+            <strong>${escapeHtml(station.station_name)}</strong>
+            is a railway station with station code
+            <strong>${escapeHtml(station.station_code)}</strong>.
+            It is located in ${escapeHtml(station.district)},
+            ${escapeHtml(station.state)}.
+        </p>
+
+    `;
+
+    return new Response(
+        createPage(
+            `${station.station_name} Railway Station - ${station.station_code}`,
+            content
+        ),
+        {
+            status: 200,
+            headers: {
+                "content-type": "text/html;charset=UTF-8",
+                "cache-control": "public, max-age=86400"
             }
-        );
-
-    } catch (error) {
-
-        console.error(error);
-
-        return new Response(
-            createPage(
-                "Railway Station Error",
-                `<h1>Railway Station Error</h1>
-                 <p>Unable to retrieve railway station information right now.</p>`
-            ),
-            {
-                status: 500,
-                headers: {
-                    "content-type": "text/html;charset=UTF-8"
-                }
-            }
-        );
-    }
+        }
+    );
 }
 
 
@@ -236,20 +177,6 @@ function createPage(title, content) {
             border-radius: 8px;
         }
 
-        .station {
-            background: white;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 10px;
-            border-left: 4px solid #1976d2;
-            box-shadow: 0 2px 10px rgba(0,0,0,.05);
-        }
-
-        .station h2 {
-            margin-top: 0;
-            color: #1976d2;
-        }
-
         @media(max-width:600px) {
 
             body {
@@ -278,7 +205,7 @@ function createPage(title, content) {
 
         <p>
             <a href="/">
-                ← Pincode & IFSC & Railway Station Finder
+                ← Railway Station Finder
             </a>
         </p>
 
@@ -296,7 +223,7 @@ function createPage(title, content) {
 
 function escapeHtml(value) {
 
-    return String(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
