@@ -1,146 +1,124 @@
-const BASE_URL = "https://mytecbooks.pages.dev";
-const PER_PAGE = 800;
-
-// Valid Pincode list will be loaded here
-// Example format:
-// const pincodes = ["521161", "521162", "521163"];
-
-const pincodes = [];
-
-// Other pages
-const pages = [
-    "/"
-];
-
-// Future bank/IFSC URLs can be added here
-const bankPages = [];
-
-
 export async function onRequestGet(context) {
 
-    const requestUrl = new URL(context.request.url);
-    const pageParam = requestUrl.searchParams.get("page");
+    const BASE_URL = "https://mytecbooks.pages.dev";
+    const PER_PAGE = 800;
 
+    /*
+     * Total possible 6-digit Pincode URLs
+     * 100000 to 999999
+     */
+    const PIN_START = 100000;
+    const PIN_END = 999999;
 
-    // Combine all URLs
-    const urls = [
-        ...pages,
+    const url = new URL(context.request.url);
+    const pageParam = url.searchParams.get("page");
 
-        ...pincodes
-            .filter(pin => /^\d{6}$/.test(pin))
-            .map(pin => `/pincode/${pin}/`),
-
-        ...bankPages
-    ];
-
-
-    // Remove duplicates
-    const uniqueUrls = [...new Set(urls)];
-
-
-    // MAIN SITEMAP
-    // /sitemap.xml
+    /*
+     * MAIN SITEMAP
+     *
+     * https://mytecbooks.pages.dev/sitemap.xml
+     */
 
     if (!pageParam) {
 
-        const totalPages = Math.max(
-            1,
-            Math.ceil(uniqueUrls.length / PER_PAGE)
-        );
+        const totalPincodes = PIN_END - PIN_START + 1;
+        const totalPages = Math.ceil(totalPincodes / PER_PAGE);
 
-        let xml =
-            `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
 
-        xml +=
-            `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+        xml += `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
         for (let page = 1; page <= totalPages; page++) {
 
             xml += `  <sitemap>\n`;
-
-            xml +=
-                `    <loc>${BASE_URL}/sitemap.xml?page=${page}</loc>\n`;
-
+            xml += `    <loc>${BASE_URL}/sitemap.xml?page=${page}</loc>\n`;
             xml += `  </sitemap>\n`;
+
         }
 
         xml += `</sitemapindex>`;
 
-
         return new Response(xml, {
             headers: {
-                "Content-Type":
-                    "application/xml; charset=UTF-8",
-
-                "Cache-Control":
-                    "public, max-age=86400"
+                "Content-Type": "application/xml; charset=UTF-8"
             }
         });
     }
 
-
-    // INDIVIDUAL PAGE
+    /*
+     * SITEMAP PAGE
+     *
+     * ?page=1
+     * ?page=2
+     * ?page=3
+     */
 
     const page = parseInt(pageParam, 10);
 
     if (!Number.isInteger(page) || page < 1) {
 
-        return new Response(
-            "Invalid sitemap page",
-            { status: 404 }
-        );
+        return new Response("Invalid sitemap page", {
+            status: 404
+        });
+
     }
 
+    const totalPincodes = PIN_END - PIN_START + 1;
+    const totalPages = Math.ceil(totalPincodes / PER_PAGE);
 
-    const start =
-        (page - 1) * PER_PAGE;
+    if (page > totalPages) {
 
-    const pageUrls =
-        uniqueUrls.slice(
-            start,
-            start + PER_PAGE
-        );
+        return new Response("Sitemap page not found", {
+            status: 404
+        });
 
-
-    if (pageUrls.length === 0) {
-
-        return new Response(
-            "Sitemap page not found",
-            { status: 404 }
-        );
     }
 
+    const start = PIN_START + ((page - 1) * PER_PAGE);
 
-    // XML
+    const end = Math.min(
+        start + PER_PAGE - 1,
+        PIN_END
+    );
 
-    let xml =
-        `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    /*
+     * Generate sitemap
+     */
 
-    xml +=
-        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
 
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-    for (const path of pageUrls) {
+    /*
+     * Homepage on first sitemap page
+     */
+
+    if (page === 1) {
 
         xml += `  <url>\n`;
-
-        xml +=
-            `    <loc>${BASE_URL}${path}</loc>\n`;
-
+        xml += `    <loc>${BASE_URL}/</loc>\n`;
         xml += `  </url>\n`;
+
     }
 
+    /*
+     * Generate Pincode URLs
+     */
+
+    for (let pin = start; pin <= end; pin++) {
+
+        xml += `  <url>\n`;
+        xml += `    <loc>${BASE_URL}/pincode/${pin}/</loc>\n`;
+        xml += `  </url>\n`;
+
+    }
 
     xml += `</urlset>`;
 
-
     return new Response(xml, {
         headers: {
-            "Content-Type":
-                "application/xml; charset=UTF-8",
-
-            "Cache-Control":
-                "public, max-age=86400"
+            "Content-Type": "application/xml; charset=UTF-8",
+            "Cache-Control": "public, max-age=86400"
         }
     });
 }
