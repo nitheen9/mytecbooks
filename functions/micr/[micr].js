@@ -277,8 +277,8 @@ function createPage(title, content) {
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="/favicon.png">
     <meta name="robots" content="index, follow">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find Indian Pincode, IFSC codes, railway station codes and useful location and banking information.">
 
     <title>${escapeHtml(title)}</title>
 
