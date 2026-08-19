@@ -4,13 +4,22 @@ export async function onRequestGet(context) {
         .trim()
         .toUpperCase();
 
-    if (!cin) {
+    /*
+     * Basic CIN validation.
+     * Allows normal Indian company CIN formats and LLP-style IDs
+     * returned by the government dataset.
+     */
+    if (!/^[A-Z0-9-]{6,30}$/.test(cin)) {
+
         return new Response(
             createPage(
                 "Invalid CIN",
                 `
                 <h1>Invalid CIN</h1>
-                <p>Please enter a valid Corporate Identification Number.</p>
+
+                <p>
+                    Please enter a valid Corporate Identification Number (CIN).
+                </p>
                 `
             ),
             {
@@ -22,18 +31,28 @@ export async function onRequestGet(context) {
         );
     }
 
+
     /*
-     * Cloudflare Pages secret
+     * ==========================================
+     * API KEY
+     * ==========================================
      *
-     * Settings → Environment variables →
-     * Add secret:
+     * Cloudflare Pages:
      *
+     * Settings
+     * → Variables and Secrets
+     * → Add
+     *
+     * Name:
      * DATA_GOV_API_KEY
+     *
+     * Put your real API key there.
      */
 
     const apiKey = context.env.DATA_GOV_API_KEY;
 
     if (!apiKey) {
+
         console.error("DATA_GOV_API_KEY is not configured.");
 
         return new Response(
@@ -43,7 +62,7 @@ export async function onRequestGet(context) {
                 <h1>Company Lookup Error</h1>
 
                 <p>
-                    The company database API is not configured.
+                    The company data service is not configured correctly.
                     Please try again later.
                 </p>
                 `
@@ -57,17 +76,30 @@ export async function onRequestGet(context) {
         );
     }
 
+
     try {
 
+        /*
+         * ==========================================
+         * DATA.GOV.IN API
+         * ==========================================
+         */
+
         const apiUrl =
-            "https://api.data.gov.in/resource/4dbe5667-7b6b-41d7-82af-211562424d9a" +
+            "https://api.data.gov.in/resource/" +
+            "4dbe5667-7b6b-41d7-82af-211562424d9a" +
             "?api-key=" +
             encodeURIComponent(apiKey) +
             "&format=json" +
-            "&limit=100" +
-            "&filters[CompanyStatus]=ACTIVE";
+            "&limit=100";
 
-        const response = await fetch(apiUrl);
+
+        const response = await fetch(apiUrl, {
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
 
         if (!response.ok) {
 
@@ -83,8 +115,8 @@ export async function onRequestGet(context) {
                     <h1>Company Lookup Error</h1>
 
                     <p>
-                        Unable to retrieve company information
-                        right now.
+                        Unable to retrieve company information right now.
+                        Please try again later.
                     </p>
                     `
                 ),
@@ -97,48 +129,18 @@ export async function onRequestGet(context) {
             );
         }
 
+
         const data = await response.json();
 
-        /*
-         * Data.gov.in normally returns:
-         *
-         * {
-         *   records: [...]
-         * }
-         */
-
-        const records =
-            data && Array.isArray(data.records)
-                ? data.records
-                : [];
 
         /*
-         * Find the requested CIN.
-         *
-         * We check several possible capitalization
-         * variations because API field names can differ.
+         * API records are inside data.records
          */
 
-        const company = records.find(function (item) {
-
-            const value =
-                item.CORPORATE_IDENTIFICATION_NUMBER ??
-                item.corporate_identification_number ??
-                item["Corporate Identification Number"] ??
-                "";
-
-            return String(value)
-                .trim()
-                .toUpperCase() === cin;
-        });
-
-
-        /*
-         * If the API's status filter did not return
-         * the company, return Not Found.
-         */
-
-        if (!company) {
+        if (
+            !data ||
+            !Array.isArray(data.records)
+        ) {
 
             return new Response(
                 createPage(
@@ -147,8 +149,7 @@ export async function onRequestGet(context) {
                     <h1>Company Not Found</h1>
 
                     <p>
-                        No active company information was found
-                        for
+                        No company information was found for
                         <strong>${escapeHtml(cin)}</strong>.
                     </p>
                     `
@@ -164,97 +165,132 @@ export async function onRequestGet(context) {
 
 
         /*
-         * Get the exact fields from your dataset.
+         * Find exact CIN.
+         *
+         * Also require CompanyStatus = Active.
          */
 
-        const cinValue =
-            getField(
-                company,
-                "CORPORATE_IDENTIFICATION_NUMBER"
+        const company = data.records.find(function (record) {
+
+            const recordCin =
+                String(record.CIN || "")
+                    .trim()
+                    .toUpperCase();
+
+            const status =
+                String(record.CompanyStatus || "")
+                    .trim()
+                    .toLowerCase();
+
+            return (
+                recordCin === cin &&
+                status === "active"
             );
 
-        const registrationDate =
-            getField(
-                company,
-                "DATE_OF_REGISTRATION"
+        });
+
+
+        /*
+         * Company not found or not Active
+         */
+
+        if (!company) {
+
+            return new Response(
+                createPage(
+                    "Company Not Found",
+                    `
+                    <h1>Company Not Found</h1>
+
+                    <p>
+                        No active company information was found for
+                        <strong>${escapeHtml(cin)}</strong>.
+                    </p>
+
+                    <p>
+                        Only companies with
+                        <strong>Company Status = Active</strong>
+                        are displayed.
+                    </p>
+                    `
+                ),
+                {
+                    status: 404,
+                    headers: {
+                        "content-type": "text/html;charset=UTF-8"
+                    }
+                }
             );
+        }
+
+
+        /*
+         * ==========================================
+         * COMPANY DATA
+         * ==========================================
+         */
 
         const companyName =
-            getField(
-                company,
-                "COMPANY_NAME"
-            );
+            company.CompanyName || "Company";
+
+        const registrationDate =
+            company.CompanyRegistrationdate_date || "N/A";
 
         const companyStatus =
-            getField(
-                company,
-                "COMPANY_STATUS"
-            );
+            company.CompanyStatus || "N/A";
 
         const companyClass =
-            getField(
-                company,
-                "COMPANY_CLASS"
-            );
+            company.CompanyClass || "N/A";
 
         const companyCategory =
-            getField(
-                company,
-                "COMPANY_CATEGORY"
-            );
+            company.CompanyCategory || "N/A";
+
+        const companySubCategory =
+            company.CompanySubCategory || "N/A";
 
         const authorizedCapital =
-            getField(
-                company,
-                "AUTHORIZED_CAPITAL"
-            );
+            company.AuthorizedCapital || "N/A";
 
-        const paidUpCapital =
-            getField(
-                company,
-                "PAIDUP_CAPITAL"
-            );
+        const paidupCapital =
+            company.PaidupCapital || "N/A";
 
-        const registeredState =
-            getField(
-                company,
-                "REGISTERED_STATE"
-            );
+        const roc =
+            company.CompanyROCcode || "N/A";
 
-        const registrar =
-            getField(
-                company,
-                "REGISTRAR_OF_COMPANIES"
-            );
-
-        const businessActivity =
-            getField(
-                company,
-                "PRINCIPAL_BUSINESS_ACTIVITY"
-            );
+        const stateCode =
+            company.CompanyStateCode || "N/A";
 
         const registeredAddress =
-            getField(
-                company,
-                "REGISTERED_OFFICE_ADDRESS"
-            );
+            company.Registered_Office_Address || "N/A";
 
-        const subCategory =
-            getField(
-                company,
-                "SUB_CATEGORY"
-            );
+        const listingStatus =
+            company.Listingstatus || "N/A";
 
+        const indianForeign =
+            company["CompanyIndian/Foreign Company"] || "N/A";
+
+        const nicCode =
+            company.nic_code || "N/A";
+
+        const industrialClassification =
+            company.CompanyIndustrialClassification || "N/A";
+
+
+        /*
+         * ==========================================
+         * PAGE CONTENT
+         * ==========================================
+         */
 
         const content = `
 
             <h1>
-                🏢 ${escapeHtml(companyName || cinValue)}
+                🏢 ${escapeHtml(companyName)}
             </h1>
 
             <p>
                 Company information for
-                <strong>${escapeHtml(cinValue || cin)}</strong>.
+                <strong>${escapeHtml(cin)}</strong>.
             </p>
 
 
@@ -262,7 +298,7 @@ export async function onRequestGet(context) {
 
                 <div>
                     <strong>CIN</strong><br>
-                    ${escapeHtml(cinValue || cin)}
+                    ${escapeHtml(company.CIN || cin)}
                 </div>
 
                 <div>
@@ -276,7 +312,7 @@ export async function onRequestGet(context) {
                 </div>
 
                 <div>
-                    <strong>Date of Registration</strong><br>
+                    <strong>Registration Date</strong><br>
                     ${escapeHtml(registrationDate)}
                 </div>
 
@@ -291,13 +327,13 @@ export async function onRequestGet(context) {
                 </div>
 
                 <div>
-                    <strong>Registered State</strong><br>
-                    ${escapeHtml(registeredState)}
+                    <strong>ROC</strong><br>
+                    ${escapeHtml(roc)}
                 </div>
 
                 <div>
-                    <strong>Registrar of Companies</strong><br>
-                    ${escapeHtml(registrar)}
+                    <strong>State</strong><br>
+                    ${escapeHtml(stateCode)}
                 </div>
 
             </div>
@@ -305,61 +341,83 @@ export async function onRequestGet(context) {
 
             <div class="details">
 
-                <h2>Company Details</h2>
+                <h2>
+                    Company Details
+                </h2>
 
                 <p>
-                    <strong>Corporate Identification Number:</strong><br>
-                    ${escapeHtml(cinValue || cin)}
+                    <strong>CIN:</strong>
+                    ${escapeHtml(company.CIN || cin)}
                 </p>
 
                 <p>
-                    <strong>Date of Registration:</strong><br>
-                    ${escapeHtml(registrationDate)}
-                </p>
-
-                <p>
-                    <strong>Company Name:</strong><br>
+                    <strong>Company Name:</strong>
                     ${escapeHtml(companyName)}
                 </p>
 
                 <p>
-                    <strong>Company Status:</strong><br>
+                    <strong>Company Status:</strong>
                     ${escapeHtml(companyStatus)}
                 </p>
 
                 <p>
-                    <strong>Company Class:</strong><br>
+                    <strong>Company Class:</strong>
                     ${escapeHtml(companyClass)}
                 </p>
 
                 <p>
-                    <strong>Company Category:</strong><br>
+                    <strong>Company Category:</strong>
                     ${escapeHtml(companyCategory)}
                 </p>
 
                 <p>
-                    <strong>Authorized Capital:</strong><br>
+                    <strong>Company Sub Category:</strong>
+                    ${escapeHtml(companySubCategory)}
+                </p>
+
+                <p>
+                    <strong>Authorized Capital:</strong>
                     ${escapeHtml(authorizedCapital)}
                 </p>
 
                 <p>
-                    <strong>Paid-up Capital:</strong><br>
-                    ${escapeHtml(paidUpCapital)}
+                    <strong>Paid-up Capital:</strong>
+                    ${escapeHtml(paidupCapital)}
                 </p>
 
                 <p>
-                    <strong>Registered State:</strong><br>
-                    ${escapeHtml(registeredState)}
+                    <strong>Registration Date:</strong>
+                    ${escapeHtml(registrationDate)}
                 </p>
 
                 <p>
-                    <strong>Registrar of Companies:</strong><br>
-                    ${escapeHtml(registrar)}
+                    <strong>Registrar of Companies:</strong>
+                    ${escapeHtml(roc)}
                 </p>
 
                 <p>
-                    <strong>Principal Business Activity:</strong><br>
-                    ${escapeHtml(businessActivity)}
+                    <strong>Registered State:</strong>
+                    ${escapeHtml(stateCode)}
+                </p>
+
+                <p>
+                    <strong>Listing Status:</strong>
+                    ${escapeHtml(listingStatus)}
+                </p>
+
+                <p>
+                    <strong>Indian / Foreign Company:</strong>
+                    ${escapeHtml(indianForeign)}
+                </p>
+
+                <p>
+                    <strong>NIC Code:</strong>
+                    ${escapeHtml(nicCode)}
+                </p>
+
+                <p>
+                    <strong>Industrial Classification:</strong>
+                    ${escapeHtml(industrialClassification)}
                 </p>
 
                 <p>
@@ -367,22 +425,23 @@ export async function onRequestGet(context) {
                     ${escapeHtml(registeredAddress)}
                 </p>
 
-                <p>
-                    <strong>Sub Category:</strong><br>
-                    ${escapeHtml(subCategory)}
-                </p>
-
             </div>
 
         `;
 
 
+        /*
+         * ==========================================
+         * RETURN PAGE
+         * ==========================================
+         */
+
         return new Response(
             createPage(
-                `${companyName || cin} - Company Details`,
+                `${companyName} - ${cin} Company Details`,
                 content,
-                companyName || cinValue || cin,
-                cinValue || cin
+                companyName,
+                cin
             ),
             {
                 status: 200,
@@ -396,9 +455,14 @@ export async function onRequestGet(context) {
             }
         );
 
+
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Company API error:",
+            error
+        );
+
 
         return new Response(
             createPage(
@@ -407,8 +471,8 @@ export async function onRequestGet(context) {
                 <h1>Company Lookup Error</h1>
 
                 <p>
-                    Unable to retrieve company information
-                    right now. Please try again later.
+                    Unable to retrieve company information right now.
+                    Please try again later.
                 </p>
                 `
             ),
@@ -421,42 +485,6 @@ export async function onRequestGet(context) {
             }
         );
     }
-}
-
-
-/*
- * ==========================================
- * GET FIELD
- * ==========================================
- */
-
-function getField(object, field) {
-
-    if (!object) {
-        return "";
-    }
-
-    if (
-        Object.prototype.hasOwnProperty.call(
-            object,
-            field
-        )
-    ) {
-        return object[field] ?? "";
-    }
-
-    /*
-     * Case-insensitive fallback
-     */
-
-    const key = Object.keys(object).find(function (key) {
-
-        return key.toUpperCase() ===
-            field.toUpperCase();
-
-    });
-
-    return key ? object[key] ?? "" : "";
 }
 
 
@@ -475,8 +503,9 @@ function createPage(
 
     const description =
         companyName && cin
-            ? `${companyName} (${cin}) - Find company registration date, status, class, category, authorized capital, paid-up capital, registered state, ROC and company details.`
-            : `${title} - Find company information, registration details, status, capital, registered state and ROC details.`;
+            ? `${companyName} (${cin}) - Find company status, registration date, ROC, registered office address, authorized capital, paid-up capital and company details.`
+            : "Find Indian company information including CIN, company status, registration date, ROC, registered office address and company details.";
+
 
     return `<!DOCTYPE html>
 
@@ -515,6 +544,7 @@ function createPage(
     <title>
         ${escapeHtml(title)}
     </title>
+
 
     <style>
 
@@ -557,7 +587,6 @@ function createPage(
             display: grid;
             grid-template-columns:
                 repeat(2, 1fr);
-
             gap: 12px;
             margin: 20px 0;
         }
@@ -574,10 +603,12 @@ function createPage(
             margin-top: 20px;
             border-radius: 10px;
             border-left: 4px solid #1976d2;
+            box-shadow:
+                0 2px 10px rgba(0,0,0,.05);
         }
 
         .details p {
-            margin: 14px 0;
+            margin: 12px 0;
         }
 
         @media(max-width:600px) {
@@ -603,6 +634,7 @@ function createPage(
     </style>
 
 </head>
+
 
 <body>
 
