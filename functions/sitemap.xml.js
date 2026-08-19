@@ -1,12 +1,18 @@
 ```javascript
 import { pincodes } from "./data/pincodes.js";
 import railwayData from "./data/RailwayStationCode.json";
-import companyCins from "./data/AP_AR_AS_AandM_Company_CIN.json";
+import companyCINs from "./data/AP_AR_AS_AandM_Company_CIN.json";
 
 const BASE_URL = "https://mytecbooks.pages.dev";
 
 const PER_PAGE = 800;
 
+
+/*
+ * ==========================================
+ * MAIN GET
+ * ==========================================
+ */
 
 export async function onRequestGet(context) {
 
@@ -30,7 +36,7 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * PINCODE DATA
+     * PINCODES
      * ==========================================
      */
 
@@ -50,7 +56,7 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * RAILWAY STATION DATA
+     * RAILWAY STATIONS
      * ==========================================
      */
 
@@ -77,14 +83,13 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * COMPANY CIN DATA
+     * COMPANY CIN
      * ==========================================
      *
-     * JSON example:
+     * JSON format:
      *
      * [
      *   "AAA-0396",
-     *   "AAA-1262",
      *   "U70101AS1998PTC005556",
      *   "U70101AS1998PTC005566"
      * ]
@@ -93,29 +98,16 @@ export async function onRequestGet(context) {
 
     const companyPages = [
         ...new Set(
-            companyCins
+            companyCINs
                 .map(String)
                 .map(function (cin) {
                     return cin.trim().toUpperCase();
                 })
                 .filter(function (cin) {
-
-                    return /^[A-Z0-9-]{5,30}$/.test(cin);
-
+                    return cin.length > 0;
                 })
         )
     ];
-
-
-    /*
-     * ==========================================
-     * FUTURE IFSC DATA
-     * ==========================================
-     *
-     * Add your IFSC JSON later.
-     */
-
-    const ifscPages = [];
 
 
     /*
@@ -128,23 +120,24 @@ export async function onRequestGet(context) {
 
     if (!type) {
 
-        let xml =
-            '<?xml version="1.0" encoding="UTF-8"?>\n';
+        let xml = "";
 
-        xml +=
-            '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        xml += '<?xml version="1.0" encoding="UTF-8"?>';
+        xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
 
         /*
          * NORMAL PAGES
          */
 
-        xml += '  <sitemap>\n';
+        xml += "<sitemap>";
 
-        xml +=
-            `    <loc>${BASE_URL}/sitemap.xml?type=pages&amp;page=1</loc>\n`;
+        xml += "<loc>";
+        xml += BASE_URL;
+        xml += "/sitemap.xml?type=pages&amp;page=1";
+        xml += "</loc>";
 
-        xml += '  </sitemap>\n';
+        xml += "</sitemap>";
 
 
         /*
@@ -163,13 +156,15 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml += '  <sitemap>\n';
+            xml += "<sitemap>";
 
-            xml +=
-                `    <loc>${BASE_URL}/sitemap.xml?type=pincode&amp;page=${page}</loc>\n`;
+            xml += "<loc>";
+            xml += BASE_URL;
+            xml += "/sitemap.xml?type=pincode&amp;page=";
+            xml += page;
+            xml += "</loc>";
 
-            xml += '  </sitemap>\n';
-
+            xml += "</sitemap>";
         }
 
 
@@ -189,13 +184,15 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml += '  <sitemap>\n';
+            xml += "<sitemap>";
 
-            xml +=
-                `    <loc>${BASE_URL}/sitemap.xml?type=railway&amp;page=${page}</loc>\n`;
+            xml += "<loc>";
+            xml += BASE_URL;
+            xml += "/sitemap.xml?type=railway&amp;page=";
+            xml += page;
+            xml += "</loc>";
 
-            xml += '  </sitemap>\n';
-
+            xml += "</sitemap>";
         }
 
 
@@ -215,47 +212,19 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml += '  <sitemap>\n';
+            xml += "<sitemap>";
 
-            xml +=
-                `    <loc>${BASE_URL}/sitemap.xml?type=company&amp;page=${page}</loc>\n`;
+            xml += "<loc>";
+            xml += BASE_URL;
+            xml += "/sitemap.xml?type=company&amp;page=";
+            xml += page;
+            xml += "</loc>";
 
-            xml += '  </sitemap>\n';
-
+            xml += "</sitemap>";
         }
 
 
-        /*
-         * IFSC SITEMAPS
-         */
-
-        if (ifscPages.length > 0) {
-
-            const ifscTotalPages =
-                Math.ceil(
-                    ifscPages.length / PER_PAGE
-                );
-
-
-            for (
-                let page = 1;
-                page <= ifscTotalPages;
-                page++
-            ) {
-
-                xml += '  <sitemap>\n';
-
-                xml +=
-                    `    <loc>${BASE_URL}/sitemap.xml?type=ifsc&amp;page=${page}</loc>\n`;
-
-                xml += '  </sitemap>\n';
-
-            }
-
-        }
-
-
-        xml += '</sitemapindex>';
+        xml += "</sitemapindex>";
 
 
         return new Response(xml, {
@@ -263,17 +232,14 @@ export async function onRequestGet(context) {
             status: 200,
 
             headers: {
-
                 "Content-Type":
                     "application/xml; charset=UTF-8",
 
                 "Cache-Control":
                     "public, max-age=86400"
-
             }
 
         });
-
     }
 
 
@@ -293,13 +259,11 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
-
         }
 
         return createUrlSitemap(
             normalPages
         );
-
     }
 
 
@@ -333,7 +297,6 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
-
         }
 
 
@@ -349,15 +312,16 @@ export async function onRequestGet(context) {
 
 
         const urls =
-            pagePincodes.map(function (pin) {
+            pagePincodes.map(
+                function (pin) {
 
-                return `/pincode/${pin}/`;
+                    return "/pincode/" + pin + "/";
 
-            });
+                }
+            );
 
 
         return createUrlSitemap(urls);
-
     }
 
 
@@ -391,7 +355,6 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
-
         }
 
 
@@ -407,21 +370,22 @@ export async function onRequestGet(context) {
 
 
         const urls =
-            pageRailway.map(function (code) {
+            pageRailway.map(
+                function (code) {
 
-                return `/railway/${code}/`;
+                    return "/railway/" + code + "/";
 
-            });
+                }
+            );
 
 
         return createUrlSitemap(urls);
-
     }
 
 
     /*
      * ==========================================
-     * COMPANY SITEMAP
+     * COMPANY CIN SITEMAP
      * ==========================================
      */
 
@@ -449,7 +413,6 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
-
         }
 
 
@@ -465,65 +428,16 @@ export async function onRequestGet(context) {
 
 
         const urls =
-            pageCompanies.map(function (cin) {
+            pageCompanies.map(
+                function (cin) {
 
-                return `/company/${cin}/`;
+                    return "/company/" + cin + "/";
 
-            });
-
-
-        return createUrlSitemap(urls);
-
-    }
-
-
-    /*
-     * ==========================================
-     * IFSC SITEMAP
-     * ==========================================
-     */
-
-    if (type === "ifsc") {
-
-        const page =
-            parseInt(pageParam, 10);
-
-
-        const totalPages =
-            Math.ceil(
-                ifscPages.length / PER_PAGE
-            );
-
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
-        ) {
-
-            return new Response(
-                "Sitemap page not found",
-                {
-                    status: 404
                 }
             );
 
-        }
-
-
-        const start =
-            (page - 1) * PER_PAGE;
-
-
-        const urls =
-            ifscPages.slice(
-                start,
-                start + PER_PAGE
-            );
-
 
         return createUrlSitemap(urls);
-
     }
 
 
@@ -539,7 +453,6 @@ export async function onRequestGet(context) {
             status: 404
         }
     );
-
 }
 
 
@@ -551,28 +464,30 @@ export async function onRequestGet(context) {
 
 function createUrlSitemap(paths) {
 
-    let xml =
-        '<?xml version="1.0" encoding="UTF-8"?>\n';
+    let xml = "";
 
-    xml +=
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    xml += '<?xml version="1.0" encoding="UTF-8"?>';
+
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
 
     for (const path of paths) {
 
-        xml += '  <url>\n';
+        xml += "<url>";
 
-        xml +=
-            `    <loc>${escapeXml(
-                BASE_URL + path
-            )}</loc>\n`;
+        xml += "<loc>";
 
-        xml += '  </url>\n';
+        xml += escapeXml(
+            BASE_URL + path
+        );
 
+        xml += "</loc>";
+
+        xml += "</url>";
     }
 
 
-    xml += '</urlset>';
+    xml += "</urlset>";
 
 
     return new Response(xml, {
@@ -580,17 +495,14 @@ function createUrlSitemap(paths) {
         status: 200,
 
         headers: {
-
             "Content-Type":
                 "application/xml; charset=UTF-8",
 
             "Cache-Control":
                 "public, max-age=86400"
-
         }
 
     });
-
 }
 
 
@@ -608,6 +520,5 @@ function escapeXml(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&apos;");
-
 }
 ```
