@@ -1,9 +1,14 @@
+```javascript
 import { pincodes } from "./data/pincodes.js";
 import railwayData from "./data/RailwayStationCode.json";
 
 const BASE_URL = "https://mytecbooks.pages.dev";
 
 const PER_PAGE = 800;
+
+// Cloudflare Pages Secret
+// Name this secret: DATA_GOV_API_KEY
+const DATA_GOV_API_KEY = "DATA_GOV_API_KEY";
 
 
 export async function onRequestGet(context) {
@@ -23,8 +28,6 @@ export async function onRequestGet(context) {
 
     const normalPages = [
         "/"
-        // "/about/",
-        // "/contact/"
     ];
 
 
@@ -54,12 +57,18 @@ export async function onRequestGet(context) {
         ...new Set(
             railwayData
                 .map(function (item) {
-                    return String(item.station_code || "")
+
+                    return String(
+                        item.station_code || ""
+                    )
                         .trim()
                         .toUpperCase();
+
                 })
                 .filter(function (code) {
+
                     return /^[A-Z0-9]{2,6}$/.test(code);
+
                 })
         )
     ];
@@ -67,31 +76,8 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * FUTURE IFSC DATA
-     * ==========================================
-     *
-     * Tomorrow we can connect your
-     * complete IFSC JSON/list here.
-     */
-
-    const ifscPages = [];
-
-
-    /*
-     * ==========================================
-     * FUTURE OTHER DATA
-     * ==========================================
-     */
-
-    const otherPages = [];
-
-
-    /*
-     * ==========================================
      * MAIN SITEMAP INDEX
      * ==========================================
-     *
-     * https://mytecbooks.pages.dev/sitemap.xml
      */
 
     if (!type) {
@@ -137,6 +123,7 @@ export async function onRequestGet(context) {
                 `    <loc>${BASE_URL}/sitemap.xml?type=pincode&amp;page=${page}</loc>\n`;
 
             xml += `  </sitemap>\n`;
+
         }
 
 
@@ -162,66 +149,58 @@ export async function onRequestGet(context) {
                 `    <loc>${BASE_URL}/sitemap.xml?type=railway&amp;page=${page}</loc>\n`;
 
             xml += `  </sitemap>\n`;
+
         }
 
 
         /*
-         * IFSC SITEMAPS
+         * ==========================================
+         * COMPANY SITEMAPS
+         * ==========================================
          *
-         * Currently empty.
-         * Will automatically appear when
-         * IFSC data is added.
+         * Company data is loaded from data.gov.in.
+         *
+         * Only:
+         *
+         * CompanyStatus = Active
+         *
+         * is included.
          */
 
-        if (ifscPages.length > 0) {
+        try {
 
-            const ifscTotalPages =
+            const companyTotal =
+                await getActiveCompanyTotal(context);
+
+
+            const companyTotalPages =
                 Math.ceil(
-                    ifscPages.length / PER_PAGE
+                    companyTotal / PER_PAGE
                 );
 
 
             for (
                 let page = 1;
-                page <= ifscTotalPages;
+                page <= companyTotalPages;
                 page++
             ) {
 
                 xml += `  <sitemap>\n`;
 
                 xml +=
-                    `    <loc>${BASE_URL}/sitemap.xml?type=ifsc&amp;page=${page}</loc>\n`;
+                    `    <loc>${BASE_URL}/sitemap.xml?type=company&amp;page=${page}</loc>\n`;
 
                 xml += `  </sitemap>\n`;
+
             }
-        }
 
+        } catch (error) {
 
-        /*
-         * OTHER FUTURE DATA
-         */
+            console.error(
+                "Company sitemap index error:",
+                error
+            );
 
-        if (otherPages.length > 0) {
-
-            const otherTotalPages =
-                Math.ceil(
-                    otherPages.length / PER_PAGE
-                );
-
-
-            for (
-                let page = 1;
-                page <= otherTotalPages;
-                page++
-            ) {
-
-                xml += `  <sitemap>\n`;
-
-                xml +=
-                    `    <loc>${BASE_URL}/sitemap.xml?type=other&amp;page=${page}</loc>\n`;
-
-                xml += `  </sitemap>\n`;
-            }
         }
 
 
@@ -233,14 +212,17 @@ export async function onRequestGet(context) {
             status: 200,
 
             headers: {
+
                 "Content-Type":
                     "application/xml; charset=UTF-8",
 
                 "Cache-Control":
                     "public, max-age=86400"
+
             }
 
         });
+
     }
 
 
@@ -260,11 +242,13 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
         return createUrlSitemap(
             normalPages
         );
+
     }
 
 
@@ -298,6 +282,7 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
@@ -315,12 +300,15 @@ export async function onRequestGet(context) {
         const urls =
             pagePincodes.map(
                 function (pin) {
+
                     return `/pincode/${pin}/`;
+
                 }
             );
 
 
         return createUrlSitemap(urls);
+
     }
 
 
@@ -354,6 +342,7 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
@@ -371,37 +360,43 @@ export async function onRequestGet(context) {
         const urls =
             pageRailway.map(
                 function (code) {
+
                     return `/railway/${code}/`;
+
                 }
             );
 
 
         return createUrlSitemap(urls);
+
     }
 
 
     /*
      * ==========================================
-     * IFSC SITEMAP
+     * COMPANY SITEMAP
      * ==========================================
+     *
+     * Example:
+     *
+     * /sitemap.xml?type=company&page=1
+     *
+     * Returns:
+     *
+     * /company/CIN1/
+     * /company/CIN2/
+     * /company/CIN3/
      */
 
-    if (type === "ifsc") {
+    if (type === "company") {
 
         const page =
             parseInt(pageParam, 10);
 
 
-        const totalPages =
-            Math.ceil(
-                ifscPages.length / PER_PAGE
-            );
-
-
         if (
             !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
+            page < 1
         ) {
 
             return new Response(
@@ -410,6 +405,7 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
@@ -417,68 +413,113 @@ export async function onRequestGet(context) {
             (page - 1) * PER_PAGE;
 
 
-        const urls =
-            ifscPages.slice(
-                start,
-                start + PER_PAGE
+        try {
+
+            const records =
+                await getActiveCompanies(
+                    context,
+                    start,
+                    PER_PAGE
+                );
+
+
+            if (
+                !records ||
+                records.length === 0
+            ) {
+
+                return new Response(
+                    "Sitemap page not found",
+                    {
+                        status: 404
+                    }
+                );
+
+            }
+
+
+            const urls = [];
+
+
+            for (const company of records) {
+
+                const cin =
+                    String(
+                        company.CIN || ""
+                    )
+                        .trim()
+                        .toUpperCase();
+
+
+                if (!cin) {
+                    continue;
+                }
+
+
+                /*
+                 * Extra safety check.
+                 *
+                 * Only Active companies
+                 * are allowed in sitemap.
+                 */
+
+                const status =
+                    String(
+                        company.CompanyStatus || ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                if (status !== "active") {
+                    continue;
+                }
+
+
+                urls.push(
+                    `/company/${encodeURIComponent(cin)}/`
+                );
+
+            }
+
+
+            if (urls.length === 0) {
+
+                return new Response(
+                    "Sitemap page not found",
+                    {
+                        status: 404
+                    }
+                );
+
+            }
+
+
+            return createUrlSitemap(urls);
+
+        } catch (error) {
+
+            console.error(
+                "Company sitemap error:",
+                error
             );
 
-
-        return createUrlSitemap(urls);
-    }
-
-
-    /*
-     * ==========================================
-     * OTHER DATA
-     * ==========================================
-     */
-
-    if (type === "other") {
-
-        const page =
-            parseInt(pageParam, 10);
-
-
-        const totalPages =
-            Math.ceil(
-                otherPages.length / PER_PAGE
-            );
-
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
-        ) {
 
             return new Response(
-                "Sitemap page not found",
+                "Unable to create company sitemap",
                 {
-                    status: 404
+                    status: 500
                 }
             );
+
         }
 
-
-        const start =
-            (page - 1) * PER_PAGE;
-
-
-        const urls =
-            otherPages.slice(
-                start,
-                start + PER_PAGE
-            );
-
-
-        return createUrlSitemap(urls);
     }
 
 
     /*
      * ==========================================
-     * UNKNOWN SITEMAP TYPE
+     * UNKNOWN TYPE
      * ==========================================
      */
 
@@ -488,6 +529,183 @@ export async function onRequestGet(context) {
             status: 404
         }
     );
+
+}
+
+
+/*
+ * ==========================================
+ * GET ACTIVE COMPANY TOTAL
+ * ==========================================
+ */
+
+async function getActiveCompanyTotal(context) {
+
+    const apiKey =
+        context.env[DATA_GOV_API_KEY];
+
+
+    if (!apiKey) {
+
+        throw new Error(
+            "DATA_GOV_API_KEY secret is not configured"
+        );
+
+    }
+
+
+    const apiUrl =
+        new URL(
+            "https://api.data.gov.in/resource/4dbe5667-7b6b-41d7-82af-211562424d9a"
+        );
+
+
+    apiUrl.searchParams.set(
+        "api-key",
+        apiKey
+    );
+
+
+    apiUrl.searchParams.set(
+        "format",
+        "json"
+    );
+
+
+    apiUrl.searchParams.set(
+        "limit",
+        "1"
+    );
+
+
+    apiUrl.searchParams.set(
+        "offset",
+        "0"
+    );
+
+
+    apiUrl.searchParams.set(
+        "filters[CompanyStatus]",
+        "Active"
+    );
+
+
+    const response =
+        await fetch(
+            apiUrl.toString()
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            `Data.gov API returned ${response.status}`
+        );
+
+    }
+
+
+    const data =
+        await response.json();
+
+
+    return Number(
+        data.total || 0
+    );
+
+}
+
+
+/*
+ * ==========================================
+ * GET ACTIVE COMPANIES
+ * ==========================================
+ */
+
+async function getActiveCompanies(
+    context,
+    offset,
+    limit
+) {
+
+    const apiKey =
+        context.env[DATA_GOV_API_KEY];
+
+
+    if (!apiKey) {
+
+        throw new Error(
+            "DATA_GOV_API_KEY secret is not configured"
+        );
+
+    }
+
+
+    const apiUrl =
+        new URL(
+            "https://api.data.gov.in/resource/4dbe5667-7b6b-41d7-82af-211562424d9a"
+        );
+
+
+    apiUrl.searchParams.set(
+        "api-key",
+        apiKey
+    );
+
+
+    apiUrl.searchParams.set(
+        "format",
+        "json"
+    );
+
+
+    apiUrl.searchParams.set(
+        "limit",
+        String(limit)
+    );
+
+
+    apiUrl.searchParams.set(
+        "offset",
+        String(offset)
+    );
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Only Active companies.
+     */
+
+    apiUrl.searchParams.set(
+        "filters[CompanyStatus]",
+        "Active"
+    );
+
+
+    const response =
+        await fetch(
+            apiUrl.toString()
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            `Data.gov API returned ${response.status}`
+        );
+
+    }
+
+
+    const data =
+        await response.json();
+
+
+    return Array.isArray(data.records)
+        ? data.records
+        : [];
+
 }
 
 
@@ -501,6 +719,7 @@ function createUrlSitemap(paths) {
 
     let xml =
         `<?xml version="1.0" encoding="UTF-8"?>\n`;
+
 
     xml +=
         `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
@@ -516,6 +735,7 @@ function createUrlSitemap(paths) {
             )}</loc>\n`;
 
         xml += `  </url>\n`;
+
     }
 
 
@@ -527,14 +747,17 @@ function createUrlSitemap(paths) {
         status: 200,
 
         headers: {
+
             "Content-Type":
                 "application/xml; charset=UTF-8",
 
             "Cache-Control":
                 "public, max-age=86400"
+
         }
 
     });
+
 }
 
 
@@ -547,9 +770,31 @@ function createUrlSitemap(paths) {
 function escapeXml(value) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&apos;");
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&apos;"
+        );
+
 }
+```
