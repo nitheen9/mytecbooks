@@ -1,3 +1,4 @@
+```javascript
 export async function onRequestGet(context) {
 
     const cin = String(context.params.cin || "")
@@ -5,10 +6,11 @@ export async function onRequestGet(context) {
         .toUpperCase();
 
     /*
-     * Basic CIN validation.
-     * Allows normal Indian company CIN formats and LLP-style IDs
-     * returned by the government dataset.
+     * ==========================================
+     * CIN VALIDATION
+     * ==========================================
      */
+
     if (!/^[A-Z0-9-]{6,30}$/.test(cin)) {
 
         return new Response(
@@ -31,21 +33,11 @@ export async function onRequestGet(context) {
         );
     }
 
+
     /*
      * ==========================================
-     * API KEY
+     * DATA.GOV.IN API KEY
      * ==========================================
-     *
-     * Cloudflare Pages:
-     *
-     * Settings
-     * → Variables and Secrets
-     * → Add
-     *
-     * Name:
-     * DATA_GOV_API_KEY
-     *
-     * Put your real API key there.
      */
 
     const apiKey = context.env.DATA_GOV_API_KEY;
@@ -82,6 +74,12 @@ export async function onRequestGet(context) {
          * ==========================================
          * DATA.GOV.IN API
          * ==========================================
+         *
+         * IMPORTANT:
+         *
+         * Filter directly by CIN.
+         *
+         * This is the important fix.
          */
 
         const apiUrl =
@@ -90,7 +88,18 @@ export async function onRequestGet(context) {
             "?api-key=" +
             encodeURIComponent(apiKey) +
             "&format=json" +
-            "&limit=100";
+            "&filters[CIN]=" +
+            encodeURIComponent(cin) +
+            "&limit=1";
+
+
+        console.log(
+            "Company API URL:",
+            apiUrl.replace(
+                encodeURIComponent(apiKey),
+                "HIDDEN"
+            )
+        );
 
 
         const response = await fetch(apiUrl, {
@@ -100,11 +109,25 @@ export async function onRequestGet(context) {
         });
 
 
+        /*
+         * ==========================================
+         * API ERROR
+         * ==========================================
+         */
+
         if (!response.ok) {
 
             console.error(
                 "Data.gov.in API error:",
                 response.status
+            );
+
+            const errorText =
+                await response.text();
+
+            console.error(
+                "Data.gov.in API response:",
+                errorText
             );
 
             return new Response(
@@ -122,23 +145,34 @@ export async function onRequestGet(context) {
                 {
                     status: 502,
                     headers: {
-                        "content-type": "text/html;charset=UTF-8"
+                        "content-type":
+                            "text/html;charset=UTF-8"
                     }
                 }
             );
         }
 
 
-        const data = await response.json();
+        /*
+         * ==========================================
+         * READ JSON
+         * ==========================================
+         */
+
+        const data =
+            await response.json();
 
 
         /*
-         * API records are inside data.records
+         * ==========================================
+         * CHECK RECORDS
+         * ==========================================
          */
 
         if (
             !data ||
-            !Array.isArray(data.records)
+            !Array.isArray(data.records) ||
+            data.records.length === 0
         ) {
 
             return new Response(
@@ -156,7 +190,8 @@ export async function onRequestGet(context) {
                 {
                     status: 404,
                     headers: {
-                        "content-type": "text/html;charset=UTF-8"
+                        "content-type":
+                            "text/html;charset=UTF-8"
                     }
                 }
             );
@@ -164,33 +199,30 @@ export async function onRequestGet(context) {
 
 
         /*
-         * Find exact CIN.
-         *
-         * Also require CompanyStatus = Active.
+         * ==========================================
+         * FIND EXACT CIN
+         * ==========================================
          */
 
-        const company = data.records.find(function (record) {
+        const company =
+            data.records.find(
+                function (record) {
 
-            const recordCin =
-                String(record.CIN || "")
-                    .trim()
-                    .toUpperCase();
+                    const recordCin =
+                        String(record.CIN || "")
+                            .trim()
+                            .toUpperCase();
 
-            const status =
-                String(record.CompanyStatus || "")
-                    .trim()
-                    .toLowerCase();
+                    return recordCin === cin;
 
-            return (
-                recordCin === cin &&
-                status === "active"
+                }
             );
-
-        });
 
 
         /*
-         * Company not found or not Active
+         * ==========================================
+         * COMPANY NOT FOUND
+         * ==========================================
          */
 
         if (!company) {
@@ -202,14 +234,55 @@ export async function onRequestGet(context) {
                     <h1>Company Not Found</h1>
 
                     <p>
-                        No active company information was found for
+                        No company information was found for
                         <strong>${escapeHtml(cin)}</strong>.
-                    </p>                   `
+                    </p>
+                    `
                 ),
                 {
                     status: 404,
                     headers: {
-                        "content-type": "text/html;charset=UTF-8"
+                        "content-type":
+                            "text/html;charset=UTF-8"
+                    }
+                }
+            );
+        }
+
+
+        /*
+         * ==========================================
+         * CHECK COMPANY STATUS
+         * ==========================================
+         */
+
+        const companyStatus =
+            String(
+                company.CompanyStatus || ""
+            ).trim();
+
+
+        if (
+            companyStatus.toLowerCase() !== "active"
+        ) {
+
+            return new Response(
+                createPage(
+                    "Company Not Found",
+                    `
+                    <h1>Company Not Found</h1>
+
+                    <p>
+                        No active company information was found for
+                        <strong>${escapeHtml(cin)}</strong>.
+                    </p>
+                    `
+                ),
+                {
+                    status: 404,
+                    headers: {
+                        "content-type":
+                            "text/html;charset=UTF-8"
                     }
                 }
             );
@@ -227,9 +300,6 @@ export async function onRequestGet(context) {
 
         const registrationDate =
             company.CompanyRegistrationdate_date || "N/A";
-
-        const companyStatus =
-            company.CompanyStatus || "N/A";
 
         const companyClass =
             company.CompanyClass || "N/A";
@@ -333,9 +403,7 @@ export async function onRequestGet(context) {
 
             <div class="details">
 
-                <h2>
-                    Company Details
-                </h2>
+                <h2>Company Details</h2>
 
                 <p>
                     <strong>CIN:</strong>
@@ -437,6 +505,7 @@ export async function onRequestGet(context) {
             ),
             {
                 status: 200,
+
                 headers: {
                     "content-type":
                         "text/html;charset=UTF-8",
@@ -455,7 +524,6 @@ export async function onRequestGet(context) {
             error
         );
 
-
         return new Response(
             createPage(
                 "Company Lookup Error",
@@ -470,6 +538,7 @@ export async function onRequestGet(context) {
             ),
             {
                 status: 500,
+
                 headers: {
                     "content-type":
                         "text/html;charset=UTF-8"
@@ -482,7 +551,7 @@ export async function onRequestGet(context) {
 
 /*
  * ==========================================
- * CREATE PAGE
+ * CREATE HTML PAGE
  * ==========================================
  */
 
@@ -577,8 +646,7 @@ function createPage(
 
         .summary {
             display: grid;
-            grid-template-columns:
-                repeat(2, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             margin: 20px 0;
         }
@@ -667,3 +735,4 @@ function escapeHtml(value) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+```
