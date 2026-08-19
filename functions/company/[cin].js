@@ -31,7 +31,6 @@ export async function onRequestGet(context) {
         );
     }
 
-
     /*
      * ==========================================
      * API KEY
