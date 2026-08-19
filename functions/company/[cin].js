@@ -205,14 +205,7 @@ export async function onRequestGet(context) {
                     <p>
                         No active company information was found for
                         <strong>${escapeHtml(cin)}</strong>.
-                    </p>
-
-                    <p>
-                        Only companies with
-                        <strong>Company Status = Active</strong>
-                        are displayed.
-                    </p>
-                    `
+                    </p>                   `
                 ),
                 {
                     status: 404,
