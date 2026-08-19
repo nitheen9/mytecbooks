@@ -1,4 +1,3 @@
-```javascript
 import { pincodes } from "./data/pincodes.js";
 import railwayData from "./data/RailwayStationCode.json";
 import companyCINs from "./data/AP_AR_AS_AandM_Company_CIN.json";
@@ -7,12 +6,6 @@ const BASE_URL = "https://mytecbooks.pages.dev";
 
 const PER_PAGE = 800;
 
-
-/*
- * ==========================================
- * MAIN GET
- * ==========================================
- */
 
 export async function onRequestGet(context) {
 
@@ -36,7 +29,7 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * PINCODES
+     * PINCODE DATA
      * ==========================================
      */
 
@@ -56,7 +49,7 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * RAILWAY STATIONS
+     * RAILWAY STATION DATA
      * ==========================================
      */
 
@@ -83,17 +76,16 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * COMPANY CIN
+     * COMPANY CIN DATA
      * ==========================================
      *
      * JSON format:
      *
      * [
      *   "AAA-0396",
-     *   "U70101AS1998PTC005556",
-     *   "U70101AS1998PTC005566"
+     *   "AAA-1262",
+     *   "U70101AS1998PTC005556"
      * ]
-     *
      */
 
     const companyPages = [
@@ -101,10 +93,16 @@ export async function onRequestGet(context) {
             companyCINs
                 .map(String)
                 .map(function (cin) {
-                    return cin.trim().toUpperCase();
+
+                    return cin
+                        .trim()
+                        .toUpperCase();
+
                 })
                 .filter(function (cin) {
+
                     return cin.length > 0;
+
                 })
         )
     ];
@@ -120,24 +118,26 @@ export async function onRequestGet(context) {
 
     if (!type) {
 
-        let xml = "";
+        let xml =
+            '<?xml version="1.0" encoding="UTF-8"?>\n';
 
-        xml += '<?xml version="1.0" encoding="UTF-8"?>';
-        xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+        xml +=
+            '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
 
         /*
          * NORMAL PAGES
          */
 
-        xml += "<sitemap>";
+        xml += "  <sitemap>\n";
 
-        xml += "<loc>";
-        xml += BASE_URL;
-        xml += "/sitemap.xml?type=pages&amp;page=1";
-        xml += "</loc>";
+        xml +=
+            "    <loc>" +
+            BASE_URL +
+            "/sitemap.xml?type=pages&amp;page=1" +
+            "</loc>\n";
 
-        xml += "</sitemap>";
+        xml += "  </sitemap>\n";
 
 
         /*
@@ -156,15 +156,16 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml += "<sitemap>";
+            xml += "  <sitemap>\n";
 
-            xml += "<loc>";
-            xml += BASE_URL;
-            xml += "/sitemap.xml?type=pincode&amp;page=";
-            xml += page;
-            xml += "</loc>";
+            xml +=
+                "    <loc>" +
+                BASE_URL +
+                "/sitemap.xml?type=pincode&amp;page=" +
+                page +
+                "</loc>\n";
 
-            xml += "</sitemap>";
+            xml += "  </sitemap>\n";
         }
 
 
@@ -184,15 +185,16 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml += "<sitemap>";
+            xml += "  <sitemap>\n";
 
-            xml += "<loc>";
-            xml += BASE_URL;
-            xml += "/sitemap.xml?type=railway&amp;page=";
-            xml += page;
-            xml += "</loc>";
+            xml +=
+                "    <loc>" +
+                BASE_URL +
+                "/sitemap.xml?type=railway&amp;page=" +
+                page +
+                "</loc>\n";
 
-            xml += "</sitemap>";
+            xml += "  </sitemap>\n";
         }
 
 
@@ -212,15 +214,16 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml += "<sitemap>";
+            xml += "  <sitemap>\n";
 
-            xml += "<loc>";
-            xml += BASE_URL;
-            xml += "/sitemap.xml?type=company&amp;page=";
-            xml += page;
-            xml += "</loc>";
+            xml +=
+                "    <loc>" +
+                BASE_URL +
+                "/sitemap.xml?type=company&amp;page=" +
+                page +
+                "</loc>\n";
 
-            xml += "</sitemap>";
+            xml += "  </sitemap>\n";
         }
 
 
@@ -236,7 +239,7 @@ export async function onRequestGet(context) {
                     "application/xml; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=86400"
+                    "public, max-age=3600"
             }
 
         });
@@ -277,7 +280,6 @@ export async function onRequestGet(context) {
 
         const page =
             parseInt(pageParam, 10);
-
 
         const totalPages =
             Math.ceil(
@@ -327,7 +329,7 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * RAILWAY SITEMAP
+     * RAILWAY STATION SITEMAP
      * ==========================================
      */
 
@@ -335,7 +337,6 @@ export async function onRequestGet(context) {
 
         const page =
             parseInt(pageParam, 10);
-
 
         const totalPages =
             Math.ceil(
@@ -393,7 +394,6 @@ export async function onRequestGet(context) {
 
         const page =
             parseInt(pageParam, 10);
-
 
         const totalPages =
             Math.ceil(
@@ -464,26 +464,23 @@ export async function onRequestGet(context) {
 
 function createUrlSitemap(paths) {
 
-    let xml = "";
+    let xml =
+        '<?xml version="1.0" encoding="UTF-8"?>\n';
 
-    xml += '<?xml version="1.0" encoding="UTF-8"?>';
-
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+    xml +=
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
 
     for (const path of paths) {
 
-        xml += "<url>";
+        xml += "  <url>\n";
 
-        xml += "<loc>";
+        xml +=
+            "    <loc>" +
+            escapeXml(BASE_URL + path) +
+            "</loc>\n";
 
-        xml += escapeXml(
-            BASE_URL + path
-        );
-
-        xml += "</loc>";
-
-        xml += "</url>";
+        xml += "  </url>\n";
     }
 
 
@@ -499,7 +496,7 @@ function createUrlSitemap(paths) {
                 "application/xml; charset=UTF-8",
 
             "Cache-Control":
-                "public, max-age=86400"
+                "public, max-age=3600"
         }
 
     });
@@ -521,4 +518,3 @@ function escapeXml(value) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&apos;");
 }
-```
