@@ -1,6 +1,7 @@
 ```javascript
 import { pincodes } from "./data/pincodes.js";
 import railwayData from "./data/RailwayStationCode.json";
+import companyCins from "./data/AP_AR_AS_AandM_Company_CIN.json";
 
 const BASE_URL = "https://mytecbooks.pages.dev";
 
@@ -9,9 +10,22 @@ const PER_PAGE = 800;
 
 /*
  * ==========================================
- * CLOUDFLARE PAGES FUNCTION
+ * MAIN SITEMAP FUNCTION
  * ==========================================
+ *
+ * /sitemap.xml
+ *
+ * Sitemap types:
+ *
+ * pages
+ * pincode
+ * railway
+ * company
+ *
+ * Future:
+ * ifsc
  */
+
 
 export async function onRequestGet(context) {
 
@@ -30,6 +44,8 @@ export async function onRequestGet(context) {
 
     const normalPages = [
         "/"
+        // "/about/",
+        // "/contact/"
     ];
 
 
@@ -82,31 +98,87 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * COMPANY DATA
+     * COMPANY CIN DATA
      * ==========================================
      *
-     * Company pages are generated dynamically
-     * from CIN.
+     * JSON can be:
      *
-     * We cannot download all 3.6 million
-     * company records on every sitemap request.
+     * [
+     *   "U12345AP2020PTC123456",
+     *   "U12345AR2021PTC123457"
+     * ]
      *
-     * Therefore company sitemap pages are
-     * created separately when company CIN data
-     * is available.
+     * OR:
      *
-     * IMPORTANT:
-     * Replace this empty array later with your
-     * company CIN JSON/data source.
+     * [
+     *   {"CIN":"U12345AP2020PTC123456"}
+     * ]
+     *
+     * Both formats are supported.
      */
 
-    const companyPages = [];
+    const companyPages = [
+        ...new Set(
+
+            companyCins
+
+                .map(function (item) {
+
+                    if (
+                        typeof item === "string"
+                    ) {
+                        return item;
+                    }
+
+                    if (
+                        item &&
+                        typeof item === "object"
+                    ) {
+                        return item.CIN || "";
+                    }
+
+                    return "";
+
+                })
+
+                .map(function (cin) {
+
+                    return String(cin)
+                        .trim()
+                        .toUpperCase();
+
+                })
+
+                .filter(function (cin) {
+
+                    /*
+                     * CIN normally contains:
+                     *
+                     * 21 characters
+                     *
+                     * Example:
+                     * U12345AP2020PTC123456
+                     *
+                     * Also allow LLP-style
+                     * / other valid alphanumeric
+                     * CIN-like identifiers.
+                     */
+
+                    return /^[A-Z0-9-]{5,30}$/.test(cin);
+
+                })
+
+        )
+    ];
 
 
     /*
      * ==========================================
      * FUTURE IFSC DATA
      * ==========================================
+     *
+     * Tomorrow you can connect your
+     * complete IFSC JSON here.
      */
 
     const ifscPages = [];
@@ -139,29 +211,28 @@ export async function onRequestGet(context) {
 
 
         /*
+         * ==========================================
          * NORMAL PAGES
+         * ==========================================
          */
 
-        xml +=
-            '  <sitemap>\n';
+        xml += '  <sitemap>\n';
 
         xml +=
-            '    <loc>' +
-            BASE_URL +
-            '/sitemap.xml?type=pages&amp;page=1</loc>\n';
+            `    <loc>${BASE_URL}/sitemap.xml?type=pages&amp;page=1</loc>\n`;
 
-        xml +=
-            '  </sitemap>\n';
+        xml += '  </sitemap>\n';
 
 
         /*
+         * ==========================================
          * PINCODE SITEMAPS
+         * ==========================================
          */
 
         const pincodeTotalPages =
             Math.ceil(
-                validPincodes.length /
-                PER_PAGE
+                validPincodes.length / PER_PAGE
             );
 
 
@@ -171,29 +242,25 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml +=
-                '  <sitemap>\n';
+            xml += '  <sitemap>\n';
 
             xml +=
-                '    <loc>' +
-                BASE_URL +
-                '/sitemap.xml?type=pincode&amp;page=' +
-                page +
-                '</loc>\n';
+                `    <loc>${BASE_URL}/sitemap.xml?type=pincode&amp;page=${page}</loc>\n`;
 
-            xml +=
-                '  </sitemap>\n';
+            xml += '  </sitemap>\n';
+
         }
 
 
         /*
+         * ==========================================
          * RAILWAY SITEMAPS
+         * ==========================================
          */
 
         const railwayTotalPages =
             Math.ceil(
-                railwayPages.length /
-                PER_PAGE
+                railwayPages.length / PER_PAGE
             );
 
 
@@ -203,66 +270,55 @@ export async function onRequestGet(context) {
             page++
         ) {
 
-            xml +=
-                '  <sitemap>\n';
+            xml += '  <sitemap>\n';
 
             xml +=
-                '    <loc>' +
-                BASE_URL +
-                '/sitemap.xml?type=railway&amp;page=' +
-                page +
-                '</loc>\n';
+                `    <loc>${BASE_URL}/sitemap.xml?type=railway&amp;page=${page}</loc>\n`;
 
-            xml +=
-                '  </sitemap>\n';
+            xml += '  </sitemap>\n';
+
         }
 
 
         /*
+         * ==========================================
          * COMPANY SITEMAPS
+         * ==========================================
          */
 
-        if (companyPages.length > 0) {
-
-            const companyTotalPages =
-                Math.ceil(
-                    companyPages.length /
-                    PER_PAGE
-                );
+        const companyTotalPages =
+            Math.ceil(
+                companyPages.length / PER_PAGE
+            );
 
 
-            for (
-                let page = 1;
-                page <= companyTotalPages;
-                page++
-            ) {
+        for (
+            let page = 1;
+            page <= companyTotalPages;
+            page++
+        ) {
 
-                xml +=
-                    '  <sitemap>\n';
+            xml += '  <sitemap>\n';
 
-                xml +=
-                    '    <loc>' +
-                    BASE_URL +
-                    '/sitemap.xml?type=company&amp;page=' +
-                    page +
-                    '</loc>\n';
+            xml +=
+                `    <loc>${BASE_URL}/sitemap.xml?type=company&amp;page=${page}</loc>\n`;
 
-                xml +=
-                    '  </sitemap>\n';
-            }
+            xml += '  </sitemap>\n';
+
         }
 
 
         /*
+         * ==========================================
          * IFSC SITEMAPS
+         * ==========================================
          */
 
         if (ifscPages.length > 0) {
 
             const ifscTotalPages =
                 Math.ceil(
-                    ifscPages.length /
-                    PER_PAGE
+                    ifscPages.length / PER_PAGE
                 );
 
 
@@ -272,32 +328,29 @@ export async function onRequestGet(context) {
                 page++
             ) {
 
-                xml +=
-                    '  <sitemap>\n';
+                xml += '  <sitemap>\n';
 
                 xml +=
-                    '    <loc>' +
-                    BASE_URL +
-                    '/sitemap.xml?type=ifsc&amp;page=' +
-                    page +
-                    '</loc>\n';
+                    `    <loc>${BASE_URL}/sitemap.xml?type=ifsc&amp;page=${page}</loc>\n`;
 
-                xml +=
-                    '  </sitemap>\n';
+                xml += '  </sitemap>\n';
+
             }
+
         }
 
 
         /*
-         * OTHER SITEMAPS
+         * ==========================================
+         * OTHER DATA
+         * ==========================================
          */
 
         if (otherPages.length > 0) {
 
             const otherTotalPages =
                 Math.ceil(
-                    otherPages.length /
-                    PER_PAGE
+                    otherPages.length / PER_PAGE
                 );
 
 
@@ -307,40 +360,37 @@ export async function onRequestGet(context) {
                 page++
             ) {
 
-                xml +=
-                    '  <sitemap>\n';
+                xml += '  <sitemap>\n';
 
                 xml +=
-                    '    <loc>' +
-                    BASE_URL +
-                    '/sitemap.xml?type=other&amp;page=' +
-                    page +
-                    '</loc>\n';
+                    `    <loc>${BASE_URL}/sitemap.xml?type=other&amp;page=${page}</loc>\n`;
 
-                xml +=
-                    '  </sitemap>\n';
+                xml += '  </sitemap>\n';
+
             }
+
         }
 
 
-        xml +=
-            '</sitemapindex>';
+        xml += '</sitemapindex>';
 
 
-        return new Response(
-            xml,
-            {
-                status: 200,
+        return new Response(xml, {
 
-                headers: {
-                    "Content-Type":
-                        "application/xml; charset=UTF-8",
+            status: 200,
 
-                    "Cache-Control":
-                        "public, max-age=86400"
-                }
+            headers: {
+
+                "Content-Type":
+                    "application/xml; charset=UTF-8",
+
+                "Cache-Control":
+                    "public, max-age=86400"
+
             }
-        );
+
+        });
+
     }
 
 
@@ -360,12 +410,13 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
-        }
 
+        }
 
         return createUrlSitemap(
             normalPages
         );
+
     }
 
 
@@ -378,16 +429,12 @@ export async function onRequestGet(context) {
     if (type === "pincode") {
 
         const page =
-            parseInt(
-                pageParam,
-                10
-            );
+            parseInt(pageParam, 10);
 
 
         const totalPages =
             Math.ceil(
-                validPincodes.length /
-                PER_PAGE
+                validPincodes.length / PER_PAGE
             );
 
 
@@ -403,12 +450,12 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
         const start =
-            (page - 1) *
-            PER_PAGE;
+            (page - 1) * PER_PAGE;
 
 
         const pagePincodes =
@@ -422,41 +469,32 @@ export async function onRequestGet(context) {
             pagePincodes.map(
                 function (pin) {
 
-                    return (
-                        "/pincode/" +
-                        pin +
-                        "/"
-                    );
+                    return `/pincode/${pin}/`;
 
                 }
             );
 
 
-        return createUrlSitemap(
-            urls
-        );
+        return createUrlSitemap(urls);
+
     }
 
 
     /*
      * ==========================================
-     * RAILWAY SITEMAP
+     * RAILWAY STATION SITEMAP
      * ==========================================
      */
 
     if (type === "railway") {
 
         const page =
-            parseInt(
-                pageParam,
-                10
-            );
+            parseInt(pageParam, 10);
 
 
         const totalPages =
             Math.ceil(
-                railwayPages.length /
-                PER_PAGE
+                railwayPages.length / PER_PAGE
             );
 
 
@@ -472,12 +510,12 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
         const start =
-            (page - 1) *
-            PER_PAGE;
+            (page - 1) * PER_PAGE;
 
 
         const pageRailway =
@@ -491,19 +529,14 @@ export async function onRequestGet(context) {
             pageRailway.map(
                 function (code) {
 
-                    return (
-                        "/railway/" +
-                        code +
-                        "/"
-                    );
+                    return `/railway/${code}/`;
 
                 }
             );
 
 
-        return createUrlSitemap(
-            urls
-        );
+        return createUrlSitemap(urls);
+
     }
 
 
@@ -511,21 +544,19 @@ export async function onRequestGet(context) {
      * ==========================================
      * COMPANY SITEMAP
      * ==========================================
+     *
+     * /company/CIN/
      */
 
     if (type === "company") {
 
         const page =
-            parseInt(
-                pageParam,
-                10
-            );
+            parseInt(pageParam, 10);
 
 
         const totalPages =
             Math.ceil(
-                companyPages.length /
-                PER_PAGE
+                companyPages.length / PER_PAGE
             );
 
 
@@ -541,12 +572,12 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
         const start =
-            (page - 1) *
-            PER_PAGE;
+            (page - 1) * PER_PAGE;
 
 
         const pageCompanies =
@@ -560,19 +591,14 @@ export async function onRequestGet(context) {
             pageCompanies.map(
                 function (cin) {
 
-                    return (
-                        "/company/" +
-                        encodeURIComponent(cin) +
-                        "/"
-                    );
+                    return `/company/${encodeURIComponent(cin)}/`;
 
                 }
             );
 
 
-        return createUrlSitemap(
-            urls
-        );
+        return createUrlSitemap(urls);
+
     }
 
 
@@ -585,16 +611,12 @@ export async function onRequestGet(context) {
     if (type === "ifsc") {
 
         const page =
-            parseInt(
-                pageParam,
-                10
-            );
+            parseInt(pageParam, 10);
 
 
         const totalPages =
             Math.ceil(
-                ifscPages.length /
-                PER_PAGE
+                ifscPages.length / PER_PAGE
             );
 
 
@@ -610,12 +632,12 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
         const start =
-            (page - 1) *
-            PER_PAGE;
+            (page - 1) * PER_PAGE;
 
 
         const urls =
@@ -625,31 +647,26 @@ export async function onRequestGet(context) {
             );
 
 
-        return createUrlSitemap(
-            urls
-        );
+        return createUrlSitemap(urls);
+
     }
 
 
     /*
      * ==========================================
-     * OTHER SITEMAP
+     * OTHER DATA
      * ==========================================
      */
 
     if (type === "other") {
 
         const page =
-            parseInt(
-                pageParam,
-                10
-            );
+            parseInt(pageParam, 10);
 
 
         const totalPages =
             Math.ceil(
-                otherPages.length /
-                PER_PAGE
+                otherPages.length / PER_PAGE
             );
 
 
@@ -665,12 +682,12 @@ export async function onRequestGet(context) {
                     status: 404
                 }
             );
+
         }
 
 
         const start =
-            (page - 1) *
-            PER_PAGE;
+            (page - 1) * PER_PAGE;
 
 
         const urls =
@@ -680,9 +697,8 @@ export async function onRequestGet(context) {
             );
 
 
-        return createUrlSitemap(
-            urls
-        );
+        return createUrlSitemap(urls);
+
     }
 
 
@@ -698,6 +714,7 @@ export async function onRequestGet(context) {
             status: 404
         }
     );
+
 }
 
 
@@ -718,39 +735,37 @@ function createUrlSitemap(paths) {
 
     for (const path of paths) {
 
-        xml +=
-            '  <url>\n';
+        xml += '  <url>\n';
 
         xml +=
-            '    <loc>' +
-            escapeXml(
+            `    <loc>${escapeXml(
                 BASE_URL + path
-            ) +
-            '</loc>\n';
+            )}</loc>\n`;
 
-        xml +=
-            '  </url>\n';
+        xml += '  </url>\n';
+
     }
 
 
-    xml +=
-        '</urlset>';
+    xml += '</urlset>';
 
 
-    return new Response(
-        xml,
-        {
-            status: 200,
+    return new Response(xml, {
 
-            headers: {
-                "Content-Type":
-                    "application/xml; charset=UTF-8",
+        status: 200,
 
-                "Cache-Control":
-                    "public, max-age=86400"
-            }
+        headers: {
+
+            "Content-Type":
+                "application/xml; charset=UTF-8",
+
+            "Cache-Control":
+                "public, max-age=86400"
+
         }
-    );
+
+    });
+
 }
 
 
@@ -763,25 +778,12 @@ function createUrlSitemap(paths) {
 function escapeXml(value) {
 
     return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&apos;"
-        );
+
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+
 }
 ```
