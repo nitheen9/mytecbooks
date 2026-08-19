@@ -8,25 +8,6 @@ const BASE_URL = "https://mytecbooks.pages.dev";
 const PER_PAGE = 800;
 
 
-/*
- * ==========================================
- * MAIN SITEMAP FUNCTION
- * ==========================================
- *
- * /sitemap.xml
- *
- * Sitemap types:
- *
- * pages
- * pincode
- * railway
- * company
- *
- * Future:
- * ifsc
- */
-
-
 export async function onRequestGet(context) {
 
     const requestUrl = new URL(context.request.url);
@@ -44,8 +25,6 @@ export async function onRequestGet(context) {
 
     const normalPages = [
         "/"
-        // "/about/",
-        // "/contact/"
     ];
 
 
@@ -101,73 +80,29 @@ export async function onRequestGet(context) {
      * COMPANY CIN DATA
      * ==========================================
      *
-     * JSON can be:
+     * JSON example:
      *
      * [
-     *   "U12345AP2020PTC123456",
-     *   "U12345AR2021PTC123457"
+     *   "AAA-0396",
+     *   "AAA-1262",
+     *   "U70101AS1998PTC005556",
+     *   "U70101AS1998PTC005566"
      * ]
      *
-     * OR:
-     *
-     * [
-     *   {"CIN":"U12345AP2020PTC123456"}
-     * ]
-     *
-     * Both formats are supported.
      */
 
     const companyPages = [
         ...new Set(
-
             companyCins
-
-                .map(function (item) {
-
-                    if (
-                        typeof item === "string"
-                    ) {
-                        return item;
-                    }
-
-                    if (
-                        item &&
-                        typeof item === "object"
-                    ) {
-                        return item.CIN || "";
-                    }
-
-                    return "";
-
-                })
-
+                .map(String)
                 .map(function (cin) {
-
-                    return String(cin)
-                        .trim()
-                        .toUpperCase();
-
+                    return cin.trim().toUpperCase();
                 })
-
                 .filter(function (cin) {
-
-                    /*
-                     * CIN normally contains:
-                     *
-                     * 21 characters
-                     *
-                     * Example:
-                     * U12345AP2020PTC123456
-                     *
-                     * Also allow LLP-style
-                     * / other valid alphanumeric
-                     * CIN-like identifiers.
-                     */
 
                     return /^[A-Z0-9-]{5,30}$/.test(cin);
 
                 })
-
         )
     ];
 
@@ -177,20 +112,10 @@ export async function onRequestGet(context) {
      * FUTURE IFSC DATA
      * ==========================================
      *
-     * Tomorrow you can connect your
-     * complete IFSC JSON here.
+     * Add your IFSC JSON later.
      */
 
     const ifscPages = [];
-
-
-    /*
-     * ==========================================
-     * FUTURE OTHER DATA
-     * ==========================================
-     */
-
-    const otherPages = [];
 
 
     /*
@@ -211,9 +136,7 @@ export async function onRequestGet(context) {
 
 
         /*
-         * ==========================================
          * NORMAL PAGES
-         * ==========================================
          */
 
         xml += '  <sitemap>\n';
@@ -225,9 +148,7 @@ export async function onRequestGet(context) {
 
 
         /*
-         * ==========================================
          * PINCODE SITEMAPS
-         * ==========================================
          */
 
         const pincodeTotalPages =
@@ -253,9 +174,7 @@ export async function onRequestGet(context) {
 
 
         /*
-         * ==========================================
          * RAILWAY SITEMAPS
-         * ==========================================
          */
 
         const railwayTotalPages =
@@ -281,9 +200,7 @@ export async function onRequestGet(context) {
 
 
         /*
-         * ==========================================
          * COMPANY SITEMAPS
-         * ==========================================
          */
 
         const companyTotalPages =
@@ -309,9 +226,7 @@ export async function onRequestGet(context) {
 
 
         /*
-         * ==========================================
          * IFSC SITEMAPS
-         * ==========================================
          */
 
         if (ifscPages.length > 0) {
@@ -332,38 +247,6 @@ export async function onRequestGet(context) {
 
                 xml +=
                     `    <loc>${BASE_URL}/sitemap.xml?type=ifsc&amp;page=${page}</loc>\n`;
-
-                xml += '  </sitemap>\n';
-
-            }
-
-        }
-
-
-        /*
-         * ==========================================
-         * OTHER DATA
-         * ==========================================
-         */
-
-        if (otherPages.length > 0) {
-
-            const otherTotalPages =
-                Math.ceil(
-                    otherPages.length / PER_PAGE
-                );
-
-
-            for (
-                let page = 1;
-                page <= otherTotalPages;
-                page++
-            ) {
-
-                xml += '  <sitemap>\n';
-
-                xml +=
-                    `    <loc>${BASE_URL}/sitemap.xml?type=other&amp;page=${page}</loc>\n`;
 
                 xml += '  </sitemap>\n';
 
@@ -466,13 +349,11 @@ export async function onRequestGet(context) {
 
 
         const urls =
-            pagePincodes.map(
-                function (pin) {
+            pagePincodes.map(function (pin) {
 
-                    return `/pincode/${pin}/`;
+                return `/pincode/${pin}/`;
 
-                }
-            );
+            });
 
 
         return createUrlSitemap(urls);
@@ -482,7 +363,7 @@ export async function onRequestGet(context) {
 
     /*
      * ==========================================
-     * RAILWAY STATION SITEMAP
+     * RAILWAY SITEMAP
      * ==========================================
      */
 
@@ -526,13 +407,11 @@ export async function onRequestGet(context) {
 
 
         const urls =
-            pageRailway.map(
-                function (code) {
+            pageRailway.map(function (code) {
 
-                    return `/railway/${code}/`;
+                return `/railway/${code}/`;
 
-                }
-            );
+            });
 
 
         return createUrlSitemap(urls);
@@ -544,8 +423,6 @@ export async function onRequestGet(context) {
      * ==========================================
      * COMPANY SITEMAP
      * ==========================================
-     *
-     * /company/CIN/
      */
 
     if (type === "company") {
@@ -588,13 +465,11 @@ export async function onRequestGet(context) {
 
 
         const urls =
-            pageCompanies.map(
-                function (cin) {
+            pageCompanies.map(function (cin) {
 
-                    return `/company/${encodeURIComponent(cin)}/`;
+                return `/company/${cin}/`;
 
-                }
-            );
+            });
 
 
         return createUrlSitemap(urls);
@@ -642,56 +517,6 @@ export async function onRequestGet(context) {
 
         const urls =
             ifscPages.slice(
-                start,
-                start + PER_PAGE
-            );
-
-
-        return createUrlSitemap(urls);
-
-    }
-
-
-    /*
-     * ==========================================
-     * OTHER DATA
-     * ==========================================
-     */
-
-    if (type === "other") {
-
-        const page =
-            parseInt(pageParam, 10);
-
-
-        const totalPages =
-            Math.ceil(
-                otherPages.length / PER_PAGE
-            );
-
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
-        ) {
-
-            return new Response(
-                "Sitemap page not found",
-                {
-                    status: 404
-                }
-            );
-
-        }
-
-
-        const start =
-            (page - 1) * PER_PAGE;
-
-
-        const urls =
-            otherPages.slice(
                 start,
                 start + PER_PAGE
             );
@@ -778,7 +603,6 @@ function createUrlSitemap(paths) {
 function escapeXml(value) {
 
     return String(value)
-
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
