@@ -1,5 +1,4 @@
-const FDIC_API =
-    "https://banks.data.fdic.gov/api";
+const FDIC_API = "https://banks.data.fdic.gov/api";
 
 const STATES = [
     ["AL", "Alabama"],
@@ -77,16 +76,12 @@ export async function onRequest(context) {
     if (type === "states") {
 
         return json({
-
-            states: STATES.map(function(item) {
-
+            states: STATES.map(function (item) {
                 return {
                     code: item[0],
                     name: item[1]
                 };
-
             })
-
         });
 
     }
@@ -104,15 +99,27 @@ export async function onRequest(context) {
         if (!state) {
 
             return json(
-                { error: "State is required." },
+                {
+                    error: "State is required."
+                },
                 400
             );
 
         }
 
 
+        /*
+         * Get all locations for the selected
+         * state.
+         *
+         * Do NOT use CITY as a search filter here.
+         * We retrieve CITY values and build the
+         * unique city list ourselves.
+         */
+
         const query =
-            `STALP:"${escapeQuery(state)}"`;
+            `STALP:${escapeSearch(state)}`;
+
 
         const data =
             await fdicRequest(
@@ -120,13 +127,12 @@ export async function onRequest(context) {
                 {
                     search: query,
                     limit: 10000,
-                    fields:
-                        "CITY,STALP"
+                    fields: "CITY,STALP"
                 }
             );
 
 
-        const cities =
+        const citySet =
             new Set();
 
 
@@ -134,24 +140,38 @@ export async function onRequest(context) {
             const item of data.data || []
         ) {
 
-            if (item.CITY) {
+            const city =
+                String(
+                    item.CITY || ""
+                ).trim();
 
-                cities.add(
-                    String(item.CITY).trim()
-                );
+
+            if (city) {
+
+                citySet.add(city);
 
             }
 
         }
 
 
+        const cities =
+            Array.from(citySet)
+                .sort(function (a, b) {
+
+                    return a.localeCompare(
+                        b,
+                        "en",
+                        {
+                            sensitivity: "base"
+                        }
+                    );
+
+                });
+
+
         return json({
-
-            cities:
-                Array.from(cities)
-                    .filter(Boolean)
-                    .sort()
-
+            cities: cities
         });
 
     }
@@ -184,7 +204,7 @@ export async function onRequest(context) {
 
 
         const query =
-            `STALP:"${escapeQuery(state)}" AND CITY:"${escapeQuery(city)}"`;
+            `STALP:${escapeSearch(state)} AND CITY:"${escapeValue(city)}"`;
 
 
         const data =
@@ -194,12 +214,12 @@ export async function onRequest(context) {
                     search: query,
                     limit: 10000,
                     fields:
-                        "NAME,CERT,STALP,CITY"
+                        "NAME,CERT,CITY,STALP"
                 }
             );
 
 
-        const banksMap =
+        const bankMap =
             new Map();
 
 
@@ -212,6 +232,7 @@ export async function onRequest(context) {
                     item.CERT || ""
                 ).trim();
 
+
             const name =
                 String(
                     item.NAME || ""
@@ -223,7 +244,7 @@ export async function onRequest(context) {
                 name
             ) {
 
-                banksMap.set(
+                bankMap.set(
                     cert,
                     {
                         cert: cert,
@@ -238,14 +259,18 @@ export async function onRequest(context) {
 
         const banks =
             Array.from(
-                banksMap.values()
+                bankMap.values()
             );
 
 
-        banks.sort(function(a, b) {
+        banks.sort(function (a, b) {
 
             return a.name.localeCompare(
-                b.name
+                b.name,
+                "en",
+                {
+                    sensitivity: "base"
+                }
             );
 
         });
@@ -283,7 +308,7 @@ export async function onRequest(context) {
             return json(
                 {
                     error:
-                        "State, city and certificate are required."
+                        "State, city and bank are required."
                 },
                 400
             );
@@ -292,7 +317,7 @@ export async function onRequest(context) {
 
 
         const query =
-            `STALP:"${escapeQuery(state)}" AND CITY:"${escapeQuery(city)}" AND CERT:${escapeQuery(cert)}`;
+            `STALP:${escapeSearch(state)} AND CITY:"${escapeValue(city)}" AND CERT:${escapeSearch(cert)}`;
 
 
         const data =
@@ -302,13 +327,12 @@ export async function onRequest(context) {
                     search: query,
                     limit: 10000,
                     fields:
-                        "ID,NAME,OFFNAME,STALP,CITY,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE"
+                        "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE"
                 }
             );
 
 
-        const branches =
-            [];
+        const branches = [];
 
 
         for (
@@ -321,7 +345,7 @@ export async function onRequest(context) {
                 ).trim();
 
 
-            const name =
+            const branchName =
                 String(
                     item.OFFNAME ||
                     item.NAME ||
@@ -336,7 +360,7 @@ export async function onRequest(context) {
                     id: id,
 
                     name:
-                        name ||
+                        branchName ||
                         "Bank Branch"
 
                 });
@@ -346,10 +370,14 @@ export async function onRequest(context) {
         }
 
 
-        branches.sort(function(a, b) {
+        branches.sort(function (a, b) {
 
             return a.name.localeCompare(
-                b.name
+                b.name,
+                "en",
+                {
+                    sensitivity: "base"
+                }
             );
 
         });
@@ -386,7 +414,7 @@ export async function onRequest(context) {
 
 
         const query =
-            `ID:${escapeQuery(id)}`;
+            `ID:${escapeSearch(id)}`;
 
 
         const data =
@@ -396,7 +424,7 @@ export async function onRequest(context) {
                     search: query,
                     limit: 1,
                     fields:
-                        "ID,NAME,OFFNAME,STALP,CITY,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE"
+                        "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE"
                 }
             );
 
@@ -455,9 +483,7 @@ export async function onRequest(context) {
                     item.CERT || "",
 
                 branchType:
-                    item.OFFNAME
-                        ? "Branch / Office"
-                        : "Main Office",
+                    "Branch / Office",
 
                 serviceType:
                     item.SERVTYPE || ""
@@ -481,7 +507,7 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   FDIC REQUEST
+   FDIC API REQUEST
 ========================================= */
 
 async function fdicRequest(
@@ -501,16 +527,15 @@ async function fdicRequest(
     );
 
 
-    for (
-        const key in params
-    ) {
+    Object.keys(params)
+        .forEach(function (key) {
 
-        apiUrl.searchParams.set(
-            key,
-            params[key]
-        );
+            apiUrl.searchParams.set(
+                key,
+                String(params[key])
+            );
 
-    }
+        });
 
 
     const response =
@@ -527,6 +552,15 @@ async function fdicRequest(
 
     if (!response.ok) {
 
+        const errorText =
+            await response.text();
+
+        console.error(
+            "FDIC API error:",
+            response.status,
+            errorText
+        );
+
         throw new Error(
             "FDIC API returned HTTP " +
             response.status
@@ -541,10 +575,23 @@ async function fdicRequest(
 
 
 /* =========================================
-   QUERY ESCAPE
+   SEARCH VALUE
 ========================================= */
 
-function escapeQuery(value) {
+function escapeSearch(value) {
+
+    return String(value || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"');
+
+}
+
+
+/* =========================================
+   SEARCH VALUE WITH QUOTES
+========================================= */
+
+function escapeValue(value) {
 
     return String(value || "")
         .replace(/\\/g, "\\\\")
@@ -568,12 +615,15 @@ function json(
             status: status,
 
             headers: {
+
                 "Content-Type":
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
                     "public, max-age=3600"
+
             }
+
         }
     );
 
