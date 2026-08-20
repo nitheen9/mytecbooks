@@ -59,18 +59,10 @@ const STATES = [
     ["MP", "Northern Mariana Islands"]
 ];
 
-
-/* =========================================
-   MAIN
-========================================= */
-
 export async function onRequest(context) {
 
-    const url =
-        new URL(context.request.url);
-
-    const type =
-        url.searchParams.get("type");
+    const url = new URL(context.request.url);
+    const type = url.searchParams.get("type");
 
     try {
 
@@ -108,10 +100,7 @@ export async function onRequest(context) {
 
     } catch (error) {
 
-        console.error(
-            "US BANK API ERROR:",
-            error
-        );
+        console.error("US BANK API ERROR:", error);
 
         return json(
             {
@@ -126,19 +115,16 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   BANKS
+   ACTIVE BANKS ONLY
 ========================================= */
 
 async function getBanks() {
 
     const allBanks = [];
-
     const seen = new Set();
 
     const limit = 5000;
-
     let offset = 0;
-
 
     while (true) {
 
@@ -146,8 +132,11 @@ async function getBanks() {
             await fdicRequest(
                 "/institutions",
                 {
+                    search:
+                        "ACTIVE:1",
+
                     fields:
-                        "NAME,CERT,CITY,STNAME",
+                        "NAME,CERT,CITY,STNAME,ACTIVE",
 
                     limit:
                         limit,
@@ -157,19 +146,26 @@ async function getBanks() {
                 }
             );
 
-
         const rows =
             extractRows(data);
 
-
-        if (
-            rows.length === 0
-        ) {
+        if (rows.length === 0) {
             break;
         }
 
-
         for (const item of rows) {
+
+            const active =
+                String(
+                    item.ACTIVE ?? ""
+                ).trim();
+
+            /*
+             * Extra safety check.
+             */
+            if (active !== "1") {
+                continue;
+            }
 
             const cert =
                 String(
@@ -189,9 +185,7 @@ async function getBanks() {
                 continue;
             }
 
-
             seen.add(cert);
-
 
             const city =
                 String(
@@ -203,12 +197,10 @@ async function getBanks() {
                     item.STNAME ?? ""
                 ).trim();
 
-
             let label =
                 name +
                 " — FDIC #" +
                 cert;
-
 
             if (city && state) {
 
@@ -220,48 +212,32 @@ async function getBanks() {
                     state +
                     " — FDIC #" +
                     cert;
-
             }
-
 
             allBanks.push({
 
-                cert:
-                    cert,
+                cert: cert,
 
-                name:
-                    name,
+                name: name,
 
-                city:
-                    city,
+                city: city,
 
-                state:
-                    state,
+                state: state,
 
-                label:
-                    label
+                label: label
             });
         }
 
-
-        if (
-            rows.length <
-            limit
-        ) {
+        if (rows.length < limit) {
             break;
         }
-
 
         offset += limit;
 
-
-        if (
-            offset >= 100000
-        ) {
+        if (offset >= 100000) {
             break;
         }
     }
-
 
     allBanks.sort(
         function (a, b) {
@@ -272,7 +248,6 @@ async function getBanks() {
 
         }
     );
-
 
     return json({
 
@@ -287,7 +262,7 @@ async function getBanks() {
 
 
 /* =========================================
-   STATES FOR SELECTED BANK
+   STATES FOR SELECTED ACTIVE BANK
 ========================================= */
 
 async function getStates(cert) {
@@ -303,36 +278,31 @@ async function getStates(cert) {
         );
     }
 
-
     const rows =
         await getAllLocations(
             `CERT:${escapeQuery(cert)}`,
             "STALP"
         );
 
-
-    const set =
+    const stateSet =
         new Set();
-
 
     for (const item of rows) {
 
-        const code =
+        const state =
             String(
                 item.STALP ?? ""
             )
             .trim()
             .toUpperCase();
 
-
-        if (code) {
-            set.add(code);
+        if (state) {
+            stateSet.add(state);
         }
     }
 
-
     const states =
-        Array.from(set)
+        Array.from(stateSet)
             .sort()
             .map(
                 function (code) {
@@ -340,13 +310,13 @@ async function getStates(cert) {
                     const found =
                         STATES.find(
                             function (item) {
+
                                 return (
-                                    item[0] ===
-                                    code
+                                    item[0] === code
                                 );
+
                             }
                         );
-
 
                     return {
 
@@ -358,10 +328,8 @@ async function getStates(cert) {
                                 ? found[1]
                                 : code
                     };
-
                 }
             );
-
 
     return json({
 
@@ -373,13 +341,12 @@ async function getStates(cert) {
 
         states:
             states
-
     });
 }
 
 
 /* =========================================
-   CITIES FOR BANK + STATE
+   CITIES
 ========================================= */
 
 async function getCities(
@@ -387,10 +354,7 @@ async function getCities(
     state
 ) {
 
-    if (
-        !cert ||
-        !state
-    ) {
+    if (!cert || !state) {
 
         return json(
             {
@@ -401,12 +365,10 @@ async function getCities(
         );
     }
 
-
     const stateCode =
         String(state)
             .trim()
             .toUpperCase();
-
 
     const rows =
         await getAllLocations(
@@ -414,10 +376,8 @@ async function getCities(
             "CITY,STALP"
         );
 
-
     const cityMap =
         new Map();
-
 
     for (const item of rows) {
 
@@ -426,19 +386,14 @@ async function getCities(
                 item.CITY ?? ""
             ).trim();
 
-
         if (!city) {
             continue;
         }
 
-
         const key =
             city.toUpperCase();
 
-
-        if (
-            !cityMap.has(key)
-        ) {
+        if (!cityMap.has(key)) {
 
             cityMap.set(
                 key,
@@ -447,12 +402,10 @@ async function getCities(
         }
     }
 
-
     const cities =
         Array.from(
             cityMap.values()
         );
-
 
     cities.sort(
         function (a, b) {
@@ -463,7 +416,6 @@ async function getCities(
 
         }
     );
-
 
     return json({
 
@@ -478,7 +430,6 @@ async function getCities(
 
         cities:
             cities
-
     });
 }
 
@@ -508,16 +459,13 @@ async function getBranches(
         );
     }
 
-
     const stateCode =
         String(state)
             .trim()
             .toUpperCase();
 
-
     const wantedCity =
         normalizeCity(city);
-
 
     const rows =
         await getAllLocations(
@@ -536,12 +484,8 @@ async function getBranches(
             ].join(",")
         );
 
-
     const branches = [];
-
-    const seen =
-        new Set();
-
+    const seen = new Set();
 
     for (const item of rows) {
 
@@ -550,7 +494,6 @@ async function getBranches(
                 item.CITY
             );
 
-
         if (
             itemCity !==
             wantedCity
@@ -558,12 +501,10 @@ async function getBranches(
             continue;
         }
 
-
         const id =
             String(
                 item.ID ?? ""
             ).trim();
-
 
         if (
             !id ||
@@ -572,9 +513,7 @@ async function getBranches(
             continue;
         }
 
-
         seen.add(id);
-
 
         const branchName =
             String(
@@ -582,28 +521,6 @@ async function getBranches(
                 item.NAME ||
                 "Bank Branch"
             ).trim();
-
-
-        const address =
-            String(
-                item.ADDRESS ||
-                ""
-            ).trim();
-
-
-        let label =
-            branchName;
-
-
-        if (address) {
-
-            label =
-                branchName +
-                " — " +
-                address;
-
-        }
-
 
         branches.push({
 
@@ -613,11 +530,11 @@ async function getBranches(
             name:
                 branchName,
 
-            label:
-                label,
-
             address:
-                address,
+                String(
+                    item.ADDRESS ||
+                    ""
+                ).trim(),
 
             city:
                 String(
@@ -657,7 +574,6 @@ async function getBranches(
         });
     }
 
-
     branches.sort(
         function (a, b) {
 
@@ -667,7 +583,6 @@ async function getBranches(
 
         }
     );
-
 
     return json({
 
@@ -685,13 +600,12 @@ async function getBranches(
 
         branches:
             branches
-
     });
 }
 
 
 /* =========================================
-   GET ALL LOCATIONS WITH PAGINATION
+   PAGINATED LOCATION LOADER
 ========================================= */
 
 async function getAllLocations(
@@ -701,10 +615,9 @@ async function getAllLocations(
 
     const allRows = [];
 
-    const pageSize = 5000;
+    const limit = 5000;
 
     let offset = 0;
-
 
     while (true) {
 
@@ -719,52 +632,37 @@ async function getAllLocations(
                         fields,
 
                     limit:
-                        pageSize,
+                        limit,
 
                     offset:
                         offset
                 }
             );
 
-
         const rows =
             extractRows(data);
 
-
-        if (
-            rows.length === 0
-        ) {
+        if (rows.length === 0) {
             break;
         }
-
 
         allRows.push(
             ...rows
         );
 
-
         if (
             rows.length <
-            pageSize
+            limit
         ) {
             break;
         }
 
+        offset += limit;
 
-        offset += pageSize;
-
-
-        /*
-         * Safety protection.
-         */
-
-        if (
-            offset >= 100000
-        ) {
+        if (offset >= 100000) {
             break;
         }
     }
-
 
     return allRows;
 }
@@ -785,12 +683,10 @@ async function fdicRequest(
             endpoint
         );
 
-
     apiUrl.searchParams.set(
         "format",
         "json"
     );
-
 
     for (
         const key in params
@@ -802,9 +698,7 @@ async function fdicRequest(
                 params[key]
             )
         );
-
     }
-
 
     const response =
         await fetch(
@@ -820,10 +714,8 @@ async function fdicRequest(
             }
         );
 
-
     const text =
         await response.text();
-
 
     if (!response.ok) {
 
@@ -836,13 +728,11 @@ async function fdicRequest(
             )
         );
 
-
         throw new Error(
             "FDIC API HTTP " +
             response.status
         );
     }
-
 
     try {
 
@@ -852,16 +742,23 @@ async function fdicRequest(
 
     } catch {
 
+        console.error(
+            "FDIC RESPONSE:",
+            text.substring(
+                0,
+                1000
+            )
+        );
+
         throw new Error(
             "FDIC returned invalid JSON."
         );
-
     }
 }
 
 
 /* =========================================
-   UNWRAP FDIC RESPONSE
+   UNWRAP CURRENT FDIC RESPONSE
 ========================================= */
 
 function extractRows(
@@ -876,23 +773,10 @@ function extractRows(
     ) {
 
         return [];
-
     }
-
 
     return result.data.map(
         function (item) {
-
-            /*
-             * Current response format:
-             *
-             * {
-             *   data: {
-             *      CERT: 3510,
-             *      NAME: "..."
-             *   }
-             * }
-             */
 
             if (
                 item &&
@@ -902,12 +786,9 @@ function extractRows(
             ) {
 
                 return item.data;
-
             }
 
-
             return item;
-
         }
     );
 }
@@ -924,12 +805,12 @@ function normalizeCity(
     return String(
         value || ""
     )
-        .toUpperCase()
-        .replace(
-            /[^A-Z0-9]+/g,
-            " "
-        )
-        .trim();
+    .toUpperCase()
+    .replace(
+        /[^A-Z0-9]+/g,
+        " "
+    )
+    .trim();
 }
 
 
@@ -944,20 +825,20 @@ function escapeQuery(
     return String(
         value || ""
     )
-        .trim()
-        .replace(
-            /\\/g,
-            "\\\\"
-        )
-        .replace(
-            /"/g,
-            '\\"'
-        );
+    .trim()
+    .replace(
+        /\\/g,
+        "\\\\"
+    )
+    .replace(
+        /"/g,
+        '\\"'
+    );
 }
 
 
 /* =========================================
-   JSON RESPONSE
+   JSON
 ========================================= */
 
 function json(
@@ -966,9 +847,7 @@ function json(
 ) {
 
     return new Response(
-        JSON.stringify(
-            data
-        ),
+        JSON.stringify(data),
         {
             status:
                 status,
