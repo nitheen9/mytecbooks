@@ -12,21 +12,17 @@
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. bank branches by state, city and bank. Find bank branch names, addresses, ZIP codes and FDIC details.">
+      content="Search U.S. bank branches by bank, state, city and branch. Find bank addresses, ZIP codes and FDIC branch details.">
 
-<link rel="icon"
-      type="image/png"
-      href="/favicon.png">
-
-<title>USA Bank Branch Finder - Search State, City, Bank & Branch</title>
+<title>USA Bank Branch Finder - Bank, State, City & Branch</title>
 
 <style>
 
 :root {
-    --primary: #f48120;
+    --primary: #2563eb;
     --dark: #1e1e24;
-    --light: #f9f9fb;
-    --border: #e0e0e6;
+    --light: #f5f7fb;
+    --border: #dfe3eb;
 }
 
 * {
@@ -34,7 +30,6 @@
 }
 
 body {
-
     font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -44,254 +39,141 @@ body {
         sans-serif;
 
     background: var(--light);
-
     color: var(--dark);
 
     margin: 0;
-
     padding: 20px;
-
 }
 
 .container {
-
     max-width: 850px;
-
     margin: 0 auto;
-
 }
 
 h1 {
-
     text-align: center;
-
-    color: var(--dark);
-
-    margin: 10px 0 15px;
-
     font-size: 30px;
-
+    margin: 10px 0 15px;
 }
 
 .intro {
-
     text-align: center;
-
     color: #666;
-
-    margin-bottom: 28px;
-
     line-height: 1.6;
-
+    margin-bottom: 28px;
 }
 
 .search-card {
-
     background: white;
-
     padding: 25px;
-
     border-radius: 12px;
-
-    box-shadow:
-        0 4px 15px rgba(0,0,0,0.05);
-
-    margin-bottom: 25px;
-
+    box-shadow: 0 4px 15px rgba(0,0,0,.05);
 }
 
 .search-card h2 {
-
     margin-top: 0;
-
-    margin-bottom: 8px;
-
 }
 
 .search-card p {
-
     color: #666;
-
     line-height: 1.6;
-
 }
 
 .field {
-
     margin-top: 18px;
-
 }
 
 .field label {
-
     display: block;
-
     font-weight: bold;
-
     margin-bottom: 7px;
-
 }
 
 select {
-
     width: 100%;
-
     padding: 14px;
-
     border: 2px solid var(--border);
-
     border-radius: 8px;
-
     font-size: 16px;
-
     background: white;
-
     color: #222;
-
     outline: none;
-
-    cursor: pointer;
-
 }
 
 select:focus {
-
     border-color: var(--primary);
-
 }
 
 select:disabled {
-
     background: #f1f1f4;
-
     color: #888;
-
-    cursor: not-allowed;
-
-}
-
-.search-button {
-
-    width: 100%;
-
-    margin-top: 22px;
-
-    padding: 14px;
-
-    background: var(--dark);
-
-    color: white;
-
-    border: none;
-
-    border-radius: 8px;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-}
-
-.search-button:hover {
-
-    background: #333;
-
 }
 
 .loading {
-
-    margin-top: 15px;
-
+    margin-top: 18px;
     padding: 14px;
-
-    background: #f1f1f6;
-
+    background: #eef3ff;
     border-left: 5px solid var(--primary);
-
     border-radius: 6px;
-
-    font-weight: bold;
-
-    color: #555;
-
     display: none;
-
+    font-weight: bold;
 }
 
 .error {
-
-    margin-top: 15px;
-
+    margin-top: 18px;
     padding: 14px;
-
     background: #fde8e8;
-
-    color: #d9383a;
-
+    color: #c62828;
     border-radius: 6px;
-
-    font-weight: bold;
-
     display: none;
-
 }
 
 .result {
-
     margin-top: 22px;
-
     padding: 20px;
-
-    background: #f1f1f6;
-
+    background: #f1f4f9;
     border-radius: 8px;
-
     border-left: 5px solid var(--primary);
-
     display: none;
-
 }
 
 .result h3 {
-
     margin-top: 0;
-
-    margin-bottom: 15px;
-
 }
 
 .result-row {
-
     padding: 12px 0;
-
     border-bottom: 1px solid var(--border);
-
     line-height: 1.6;
-
-    word-break: break-word;
-
 }
 
 .result-row:last-child {
-
     border-bottom: none;
+}
 
+.search-button {
+    width: 100%;
+    margin-top: 22px;
+    padding: 14px;
+    background: var(--dark);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.search-button:hover {
+    background: #333;
 }
 
 footer {
-
     text-align: center;
-
     color: #777;
-
     font-size: 13px;
-
     margin: 30px 0 10px;
-
     line-height: 1.6;
-
 }
 
 @media(max-width:600px) {
@@ -308,52 +190,56 @@ footer {
         padding: 18px;
     }
 
-    select {
-        font-size: 16px;
-    }
-
 }
 
 </style>
 
 </head>
 
-
 <body>
-
 
 <div class="container">
 
-
 <h1>
-🏦 USA Bank Branch Finder
+    🏦 USA Bank Branch Finder
 </h1>
 
-
 <p class="intro">
-
-Search U.S. bank branches by
-state, city, bank and branch.
-Find branch addresses, ZIP codes
-and FDIC information.
-
+    Search U.S. bank branches by bank, state,
+    city and branch to find address, ZIP code
+    and FDIC branch information.
 </p>
 
 
 <div class="search-card">
 
-
 <h2>
-Find a U.S. Bank Branch
+    Find a U.S. Bank Branch
 </h2>
 
-
 <p>
-
-Select a state, city, bank and branch
-to view complete branch information.
-
+    Select a bank first, then choose the state,
+    city and branch.
 </p>
+
+
+<!-- BANK -->
+
+<div class="field">
+
+<label for="bankSelect">
+    Bank
+</label>
+
+<select id="bankSelect">
+
+<option value="">
+    Loading banks...
+</option>
+
+</select>
+
+</div>
 
 
 <!-- STATE -->
@@ -361,13 +247,14 @@ to view complete branch information.
 <div class="field">
 
 <label for="stateSelect">
-State
+    State
 </label>
 
-<select id="stateSelect">
+<select id="stateSelect"
+        disabled>
 
 <option value="">
-Select State
+    Select State
 </option>
 
 </select>
@@ -380,34 +267,14 @@ Select State
 <div class="field">
 
 <label for="citySelect">
-City
+    City
 </label>
 
 <select id="citySelect"
         disabled>
 
 <option value="">
-Select City
-</option>
-
-</select>
-
-</div>
-
-
-<!-- BANK -->
-
-<div class="field">
-
-<label for="bankSelect">
-Bank
-</label>
-
-<select id="bankSelect"
-        disabled>
-
-<option value="">
-Select Bank
+    Select City
 </option>
 
 </select>
@@ -420,14 +287,14 @@ Select Bank
 <div class="field">
 
 <label for="branchSelect">
-Branch
+    Branch
 </label>
 
 <select id="branchSelect"
         disabled>
 
 <option value="">
-Select Branch
+    Select Branch
 </option>
 
 </select>
@@ -440,16 +307,13 @@ Select Branch
     id="findButton"
     type="button">
 
-🔍 Find Bank Branch
+    🔍 Find Branch Details
 
 </button>
 
 
 <div id="loading"
      class="loading">
-
-Loading...
-
 </div>
 
 
@@ -462,7 +326,6 @@ Loading...
      class="result">
 </div>
 
-
 </div>
 
 
@@ -470,37 +333,22 @@ Loading...
 
 USA Bank Branch Finder<br>
 
-Bank and branch information is
-retrieved from FDIC BankFind data.
+Bank and branch information is retrieved
+from the FDIC BankFind data service.
 
 <br>
 
-Please verify important banking
-information with the bank before
-financial transactions.
+Please verify important banking information
+with the bank before financial transactions.
 
 </footer>
-
 
 </div>
 
 
 <script>
 
-
 const API = "/api/us-banks";
-
-
-const stateSelect =
-    document.getElementById(
-        "stateSelect"
-    );
-
-
-const citySelect =
-    document.getElementById(
-        "citySelect"
-    );
 
 
 const bankSelect =
@@ -508,30 +356,35 @@ const bankSelect =
         "bankSelect"
     );
 
+const stateSelect =
+    document.getElementById(
+        "stateSelect"
+    );
+
+const citySelect =
+    document.getElementById(
+        "citySelect"
+    );
 
 const branchSelect =
     document.getElementById(
         "branchSelect"
     );
 
-
 const findButton =
     document.getElementById(
         "findButton"
     );
-
 
 const loading =
     document.getElementById(
         "loading"
     );
 
-
 const errorBox =
     document.getElementById(
         "error"
     );
-
 
 const resultBox =
     document.getElementById(
@@ -539,347 +392,51 @@ const resultBox =
     );
 
 
-/* =========================================
-   LOAD STATES
-========================================= */
+/* =====================================
+   PAGE LOAD
+===================================== */
 
-loadStates();
+loadBanks();
 
 
-async function loadStates() {
-
-    showLoading(
-        "🔄 Loading U.S. states..."
-    );
-
-    try {
-
-        const response =
-            await fetch(
-                API +
-                "?type=states"
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "State request failed."
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !data ||
-            !Array.isArray(
-                data.states
-            )
-        ) {
-
-            throw new Error(
-                "Invalid state data."
-            );
-
-        }
-
-
-        data.states
-            .sort(function(a, b) {
-
-                return a.name.localeCompare(
-                    b.name
-                );
-
-            })
-            .forEach(function(state) {
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-
-                option.value =
-                    state.code;
-
-
-                option.textContent =
-                    state.name;
-
-
-                stateSelect.appendChild(
-                    option
-                );
-
-            });
-
-
-        stateSelect.disabled = false;
-
-        hideLoading();
-
-    }
-    catch(error) {
-
-        console.error(
-            error
-        );
-
-        hideLoading();
-
-        showError(
-            "Unable to load U.S. states."
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   STATE CHANGE
-========================================= */
-
-stateSelect.addEventListener(
-    "change",
-    loadCities
-);
-
-
-async function loadCities() {
-
-    resetSelect(
-        citySelect,
-        "Select City"
-    );
-
-    resetSelect(
-        bankSelect,
-        "Select Bank"
-    );
-
-    resetSelect(
-        branchSelect,
-        "Select Branch"
-    );
-
-
-    resultBox.style.display =
-        "none";
-
-    hideError();
-
-
-    const state =
-        stateSelect.value;
-
-
-    if (!state) {
-        return;
-    }
-
-
-    showLoading(
-        "🔄 Loading cities..."
-    );
-
-
-    try {
-
-        const response =
-            await fetch(
-                API +
-                "?type=cities&state=" +
-                encodeURIComponent(
-                    state
-                )
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "City request failed."
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !data ||
-            !Array.isArray(
-                data.cities
-            )
-        ) {
-
-            throw new Error(
-                "Invalid city data."
-            );
-
-        }
-
-
-        data.cities
-            .sort(function(a, b) {
-
-                return a.localeCompare(
-                    b
-                );
-
-            })
-            .forEach(function(city) {
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-
-                option.value =
-                    city;
-
-
-                option.textContent =
-                    city;
-
-
-                citySelect.appendChild(
-                    option
-                );
-
-            });
-
-
-        citySelect.disabled = false;
-
-        hideLoading();
-
-    }
-    catch(error) {
-
-        console.error(
-            "City error:",
-            error
-        );
-
-        hideLoading();
-
-        showError(
-            "Unable to load cities."
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   CITY CHANGE
-========================================= */
-
-citySelect.addEventListener(
-    "change",
-    loadBanks
-);
-
+/* =====================================
+   LOAD BANKS
+===================================== */
 
 async function loadBanks() {
 
-    resetSelect(
-        bankSelect,
-        "Select Bank"
+    showLoading(
+        "🔄 Loading U.S. banks..."
     );
-
-    resetSelect(
-        branchSelect,
-        "Select Branch"
-    );
-
-
-    resultBox.style.display =
-        "none";
 
     hideError();
 
 
-    const state =
-        stateSelect.value;
-
-
-    const city =
-        citySelect.value;
-
-
-    if (
-        !state ||
-        !city
-    ) {
-
-        return;
-
-    }
-
-
-    showLoading(
-        "🔄 Loading banks..."
-    );
-
-
     try {
 
-        const url =
-            API +
-            "?type=banks" +
-            "&state=" +
-            encodeURIComponent(
-                state
-            ) +
-            "&city=" +
-            encodeURIComponent(
-                city
+        const response =
+            await fetch(
+                API +
+                "?type=banks"
             );
 
 
-        console.log(
-            "Bank API:",
-            url
-        );
-
-
-        const response =
-            await fetch(url);
+        const data =
+            await response.json();
 
 
         if (!response.ok) {
 
             throw new Error(
+                data.error ||
                 "Bank request failed."
             );
 
         }
 
 
-        const data =
-            await response.json();
-
-
-        console.log(
-            "Bank data:",
-            data
-        );
-
-
         if (
-            !data ||
+            !data.banks ||
             !Array.isArray(
                 data.banks
             )
@@ -892,15 +449,14 @@ async function loadBanks() {
         }
 
 
-        data.banks
-            .sort(function(a, b) {
+        resetSelect(
+            bankSelect,
+            "Select Bank"
+        );
 
-                return a.name.localeCompare(
-                    b.name
-                );
 
-            })
-            .forEach(function(bank) {
+        data.banks.forEach(
+            function(bank) {
 
                 const option =
                     document.createElement(
@@ -920,10 +476,20 @@ async function loadBanks() {
                     option
                 );
 
-            });
+            }
+        );
 
 
-        bankSelect.disabled = false;
+        if (
+            data.banks.length === 0
+        ) {
+
+            throw new Error(
+                "No banks were returned by the API."
+            );
+
+        }
+
 
         hideLoading();
 
@@ -935,10 +501,13 @@ async function loadBanks() {
             error
         );
 
+
         hideLoading();
 
+
         showError(
-            "Unable to load banks for this city."
+            "Unable to load U.S. banks. " +
+            error.message
         );
 
     }
@@ -946,52 +515,401 @@ async function loadBanks() {
 }
 
 
-/* =========================================
+/* =====================================
    BANK CHANGE
-========================================= */
+===================================== */
 
 bankSelect.addEventListener(
     "change",
-    loadBranches
+    async function() {
+
+        resetSelect(
+            stateSelect,
+            "Loading States..."
+        );
+
+        resetSelect(
+            citySelect,
+            "Select City"
+        );
+
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
+
+        stateSelect.disabled =
+            true;
+
+        citySelect.disabled =
+            true;
+
+        branchSelect.disabled =
+            true;
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const cert =
+            bankSelect.value;
+
+
+        if (!cert) {
+
+            resetSelect(
+                stateSelect,
+                "Select State"
+            );
+
+            return;
+        }
+
+
+        await loadStates(
+            cert
+        );
+
+    }
 );
 
 
-async function loadBranches() {
+/* =====================================
+   LOAD STATES
+===================================== */
 
-    resetSelect(
-        branchSelect,
-        "Select Branch"
+async function loadStates(
+    cert
+) {
+
+    showLoading(
+        "🔄 Loading states..."
     );
 
 
-    resultBox.style.display =
-        "none";
+    try {
 
-    hideError();
-
-
-    const state =
-        stateSelect.value;
-
-
-    const city =
-        citySelect.value;
+        const response =
+            await fetch(
+                API +
+                "?type=states&cert=" +
+                encodeURIComponent(
+                    cert
+                )
+            );
 
 
-    const cert =
-        bankSelect.value;
+        const data =
+            await response.json();
 
 
-    if (
-        !state ||
-        !city ||
-        !cert
-    ) {
+        if (!response.ok) {
 
-        return;
+            throw new Error(
+                data.error ||
+                "State request failed."
+            );
+
+        }
+
+
+        resetSelect(
+            stateSelect,
+            "Select State"
+        );
+
+
+        const states =
+            Array.isArray(
+                data.states
+            )
+            ? data.states
+            : [];
+
+
+        states.forEach(
+            function(state) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    state.code;
+
+
+                option.textContent =
+                    state.name;
+
+
+                stateSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        stateSelect.disabled =
+            false;
+
+
+        hideLoading();
+
+    }
+    catch(error) {
+
+        console.error(
+            "State error:",
+            error
+        );
+
+
+        hideLoading();
+
+
+        showError(
+            "Unable to load states. " +
+            error.message
+        );
 
     }
 
+}
+
+
+/* =====================================
+   STATE CHANGE
+===================================== */
+
+stateSelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            citySelect,
+            "Select City"
+        );
+
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
+
+        citySelect.disabled =
+            true;
+
+        branchSelect.disabled =
+            true;
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const cert =
+            bankSelect.value;
+
+        const state =
+            stateSelect.value;
+
+
+        if (
+            !cert ||
+            !state
+        ) {
+
+            return;
+        }
+
+
+        await loadCities(
+            cert,
+            state
+        );
+
+    }
+);
+
+
+/* =====================================
+   LOAD CITIES
+===================================== */
+
+async function loadCities(
+    cert,
+    state
+) {
+
+    showLoading(
+        "🔄 Loading cities..."
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                API +
+                "?type=cities" +
+                "&cert=" +
+                encodeURIComponent(
+                    cert
+                ) +
+                "&state=" +
+                encodeURIComponent(
+                    state
+                )
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "City request failed."
+            );
+
+        }
+
+
+        resetSelect(
+            citySelect,
+            "Select City"
+        );
+
+
+        const cities =
+            Array.isArray(
+                data.cities
+            )
+            ? data.cities
+            : [];
+
+
+        cities.forEach(
+            function(city) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    city;
+
+
+                option.textContent =
+                    city;
+
+
+                citySelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        citySelect.disabled =
+            false;
+
+
+        hideLoading();
+
+    }
+    catch(error) {
+
+        console.error(
+            "City error:",
+            error
+        );
+
+
+        hideLoading();
+
+
+        showError(
+            "Unable to load cities. " +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =====================================
+   CITY CHANGE
+===================================== */
+
+citySelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
+
+        branchSelect.disabled =
+            true;
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const cert =
+            bankSelect.value;
+
+        const state =
+            stateSelect.value;
+
+        const city =
+            citySelect.value;
+
+
+        if (
+            !cert ||
+            !state ||
+            !city
+        ) {
+
+            return;
+        }
+
+
+        await loadBranches(
+            cert,
+            state,
+            city
+        );
+
+    }
+);
+
+
+/* =====================================
+   LOAD BRANCHES
+===================================== */
+
+async function loadBranches(
+    cert,
+    state,
+    city
+) {
 
     showLoading(
         "🔄 Loading branches..."
@@ -1000,75 +918,55 @@ async function loadBranches() {
 
     try {
 
-        const url =
-            API +
-            "?type=branches" +
-            "&state=" +
-            encodeURIComponent(
-                state
-            ) +
-            "&city=" +
-            encodeURIComponent(
-                city
-            ) +
-            "&cert=" +
-            encodeURIComponent(
-                cert
-            );
-
-
-        console.log(
-            "Branch API:",
-            url
-        );
-
-
         const response =
-            await fetch(url);
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Branch request failed."
+            await fetch(
+                API +
+                "?type=branches" +
+                "&cert=" +
+                encodeURIComponent(
+                    cert
+                ) +
+                "&state=" +
+                encodeURIComponent(
+                    state
+                ) +
+                "&city=" +
+                encodeURIComponent(
+                    city
+                )
             );
-
-        }
 
 
         const data =
             await response.json();
 
 
-        console.log(
-            "Branch data:",
-            data
-        );
-
-
-        if (
-            !data ||
-            !Array.isArray(
-                data.branches
-            )
-        ) {
+        if (!response.ok) {
 
             throw new Error(
-                "Invalid branch data."
+                data.error ||
+                "Branch request failed."
             );
 
         }
 
 
-        data.branches
-            .sort(function(a, b) {
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
 
-                return a.name.localeCompare(
-                    b.name
-                );
 
-            })
-            .forEach(function(branch) {
+        const branches =
+            Array.isArray(
+                data.branches
+            )
+            ? data.branches
+            : [];
+
+
+        branches.forEach(
+            function(branch) {
 
                 const option =
                     document.createElement(
@@ -1088,10 +986,13 @@ async function loadBranches() {
                     option
                 );
 
-            });
+            }
+        );
 
 
-        branchSelect.disabled = false;
+        branchSelect.disabled =
+            false;
+
 
         hideLoading();
 
@@ -1103,10 +1004,13 @@ async function loadBranches() {
             error
         );
 
+
         hideLoading();
 
+
         showError(
-            "Unable to load bank branches."
+            "Unable to load branches. " +
+            error.message
         );
 
     }
@@ -1114,263 +1018,163 @@ async function loadBranches() {
 }
 
 
-/* =========================================
-   FIND BRANCH
-========================================= */
+/* =====================================
+   FIND DETAILS
+===================================== */
 
 findButton.addEventListener(
     "click",
-    findBranch
+    async function() {
+
+        const id =
+            branchSelect.value;
+
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        if (!id) {
+
+            showError(
+                "Please select Bank, State, City and Branch."
+            );
+
+            return;
+        }
+
+
+        showLoading(
+            "🔍 Loading branch details..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API +
+                    "?type=branch&id=" +
+                    encodeURIComponent(
+                        id
+                    )
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    "Branch details failed."
+                );
+
+            }
+
+
+            showResult(
+                data.branch
+            );
+
+
+            hideLoading();
+
+        }
+        catch(error) {
+
+            console.error(
+                "Details error:",
+                error
+            );
+
+
+            hideLoading();
+
+
+            showError(
+                "Unable to load branch details. " +
+                error.message
+            );
+
+        }
+
+    }
 );
 
 
-async function findBranch() {
-
-    const state =
-        stateSelect.value;
-
-
-    const city =
-        citySelect.value;
-
-
-    const cert =
-        bankSelect.value;
-
-
-    const branchId =
-        branchSelect.value;
-
-
-    resultBox.style.display =
-        "none";
-
-
-    hideError();
-
-
-    if (
-        !state ||
-        !city ||
-        !cert ||
-        !branchId
-    ) {
-
-        showError(
-            "Please select State, City, Bank and Branch."
-        );
-
-        return;
-
-    }
-
-
-    showLoading(
-        "🔍 Loading branch details..."
-    );
-
-
-    try {
-
-        const response =
-            await fetch(
-                API +
-                "?type=branch&id=" +
-                encodeURIComponent(
-                    branchId
-                )
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Branch details failed."
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !data ||
-            !data.branch
-        ) {
-
-            throw new Error(
-                "Branch details not found."
-            );
-
-        }
-
-
-        showBranchResult(
-            data.branch
-        );
-
-
-        hideLoading();
-
-    }
-    catch(error) {
-
-        console.error(
-            "Branch detail error:",
-            error
-        );
-
-        hideLoading();
-
-        showError(
-            "Unable to load branch details."
-        );
-
-    }
-
-}
-
-
-/* =========================================
+/* =====================================
    SHOW RESULT
-========================================= */
+===================================== */
 
-function showBranchResult(
+function showResult(
     data
 ) {
 
     resultBox.innerHTML = `
 
         <h3>
-            🏦 Bank Branch Details
+            🏦 Branch Details
         </h3>
 
-
         <div class="result-row">
-
-            <strong>
-                Bank:
-            </strong><br>
-
+            <strong>Bank:</strong><br>
             ${escapeHtml(
-                data.bankName ||
-                "N/A"
+                data.bank
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                Branch:
-            </strong><br>
-
+            <strong>Branch:</strong><br>
             ${escapeHtml(
-                data.branchName ||
-                "N/A"
+                data.branch
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                Address:
-            </strong><br>
-
+            <strong>Address:</strong><br>
             ${escapeHtml(
-                data.address ||
-                "N/A"
+                data.address
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                City:
-            </strong><br>
-
+            <strong>City:</strong><br>
             ${escapeHtml(
-                data.city ||
-                "N/A"
+                data.city
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                State:
-            </strong><br>
-
+            <strong>State:</strong><br>
             ${escapeHtml(
-                data.state ||
-                "N/A"
+                data.state
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                ZIP Code:
-            </strong><br>
-
+            <strong>ZIP Code:</strong><br>
             ${escapeHtml(
-                data.zip ||
-                "N/A"
+                data.zip
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                County:
-            </strong><br>
-
+            <strong>County:</strong><br>
             ${escapeHtml(
-                data.county ||
-                "N/A"
+                data.county
             )}
-
         </div>
 
-
         <div class="result-row">
-
-            <strong>
-                FDIC Certificate:
-            </strong><br>
-
+            <strong>FDIC Certificate:</strong><br>
             ${escapeHtml(
-                data.cert ||
-                "N/A"
+                data.cert
             )}
-
-        </div>
-
-
-        <div class="result-row">
-
-            <strong>
-                Branch ID:
-            </strong><br>
-
-            ${escapeHtml(
-                data.id ||
-                "N/A"
-            )}
-
         </div>
 
     `;
@@ -1382,9 +1186,9 @@ function showBranchResult(
 }
 
 
-/* =========================================
+/* =====================================
    RESET SELECT
-========================================= */
+===================================== */
 
 function resetSelect(
     select,
@@ -1392,20 +1196,14 @@ function resetSelect(
 ) {
 
     select.innerHTML =
-        `<option value="">
-            ${text}
-        </option>`;
-
-
-    select.disabled =
-        true;
+        `<option value="">${text}</option>`;
 
 }
 
 
-/* =========================================
+/* =====================================
    LOADING
-========================================= */
+===================================== */
 
 function showLoading(
     message
@@ -1413,7 +1211,6 @@ function showLoading(
 
     loading.innerText =
         message;
-
 
     loading.style.display =
         "block";
@@ -1429,9 +1226,9 @@ function hideLoading() {
 }
 
 
-/* =========================================
+/* =====================================
    ERROR
-========================================= */
+===================================== */
 
 function showError(
     message
@@ -1439,7 +1236,6 @@ function showError(
 
     errorBox.innerText =
         message;
-
 
     errorBox.style.display =
         "block";
@@ -1455,9 +1251,9 @@ function hideError() {
 }
 
 
-/* =========================================
+/* =====================================
    ESCAPE HTML
-========================================= */
+===================================== */
 
 function escapeHtml(
     value
@@ -1466,27 +1262,22 @@ function escapeHtml(
     return String(
         value ?? ""
     )
-
     .replace(
         /&/g,
         "&amp;"
     )
-
     .replace(
         /</g,
         "&lt;"
     )
-
     .replace(
         />/g,
         "&gt;"
     )
-
     .replace(
         /"/g,
         "&quot;"
     )
-
     .replace(
         /'/g,
         "&#039;"
@@ -1496,7 +1287,5 @@ function escapeHtml(
 
 </script>
 
-
 </body>
-
 </html>
