@@ -1,0 +1,1627 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<meta name="google-site-verification"
+      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+<meta name="robots"
+      content="index, follow">
+
+<meta name="description"
+      content="Find Indian post offices by state, district, city and post office. Get pincode, office type, delivery status, postal circle, region and division details.">
+
+<link rel="icon"
+      type="image/png"
+      href="/favicon.png">
+
+<title>India Post Office Finder - State, District, City & Pincode</title>
+
+
+<!-- Google Analytics -->
+
+<script async
+        src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
+
+<script>
+
+window.dataLayer = window.dataLayer || [];
+
+function gtag() {
+    dataLayer.push(arguments);
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-BP9YJW8LB9');
+
+</script>
+
+
+<style>
+
+:root {
+
+    --primary: #1976d2;
+    --primary-dark: #0d47a1;
+    --secondary: #00a6ff;
+    --dark: #172033;
+    --light: #f3f8ff;
+    --border: #d8e3f0;
+    --white: #ffffff;
+
+}
+
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+
+    margin: 0;
+
+    padding: 20px;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef7ff,
+            #f8fbff
+        );
+
+    color: var(--dark);
+
+}
+
+
+.container {
+
+    max-width: 850px;
+
+    margin: 0 auto;
+
+}
+
+
+h1 {
+
+    text-align: center;
+
+    margin: 10px 0 12px;
+
+    font-size: 30px;
+
+    color: var(--dark);
+
+}
+
+
+.intro {
+
+    text-align: center;
+
+    color: #5f6b7a;
+
+    line-height: 1.6;
+
+    margin-bottom: 28px;
+
+}
+
+
+.search-card {
+
+    background: var(--white);
+
+    padding: 28px;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 5px 22px rgba(25,118,210,.10);
+
+    border-top: 5px solid var(--primary);
+
+}
+
+
+.search-card h2 {
+
+    margin-top: 0;
+
+    color: var(--primary-dark);
+
+}
+
+
+.search-card p {
+
+    color: #667085;
+
+    line-height: 1.6;
+
+}
+
+
+.field {
+
+    margin-top: 20px;
+
+}
+
+
+.field label {
+
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-weight: 700;
+
+    color: #24324a;
+
+}
+
+
+select {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: 2px solid var(--border);
+
+    border-radius: 9px;
+
+    background: white;
+
+    color: #222;
+
+    font-size: 16px;
+
+    outline: none;
+
+    cursor: pointer;
+
+}
+
+
+select:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px rgba(25,118,210,.10);
+
+}
+
+
+select:disabled {
+
+    background: #f1f5f9;
+
+    color: #8a94a6;
+
+    cursor: not-allowed;
+
+}
+
+
+.loading {
+
+    display: none;
+
+    margin-top: 18px;
+
+    padding: 14px;
+
+    border-radius: 8px;
+
+    background: #e8f3ff;
+
+    border-left: 5px solid var(--primary);
+
+    color: var(--primary-dark);
+
+    font-weight: 700;
+
+}
+
+
+.error {
+
+    display: none;
+
+    margin-top: 18px;
+
+    padding: 14px;
+
+    border-radius: 8px;
+
+    background: #fff0f0;
+
+    border-left: 5px solid #e53935;
+
+    color: #c62828;
+
+    font-weight: 700;
+
+}
+
+
+.result {
+
+    display: none;
+
+    margin-top: 22px;
+
+    padding: 22px;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef7ff,
+            #f7fbff
+        );
+
+    border: 1px solid #cfe3f8;
+
+    border-left: 6px solid var(--primary);
+
+}
+
+
+.result h3 {
+
+    margin-top: 0;
+
+    color: var(--primary-dark);
+
+    font-size: 22px;
+
+}
+
+
+.result-row {
+
+    padding: 12px 0;
+
+    border-bottom: 1px solid #dce7f3;
+
+    line-height: 1.6;
+
+    word-break: break-word;
+
+}
+
+
+.result-row:last-child {
+
+    border-bottom: none;
+
+}
+
+
+.pincode {
+
+    display: inline-block;
+
+    padding: 5px 10px;
+
+    border-radius: 6px;
+
+    background: var(--primary);
+
+    color: white;
+
+    font-weight: 700;
+
+}
+
+
+.badge {
+
+    display: inline-block;
+
+    padding: 4px 9px;
+
+    border-radius: 5px;
+
+    background: var(--primary-dark);
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+
+footer {
+
+    text-align: center;
+
+    color: #6b7280;
+
+    font-size: 13px;
+
+    margin: 30px 0 10px;
+
+    line-height: 1.6;
+
+}
+
+
+@media(max-width:600px) {
+
+    body {
+
+        padding: 12px;
+
+    }
+
+
+    h1 {
+
+        font-size: 24px;
+
+    }
+
+
+    .search-card {
+
+        padding: 18px;
+
+    }
+
+
+    select {
+
+        font-size: 16px;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<h1>
+    🇮🇳 India Post Office Finder
+</h1>
+
+
+<p class="intro">
+
+    Search Indian post offices by
+    state, district, city and post office.
+    Find pincode and complete postal details.
+
+</p>
+
+
+<div class="search-card">
+
+
+<h2>
+    📮 Find Post Office & Pincode
+</h2>
+
+
+<p>
+
+    Select a state, district, city/town and
+    post office to view complete postal information.
+
+</p>
+
+
+<!-- STATE -->
+
+<div class="field">
+
+<label for="stateSelect">
+    State / Union Territory
+</label>
+
+<select id="stateSelect">
+
+<option value="">
+    Loading states...
+</option>
+
+</select>
+
+</div>
+
+
+<!-- DISTRICT -->
+
+<div class="field">
+
+<label for="districtSelect">
+    District
+</label>
+
+<select id="districtSelect"
+        disabled>
+
+<option value="">
+    Select District
+</option>
+
+</select>
+
+</div>
+
+
+<!-- CITY -->
+
+<div class="field">
+
+<label for="citySelect">
+    City / Town
+</label>
+
+<select id="citySelect"
+        disabled>
+
+<option value="">
+    Select City / Town
+</option>
+
+</select>
+
+</div>
+
+
+<!-- POST OFFICE -->
+
+<div class="field">
+
+<label for="officeSelect">
+    Post Office
+</label>
+
+<select id="officeSelect"
+        disabled>
+
+<option value="">
+    Select Post Office
+</option>
+
+</select>
+
+</div>
+
+
+<div id="loading"
+     class="loading">
+</div>
+
+
+<div id="error"
+     class="error">
+</div>
+
+
+<div id="result"
+     class="result">
+</div>
+
+
+</div>
+
+
+<footer>
+
+    India Post Office Finder<br>
+
+    Postal information is based on
+    Department of Posts data.
+
+</footer>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================================
+   API
+========================================= */
+
+
+const API =
+    "https://aniket-thapa.github.io/india-pincode-api";
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+
+const stateSelect =
+    document.getElementById("stateSelect");
+
+
+const districtSelect =
+    document.getElementById("districtSelect");
+
+
+const citySelect =
+    document.getElementById("citySelect");
+
+
+const officeSelect =
+    document.getElementById("officeSelect");
+
+
+const loading =
+    document.getElementById("loading");
+
+
+const errorBox =
+    document.getElementById("error");
+
+
+const resultBox =
+    document.getElementById("result");
+
+
+/* =========================================
+   CURRENT DATA
+========================================= */
+
+
+let currentOffices = [];
+
+
+/* =========================================
+   INITIAL LOAD
+========================================= */
+
+
+loadStates();
+
+
+async function loadStates() {
+
+    showLoading(
+        "🔄 Loading states..."
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                API + "/states.json"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Unable to load states"
+            );
+
+        }
+
+
+        const states =
+            await response.json();
+
+
+        stateSelect.innerHTML =
+            '<option value="">Select State</option>';
+
+
+        states
+            .sort(function(a, b) {
+
+                return a.name.localeCompare(
+                    b.name
+                );
+
+            })
+            .forEach(function(state) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    state.slug;
+
+                option.textContent =
+                    state.name;
+
+                stateSelect.appendChild(
+                    option
+                );
+
+            });
+
+
+        hideLoading();
+
+
+    }
+    catch(error) {
+
+        console.error(error);
+
+        stateSelect.innerHTML =
+            '<option value="">Unable to load states</option>';
+
+        showError(
+            "Unable to load states. Please try again."
+        );
+
+        hideLoading();
+
+    }
+
+}
+
+
+/* =========================================
+   STATE SELECTED
+========================================= */
+
+
+stateSelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            districtSelect,
+            "Select District"
+        );
+
+        resetSelect(
+            citySelect,
+            "Select City / Town"
+        );
+
+        resetSelect(
+            officeSelect,
+            "Select Post Office"
+        );
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const stateSlug =
+            stateSelect.value;
+
+
+        if (!stateSlug) {
+
+            return;
+
+        }
+
+
+        showLoading(
+            "🔄 Loading districts..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API +
+                    "/states/" +
+                    encodeURIComponent(
+                        stateSlug
+                    ) +
+                    ".json"
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "District API error"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !data ||
+                !Array.isArray(
+                    data.districts
+                )
+            ) {
+
+                throw new Error(
+                    "No districts found"
+                );
+
+            }
+
+
+            data.districts
+                .sort(function(a, b) {
+
+                    return a.name.localeCompare(
+                        b.name
+                    );
+
+                })
+                .forEach(function(district) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        district.slug;
+
+                    option.textContent =
+                        district.name;
+
+                    districtSelect.appendChild(
+                        option
+                    );
+
+                });
+
+
+            districtSelect.disabled =
+                false;
+
+
+            hideLoading();
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showError(
+                "Unable to load districts. Please try again."
+            );
+
+            hideLoading();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   DISTRICT SELECTED
+========================================= */
+
+
+districtSelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            citySelect,
+            "Select City / Town"
+        );
+
+        resetSelect(
+            officeSelect,
+            "Select Post Office"
+        );
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const stateSlug =
+            stateSelect.value;
+
+        const districtSlug =
+            districtSelect.value;
+
+
+        if (
+            !stateSlug ||
+            !districtSlug
+        ) {
+
+            return;
+
+        }
+
+
+        showLoading(
+            "🔄 Loading post offices..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API +
+                    "/districts/" +
+                    encodeURIComponent(
+                        stateSlug
+                    ) +
+                    "/" +
+                    encodeURIComponent(
+                        districtSlug
+                    ) +
+                    ".json"
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Office API error"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !data ||
+                !Array.isArray(
+                    data.offices
+                )
+            ) {
+
+                throw new Error(
+                    "No offices found"
+                );
+
+            }
+
+
+            currentOffices =
+                data.offices;
+
+
+            /*
+                Build City / Town list.
+
+                The dataset does not have a
+                separate city field.
+
+                Therefore we group offices by
+                their office-name prefix.
+
+                If there is no meaningful
+                separate city name, all offices
+                are placed under "All Locations".
+            */
+
+
+            buildCityList(
+                currentOffices
+            );
+
+
+            hideLoading();
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showError(
+                "Unable to load post offices. Please try again."
+            );
+
+            hideLoading();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   BUILD CITY LIST
+========================================= */
+
+
+function buildCityList(offices) {
+
+    citySelect.innerHTML =
+        '<option value="">Select City / Town</option>';
+
+
+    /*
+        The government postal dataset
+        contains district and office name,
+        but not always a separate city/town
+        field.
+
+        Therefore we provide a useful
+        "All Locations" option for the
+        selected district.
+    */
+
+
+    const option =
+        document.createElement(
+            "option"
+        );
+
+    option.value =
+        "__ALL__";
+
+    option.textContent =
+        "All Locations in Selected District";
+
+    citySelect.appendChild(
+        option
+    );
+
+
+    /*
+        Also create unique location names
+        from office names.
+
+        This keeps the dropdown useful
+        without inventing city data.
+    */
+
+
+    const locations =
+        new Set();
+
+
+    offices.forEach(function(office) {
+
+        const name =
+            String(
+                office.officeName || ""
+            ).trim();
+
+
+        if (!name) {
+            return;
+        }
+
+
+        /*
+            Remove common postal suffixes.
+        */
+
+        const location =
+            name
+                .replace(
+                    /\s+(H\.O\.|S\.O\.|B\.O\.|HO|SO|BO)$/i,
+                    ""
+                )
+                .trim();
+
+
+        if (location) {
+
+            locations.add(
+                location
+            );
+
+        }
+
+    });
+
+
+    Array.from(locations)
+        .sort(function(a, b) {
+
+            return a.localeCompare(b);
+
+        })
+        .forEach(function(location) {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                location;
+
+            option.textContent =
+                location;
+
+            citySelect.appendChild(
+                option
+            );
+
+        });
+
+
+    citySelect.disabled =
+        false;
+
+}
+
+
+/* =========================================
+   CITY SELECTED
+========================================= */
+
+
+citySelect.addEventListener(
+    "change",
+    function() {
+
+        resetSelect(
+            officeSelect,
+            "Select Post Office"
+        );
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const selectedCity =
+            citySelect.value;
+
+
+        if (!selectedCity) {
+
+            return;
+
+        }
+
+
+        let filtered =
+            currentOffices;
+
+
+        /*
+            All Locations
+        */
+
+        if (
+            selectedCity !==
+            "__ALL__"
+        ) {
+
+            filtered =
+                currentOffices.filter(
+                    function(office) {
+
+                        const name =
+                            String(
+                                office.officeName ||
+                                ""
+                            )
+                            .trim();
+
+
+                        const location =
+                            name
+                                .replace(
+                                    /\s+(H\.O\.|S\.O\.|B\.O\.|HO|SO|BO)$/i,
+                                    ""
+                                )
+                                .trim();
+
+
+                        return (
+                            location ===
+                            selectedCity
+                        );
+
+                    }
+                );
+
+        }
+
+
+        filtered
+            .sort(function(a, b) {
+
+                return String(
+                    a.officeName || ""
+                ).localeCompare(
+                    String(
+                        b.officeName || ""
+                    )
+                );
+
+            })
+            .forEach(function(office) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                /*
+                    Store the array index
+                    as option value.
+                */
+
+                option.value =
+                    currentOffices.indexOf(
+                        office
+                    );
+
+
+                option.textContent =
+                    office.officeName +
+                    " - " +
+                    office.pincode;
+
+
+                officeSelect.appendChild(
+                    option
+                );
+
+            });
+
+
+        officeSelect.disabled =
+            false;
+
+    }
+);
+
+
+/* =========================================
+   POST OFFICE SELECTED
+========================================= */
+
+
+officeSelect.addEventListener(
+    "change",
+    function() {
+
+        hideError();
+
+
+        const index =
+            Number(
+                officeSelect.value
+            );
+
+
+        if (
+            Number.isNaN(index) ||
+            !currentOffices[index]
+        ) {
+
+            resultBox.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        const office =
+            currentOffices[index];
+
+
+        showOfficeDetails(
+            office
+        );
+
+    }
+);
+
+
+/* =========================================
+   DISPLAY DETAILS
+========================================= */
+
+
+function showOfficeDetails(
+    office
+) {
+
+    const name =
+        office.officeName ||
+        "N/A";
+
+    const pincode =
+        office.pincode ||
+        "N/A";
+
+    const officeType =
+        getOfficeType(
+            office.officeType
+        );
+
+
+    const delivery =
+        office.deliveryStatus ||
+        "N/A";
+
+    const circle =
+        office.circleName ||
+        "N/A";
+
+    const region =
+        office.regionName ||
+        "N/A";
+
+    const division =
+        office.divisionName ||
+        "N/A";
+
+
+    let coordinates =
+        "Not available";
+
+
+    if (
+        office.latitude !== null &&
+        office.latitude !== undefined &&
+        office.longitude !== null &&
+        office.longitude !== undefined
+    ) {
+
+        coordinates =
+            escapeHtml(
+                office.latitude
+            ) +
+            ", " +
+            escapeHtml(
+                office.longitude
+            );
+
+    }
+
+
+    resultBox.innerHTML = `
+
+        <h3>
+            📮 ${escapeHtml(name)}
+        </h3>
+
+
+        <div class="result-row">
+
+            <strong>Post Office:</strong><br>
+
+            ${escapeHtml(name)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Pincode:</strong><br>
+
+            <span class="pincode">
+                ${escapeHtml(pincode)}
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Office Type:</strong><br>
+
+            <span class="badge">
+                ${escapeHtml(officeType)}
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Delivery Status:</strong><br>
+
+            ${escapeHtml(delivery)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>District:</strong><br>
+
+            ${escapeHtml(
+                dataDistrict()
+            )}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>State:</strong><br>
+
+            ${escapeHtml(
+                dataState()
+            )}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Postal Circle:</strong><br>
+
+            ${escapeHtml(circle)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Region:</strong><br>
+
+            ${escapeHtml(region)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Division:</strong><br>
+
+            ${escapeHtml(division)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Coordinates:</strong><br>
+
+            ${coordinates}
+
+        </div>
+
+    `;
+
+
+    resultBox.style.display =
+        "block";
+
+
+    /*
+        Scroll result into view
+    */
+
+    resultBox.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+
+}
+
+
+/* =========================================
+   CURRENT STATE / DISTRICT
+========================================= */
+
+
+function dataState() {
+
+    const option =
+        stateSelect.options[
+            stateSelect.selectedIndex
+        ];
+
+
+    return option
+        ? option.textContent
+        : "N/A";
+
+}
+
+
+function dataDistrict() {
+
+    const option =
+        districtSelect.options[
+            districtSelect.selectedIndex
+        ];
+
+
+    return option
+        ? option.textContent
+        : "N/A";
+
+}
+
+
+/* =========================================
+   OFFICE TYPE
+========================================= */
+
+
+function getOfficeType(type) {
+
+    switch (
+        String(type || "")
+            .toUpperCase()
+    ) {
+
+        case "HO":
+            return "Head Post Office";
+
+        case "SO":
+            return "Sub Post Office";
+
+        case "BO":
+            return "Branch Post Office";
+
+        default:
+            return type || "N/A";
+
+    }
+
+}
+
+
+/* =========================================
+   RESET SELECT
+========================================= */
+
+
+function resetSelect(
+    select,
+    text
+) {
+
+    select.innerHTML =
+        `<option value="">${text}</option>`;
+
+    select.disabled =
+        true;
+
+}
+
+
+/* =========================================
+   LOADING
+========================================= */
+
+
+function showLoading(
+    message
+) {
+
+    loading.innerText =
+        message;
+
+    loading.style.display =
+        "block";
+
+}
+
+
+function hideLoading() {
+
+    loading.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+
+function showError(
+    message
+) {
+
+    errorBox.innerText =
+        message;
+
+    errorBox.style.display =
+        "block";
+
+}
+
+
+function hideError() {
+
+    errorBox.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   HTML ESCAPE
+========================================= */
+
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+</script>
+
+
+</body>
+
+</html>
+```
