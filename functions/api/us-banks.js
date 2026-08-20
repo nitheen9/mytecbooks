@@ -57,10 +57,6 @@ const STATES = [
 ];
 
 
-/* =========================================
-   MAIN FUNCTION
-========================================= */
-
 export async function onRequest(context) {
 
     try {
@@ -72,9 +68,9 @@ export async function onRequest(context) {
             url.searchParams.get("type");
 
 
-        /* =================================
+        /* =========================================
            STATES
-        ================================= */
+        ========================================= */
 
         if (type === "states") {
 
@@ -93,45 +89,26 @@ export async function onRequest(context) {
         }
 
 
-        /* =================================
+        /* =========================================
            CITIES
-        ================================= */
+        ========================================= */
 
         if (type === "cities") {
 
             const state =
                 url.searchParams.get("state");
 
-            if (!state) {
-
-                return json(
-                    {
-                        error:
-                            "State is required."
-                    },
-                    400
-                );
-
-            }
-
-
             const stateInfo =
                 STATES.find(function (s) {
-
                     return s[2] === state;
-
                 });
 
 
             if (!stateInfo) {
 
-                return json(
-                    {
-                        error:
-                            "Invalid state."
-                    },
-                    400
-                );
+                return json({
+                    error: "Invalid state."
+                }, 400);
 
             }
 
@@ -140,42 +117,18 @@ export async function onRequest(context) {
                 stateInfo[0];
 
 
-            /*
-             * Census "place" geography gives
-             * incorporated cities and other
-             * Census places.
-             */
-
             const censusUrl =
-                new URL(CENSUS_API);
-
-
-            censusUrl.searchParams.set(
-                "get",
-                "NAME"
-            );
-
-            censusUrl.searchParams.set(
-                "for",
-                "place:*"
-            );
-
-            censusUrl.searchParams.set(
-                "in",
-                "state:" + censusState
-            );
+                `${CENSUS_API}?get=NAME&for=place:*&in=state:${censusState}`;
 
 
             const response =
-                await fetch(
-                    censusUrl.toString()
-                );
+                await fetch(censusUrl);
 
 
             if (!response.ok) {
 
                 throw new Error(
-                    "Census API error: " +
+                    "Census API error " +
                     response.status
                 );
 
@@ -186,12 +139,9 @@ export async function onRequest(context) {
                 await response.json();
 
 
-            const cities = [];
+            const citySet =
+                new Set();
 
-
-            /*
-             * First row contains column names.
-             */
 
             for (
                 let i = 1;
@@ -210,39 +160,23 @@ export async function onRequest(context) {
                 }
 
 
-                /*
-                 * Remove Census suffixes such as
-                 * " city", " town", " village",
-                 * " borough", etc.
-                 */
-
-                const city =
-                    cleanCityName(name);
-
-
-                if (
-                    city &&
-                    !cities.includes(city)
-                ) {
-
-                    cities.push(city);
-
-                }
+                citySet.add(
+                    cleanCityName(name)
+                );
 
             }
 
 
-            cities.sort(function (a, b) {
+            const cities =
+                Array.from(citySet)
+                    .filter(Boolean)
+                    .sort(function (a, b) {
 
-                return a.localeCompare(
-                    b,
-                    "en",
-                    {
-                        sensitivity: "base"
-                    }
-                );
+                        return a.localeCompare(
+                            b
+                        );
 
-            });
+                    });
 
 
             return json({
@@ -252,9 +186,14 @@ export async function onRequest(context) {
         }
 
 
-        /* =================================
+        /* =========================================
            BANKS
-        ================================= */
+           
+           IMPORTANT:
+           Get locations for the selected city,
+           then create unique banks from the
+           returned location records.
+        ========================================= */
 
         if (type === "banks") {
 
@@ -267,29 +206,34 @@ export async function onRequest(context) {
 
             if (!state || !city) {
 
-                return json(
-                    {
-                        error:
-                            "State and city are required."
-                    },
-                    400
-                );
+                return json({
+                    error:
+                        "State and city are required."
+                }, 400);
 
             }
 
 
-            const filter =
-                `STALP:${state} AND CITY:"${escapeFilter(city)}"`;
-
+            /*
+             * Use the FDIC location endpoint with
+             * a city search.
+             *
+             * We deliberately don't combine the
+             * state and city into one filter.
+             */
 
             const data =
                 await fdicRequest(
                     "/locations",
                     {
-                        filters: filter,
+                        search:
+                            `"${city}"`,
+
                         fields:
-                            "NAME,CERT,CITY,STALP",
-                        limit: 10000
+                            "ID,NAME,CERT,CITY,STALP,ADDRESS,ZIP",
+
+                        limit:
+                            10000
                     }
                 );
 
@@ -301,6 +245,42 @@ export async function onRequest(context) {
             for (
                 const item of data.data || []
             ) {
+
+                const itemState =
+                    String(
+                        item.STALP || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+
+                const itemCity =
+                    String(
+                        item.CITY || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+
+                /*
+                 * Filter state and city ourselves.
+                 */
+
+                if (
+                    itemState !==
+                    state.toUpperCase()
+                ) {
+                    continue;
+                }
+
+
+                if (
+                    itemCity !==
+                    city.toUpperCase()
+                ) {
+                    continue;
+                }
+
 
                 const cert =
                     String(
@@ -354,9 +334,9 @@ export async function onRequest(context) {
         }
 
 
-        /* =================================
+        /* =========================================
            BRANCHES
-        ================================= */
+        ========================================= */
 
         if (type === "branches") {
 
@@ -376,41 +356,83 @@ export async function onRequest(context) {
                 !cert
             ) {
 
-                return json(
-                    {
-                        error:
-                            "State, city and bank are required."
-                    },
-                    400
-                );
+                return json({
+                    error:
+                        "State, city and bank are required."
+                }, 400);
 
             }
-
-
-            const filter =
-                `STALP:${state} AND CITY:"${escapeFilter(city)}" AND CERT:${cert}`;
 
 
             const data =
                 await fdicRequest(
                     "/locations",
                     {
-                        filters: filter,
+                        search:
+                            `"${city}"`,
 
                         fields:
                             "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE",
 
-                        limit: 10000
+                        limit:
+                            10000
                     }
                 );
 
 
-            const branches = [];
+            const branches =
+                [];
 
 
             for (
                 const item of data.data || []
             ) {
+
+                const itemState =
+                    String(
+                        item.STALP || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+
+                const itemCity =
+                    String(
+                        item.CITY || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+
+                const itemCert =
+                    String(
+                        item.CERT || ""
+                    ).trim();
+
+
+                if (
+                    itemState !==
+                    state.toUpperCase()
+                ) {
+                    continue;
+                }
+
+
+                if (
+                    itemCity !==
+                    city.toUpperCase()
+                ) {
+                    continue;
+                }
+
+
+                if (
+                    itemCert !==
+                    cert
+                ) {
+                    continue;
+                }
+
 
                 const id =
                     String(
@@ -460,9 +482,9 @@ export async function onRequest(context) {
         }
 
 
-        /* =================================
+        /* =========================================
            BRANCH DETAILS
-        ================================= */
+        ========================================= */
 
         if (type === "branch") {
 
@@ -472,13 +494,10 @@ export async function onRequest(context) {
 
             if (!id) {
 
-                return json(
-                    {
-                        error:
-                            "Branch ID is required."
-                    },
-                    400
-                );
+                return json({
+                    error:
+                        "Branch ID is required."
+                }, 400);
 
             }
 
@@ -487,33 +506,45 @@ export async function onRequest(context) {
                 await fdicRequest(
                     "/locations",
                     {
-                        filters:
-                            `ID:${escapeFilter(id)}`,
+                        search:
+                            id,
 
                         fields:
                             "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE",
 
-                        limit: 1
+                        limit:
+                            100
                     }
                 );
 
 
-            const item =
-                data.data &&
-                data.data.length
-                    ? data.data[0]
-                    : null;
+            let item = null;
+
+
+            for (
+                const record of data.data || []
+            ) {
+
+                if (
+                    String(
+                        record.ID || ""
+                    ) === id
+                ) {
+
+                    item = record;
+                    break;
+
+                }
+
+            }
 
 
             if (!item) {
 
-                return json(
-                    {
-                        error:
-                            "Branch not found."
-                    },
-                    404
-                );
+                return json({
+                    error:
+                        "Branch not found."
+                }, 404);
 
             }
 
@@ -564,31 +595,25 @@ export async function onRequest(context) {
         }
 
 
-        return json(
-            {
-                error:
-                    "Invalid request type."
-            },
-            400
-        );
+        return json({
+            error:
+                "Invalid request type."
+        }, 400);
 
     }
     catch (error) {
 
         console.error(
-            "US Bank API Error:",
+            "US Bank API:",
             error
         );
 
 
-        return json(
-            {
-                error:
-                    error.message ||
-                    "Server error."
-            },
-            500
-        );
+        return json({
+            error:
+                error.message ||
+                "Unable to load U.S. bank data."
+        }, 500);
 
     }
 
@@ -596,7 +621,7 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   FDIC API
+   FDIC REQUEST
 ========================================= */
 
 async function fdicRequest(
@@ -645,15 +670,16 @@ async function fdicRequest(
         const text =
             await response.text();
 
+
         console.error(
-            "FDIC error:",
+            "FDIC HTTP",
             response.status,
             text
         );
 
 
         throw new Error(
-            "FDIC API returned HTTP " +
+            "FDIC API HTTP " +
             response.status
         );
 
@@ -666,32 +692,44 @@ async function fdicRequest(
 
 
 /* =========================================
-   CLEAN CITY NAME
+   CITY NAME CLEANUP
 ========================================= */
 
 function cleanCityName(name) {
 
     return String(name)
-        .replace(/\s+city$/i, "")
-        .replace(/\s+town$/i, "")
-        .replace(/\s+village$/i, "")
-        .replace(/\s+borough$/i, "")
-        .replace(/\s+municipality$/i, "")
-        .replace(/\s+CDP$/i, "")
+
+        .replace(
+            /\s+city$/i,
+            ""
+        )
+
+        .replace(
+            /\s+town$/i,
+            ""
+        )
+
+        .replace(
+            /\s+village$/i,
+            ""
+        )
+
+        .replace(
+            /\s+borough$/i,
+            ""
+        )
+
+        .replace(
+            /\s+municipality$/i,
+            ""
+        )
+
+        .replace(
+            /\s+CDP$/i,
+            ""
+        )
+
         .trim();
-
-}
-
-
-/* =========================================
-   ESCAPE FDIC FILTER
-========================================= */
-
-function escapeFilter(value) {
-
-    return String(value || "")
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"');
 
 }
 
