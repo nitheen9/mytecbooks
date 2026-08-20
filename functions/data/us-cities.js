@@ -11,21 +11,14 @@ export async function getUSCities() {
 
     const response =
         await fetch(
-            CITY_DATA_URL,
-            {
-                headers: {
-                    "Accept": "text/csv"
-                }
-            }
+            CITY_DATA_URL
         );
 
     if (!response.ok) {
 
         throw new Error(
-            "Unable to download US city data. HTTP " +
-            response.status
+            "Unable to load U.S. city data."
         );
-
     }
 
     const text =
@@ -45,17 +38,16 @@ function parseCSV(text) {
             .replace(/^\uFEFF/, "")
             .split(/\r?\n/)
             .filter(
-                line =>
-                    line.trim() !== ""
+                x =>
+                    x.trim() !== ""
             );
 
 
     if (lines.length < 2) {
 
         throw new Error(
-            "US city CSV is empty."
+            "City dataset is empty."
         );
-
     }
 
 
@@ -82,9 +74,8 @@ function parseCSV(text) {
     ) {
 
         throw new Error(
-            "US city CSV format has changed."
+            "City dataset format is invalid."
         );
-
     }
 
 
@@ -112,20 +103,22 @@ function parseCSV(text) {
         ) {
 
             continue;
-
         }
 
 
         const state =
             String(
                 row[stateIndex] || ""
-            ).trim().toUpperCase();
+            )
+                .trim()
+                .toUpperCase();
 
 
         const city =
             String(
                 row[nameIndex] || ""
-            ).trim();
+            )
+                .trim();
 
 
         if (
@@ -140,11 +133,8 @@ function parseCSV(text) {
 
                 city:
                     city
-
             });
-
         }
-
     }
 
 
@@ -158,7 +148,7 @@ function parseCSVLine(line) {
 
     let current = "";
 
-    let insideQuotes = false;
+    let quoted = false;
 
 
     for (
@@ -171,12 +161,10 @@ function parseCSVLine(line) {
             line[i];
 
 
-        if (
-            char === '"'
-        ) {
+        if (char === '"') {
 
             if (
-                insideQuotes &&
+                quoted &&
                 line[i + 1] === '"'
             ) {
 
@@ -187,15 +175,14 @@ function parseCSVLine(line) {
             }
             else {
 
-                insideQuotes =
-                    !insideQuotes;
-
+                quoted =
+                    !quoted;
             }
 
         }
         else if (
             char === "," &&
-            !insideQuotes
+            !quoted
         ) {
 
             result.push(
@@ -208,9 +195,7 @@ function parseCSVLine(line) {
         else {
 
             current += char;
-
         }
-
     }
 
 
