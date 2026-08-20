@@ -1,0 +1,1689 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="google-site-verification"
+          content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+    <meta name="robots"
+          content="index, follow">
+
+    <meta name="description"
+          content="Search Indian bank branches by bank, state, city and branch. Find IFSC codes, bank addresses and branch details.">
+
+    <link rel="icon"
+          type="image/png"
+          href="/favicon.png">
+
+    <title>Bank IFSC Finder - Search Bank, State, City & Branch</title>
+
+
+    <!-- Google Analytics -->
+
+    <script async
+            src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
+
+    <script>
+
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-BP9YJW8LB9');
+
+    </script>
+
+
+    <style>
+
+        :root {
+
+            --primary: #f48120;
+            --dark: #1e1e24;
+            --light: #f9f9fb;
+            --border: #e0e0e6;
+
+        }
+
+
+        * {
+
+            box-sizing: border-box;
+
+        }
+
+
+        body {
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
+            background: var(--light);
+
+            color: var(--dark);
+
+            margin: 0;
+
+            padding: 20px;
+
+        }
+
+
+        .container {
+
+            max-width: 850px;
+
+            margin: 0 auto;
+
+        }
+
+
+        h1 {
+
+            text-align: center;
+
+            color: var(--dark);
+
+            margin: 10px 0 15px;
+
+            font-size: 30px;
+
+        }
+
+
+        .intro {
+
+            text-align: center;
+
+            color: #666;
+
+            margin-bottom: 28px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .search-card {
+
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 4px 15px rgba(0,0,0,0.05);
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .search-card h2 {
+
+            margin-top: 0;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .search-card p {
+
+            color: #666;
+
+            line-height: 1.6;
+
+        }
+
+
+        .field {
+
+            margin-top: 18px;
+
+        }
+
+
+        .field label {
+
+            display: block;
+
+            font-weight: bold;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        select {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: 2px solid var(--border);
+
+            border-radius: 8px;
+
+            font-size: 16px;
+
+            background: white;
+
+            color: #222;
+
+            outline: none;
+
+            cursor: pointer;
+
+        }
+
+
+        select:focus {
+
+            border-color: var(--primary);
+
+        }
+
+
+        select:disabled {
+
+            background: #f1f1f4;
+
+            color: #888;
+
+            cursor: not-allowed;
+
+        }
+
+
+        .loading {
+
+            margin-top: 15px;
+
+            padding: 14px;
+
+            background: #f1f1f6;
+
+            border-left: 5px solid var(--primary);
+
+            border-radius: 6px;
+
+            font-weight: bold;
+
+            color: #555;
+
+            display: none;
+
+        }
+
+
+        .error {
+
+            margin-top: 15px;
+
+            padding: 14px;
+
+            background: #fde8e8;
+
+            color: #d9383a;
+
+            border-radius: 6px;
+
+            font-weight: bold;
+
+            display: none;
+
+        }
+
+
+        .result {
+
+            margin-top: 22px;
+
+            padding: 20px;
+
+            background: #f1f1f6;
+
+            border-radius: 8px;
+
+            border-left: 5px solid var(--primary);
+
+            display: none;
+
+        }
+
+
+        .result h3 {
+
+            margin-top: 0;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .result-row {
+
+            padding: 12px 0;
+
+            border-bottom: 1px solid var(--border);
+
+            line-height: 1.6;
+
+            word-break: break-word;
+
+        }
+
+
+        .result-row:last-child {
+
+            border-bottom: none;
+
+        }
+
+
+        .ifsc-link {
+
+            display: inline-block;
+
+            margin-top: 18px;
+
+            padding: 13px 20px;
+
+            background: var(--dark);
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 8px;
+
+            font-weight: bold;
+
+        }
+
+
+        .ifsc-link:hover {
+
+            background: #333;
+
+        }
+
+
+        .search-button {
+
+            width: 100%;
+
+            margin-top: 22px;
+
+            padding: 14px;
+
+            background: var(--dark);
+
+            color: white;
+
+            border: none;
+
+            border-radius: 8px;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+
+        .search-button:hover {
+
+            background: #333;
+
+        }
+
+
+        footer {
+
+            text-align: center;
+
+            color: #777;
+
+            font-size: 13px;
+
+            margin: 30px 0 10px;
+
+            line-height: 1.6;
+
+        }
+
+
+        @media(max-width:600px) {
+
+            body {
+
+                padding: 12px;
+
+            }
+
+
+            h1 {
+
+                font-size: 24px;
+
+            }
+
+
+            .search-card {
+
+                padding: 18px;
+
+            }
+
+
+            select {
+
+                font-size: 16px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <h1>
+        🏦 India Bank IFSC Finder
+    </h1>
+
+
+    <p class="intro">
+
+        Search Indian bank branches by
+        bank, state, city and branch to find
+        IFSC code and branch details.
+
+    </p>
+
+
+    <div class="search-card">
+
+
+        <h2>
+            Find Bank Branch & IFSC Code
+        </h2>
+
+
+        <p>
+
+            Select a bank, state, city and branch.
+            The IFSC code will be displayed with
+            a link to the complete branch details.
+
+        </p>
+
+
+        <!-- BANK -->
+
+
+        <div class="field">
+
+            <label for="bankSelect">
+                Bank
+            </label>
+
+            <select id="bankSelect">
+
+                <option value="">
+                    Select Bank
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- STATE -->
+
+
+        <div class="field">
+
+            <label for="stateSelect">
+                State
+            </label>
+
+            <select id="stateSelect"
+                    disabled>
+
+                <option value="">
+                    Select State
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- CITY / DISTRICT -->
+
+
+        <div class="field">
+
+            <label for="districtSelect">
+                City / District
+            </label>
+
+            <select id="districtSelect"
+                    disabled>
+
+                <option value="">
+                    Select City / District
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- BRANCH -->
+
+
+        <div class="field">
+
+            <label for="branchSelect">
+                Branch
+            </label>
+
+            <select id="branchSelect"
+                    disabled>
+
+                <option value="">
+                    Select Branch
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button class="search-button"
+                id="findButton"
+                type="button">
+
+            🔍 Find IFSC Code
+
+        </button>
+
+
+        <div id="loading"
+             class="loading">
+
+            🔄 Loading...
+
+        </div>
+
+
+        <div id="error"
+             class="error">
+        </div>
+
+
+        <div id="result"
+             class="result">
+        </div>
+
+
+    </div>
+
+
+    <footer>
+
+        India Pincode & IFSC Finder<br>
+
+        Bank and IFSC information is retrieved
+        from the Razorpay IFSC API.
+
+        <br>
+
+        Please verify important banking information
+        with the bank before financial transactions.
+
+    </footer>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================================
+   API
+========================================= */
+
+
+const API = "https://ifsc.razorpay.com";
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+
+const bankSelect =
+    document.getElementById("bankSelect");
+
+
+const stateSelect =
+    document.getElementById("stateSelect");
+
+
+const districtSelect =
+    document.getElementById("districtSelect");
+
+
+const branchSelect =
+    document.getElementById("branchSelect");
+
+
+const findButton =
+    document.getElementById("findButton");
+
+
+const loading =
+    document.getElementById("loading");
+
+
+const errorBox =
+    document.getElementById("error");
+
+
+const resultBox =
+    document.getElementById("result");
+
+
+/*
+    Store selected data
+*/
+
+
+let currentBranches = [];
+
+
+/* =========================================
+   BANK LIST
+========================================= */
+
+
+/*
+    Razorpay does not provide a simple
+    /banks endpoint.
+
+    We therefore use the bank codes that
+    are available from the public IFSC
+    dataset.
+
+    This list can be expanded later.
+*/
+
+
+const banks = [
+
+    ["ABHY", "Abhyudaya Co-operative Bank"],
+    ["AIRP", "Airtel Payments Bank"],
+    ["ALLA", "Allahabad Bank"],
+    ["AUBL", "AU Small Finance Bank"],
+    ["AXIS", "Axis Bank"],
+    ["BARB", "Bank of Baroda"],
+    ["BKID", "Bank of India"],
+    ["CBIN", "Central Bank of India"],
+    ["CNRB", "Canara Bank"],
+    ["COSB", "Cosmos Co-operative Bank"],
+    ["DBSS", "DBS Bank India"],
+    ["DCBL", "DCB Bank"],
+    ["DENS", "Delhi Nagrik Sehkari Bank"],
+    ["ESFB", "Equitas Small Finance Bank"],
+    ["FDRL", "Federal Bank"],
+    ["HDFC", "HDFC Bank"],
+    ["HSBC", "HSBC Bank"],
+    ["ICIC", "ICICI Bank"],
+    ["IDIB", "Indian Bank"],
+    ["IDFB", "IDFC FIRST Bank"],
+    ["INDB", "Indian Bank"],
+    ["IOBA", "Indian Overseas Bank"],
+    ["JAKA", "Jammu and Kashmir Bank"],
+    ["JSFB", "Jana Small Finance Bank"],
+    ["KARB", "Karnataka Bank"],
+    ["KKBK", "Kotak Mahindra Bank"],
+    ["KVBL", "Karur Vysya Bank"],
+    ["MAHB", "Bank of Maharashtra"],
+    ["NSPB", "NSDL Payments Bank"],
+    ["PUNB", "Punjab National Bank"],
+    ["RATN", "RBL Bank"],
+    ["SBIN", "State Bank of India"],
+    ["SCBL", "Standard Chartered Bank"],
+    ["SIBL", "South Indian Bank"],
+    ["SRCB", "Saraswat Co-operative Bank"],
+    ["TMBL", "Tamilnad Mercantile Bank"],
+    ["UBIN", "Union Bank of India"],
+    ["UCBA", "UCO Bank"],
+    ["UTIB", "Axis Bank"],
+    ["YESB", "Yes Bank"],
+    ["ZCBL", "Zila Cooperative Bank"]
+
+];
+
+
+/* =========================================
+   LOAD BANKS
+========================================= */
+
+
+function loadBanks() {
+
+    banks
+        .sort(function(a, b) {
+
+            return a[1].localeCompare(b[1]);
+
+        })
+        .forEach(function(bank) {
+
+            const option =
+                document.createElement("option");
+
+            option.value = bank[0];
+
+            option.textContent = bank[1];
+
+            bankSelect.appendChild(option);
+
+        });
+
+}
+
+
+loadBanks();
+
+
+/* =========================================
+   BANK SELECTED
+========================================= */
+
+
+bankSelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            stateSelect,
+            "Select State"
+        );
+
+        resetSelect(
+            districtSelect,
+            "Select City / District"
+        );
+
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
+
+        resultBox.style.display = "none";
+
+        const bankCode =
+            bankSelect.value;
+
+
+        if (!bankCode) {
+
+            stateSelect.disabled = true;
+
+            return;
+
+        }
+
+
+        stateSelect.disabled = true;
+
+        showLoading(
+            "🔄 Loading states..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API +
+                    "/places?bankcode=" +
+                    encodeURIComponent(bankCode)
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load states."
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !data ||
+                !Array.isArray(data.states)
+            ) {
+
+                throw new Error(
+                    "No states found."
+                );
+
+            }
+
+
+            data.states
+                .sort()
+                .forEach(function(state) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    /*
+                        Convert state name to
+                        ISO code.
+
+                        Razorpay places endpoint
+                        requires ISO3166 state code
+                        for the next request.
+                    */
+
+                    option.value =
+                        getStateCode(state);
+
+                    option.textContent =
+                        state;
+
+                    stateSelect.appendChild(
+                        option
+                    );
+
+                });
+
+
+            stateSelect.disabled = false;
+
+            hideLoading();
+
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showError(
+                "Unable to load states. Please try again."
+            );
+
+            hideLoading();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   STATE SELECTED
+========================================= */
+
+
+stateSelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            districtSelect,
+            "Select City / District"
+        );
+
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
+
+        resultBox.style.display = "none";
+
+
+        const bankCode =
+            bankSelect.value;
+
+        const stateCode =
+            stateSelect.value;
+
+
+        if (!bankCode || !stateCode) {
+
+            districtSelect.disabled = true;
+
+            return;
+
+        }
+
+
+        districtSelect.disabled = true;
+
+
+        showLoading(
+            "🔄 Loading cities / districts..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API +
+                    "/places?bankcode=" +
+                    encodeURIComponent(bankCode) +
+                    "&state=" +
+                    encodeURIComponent(stateCode)
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load districts."
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !data ||
+                !Array.isArray(data.districts)
+            ) {
+
+                throw new Error(
+                    "No districts found."
+                );
+
+            }
+
+
+            data.districts
+                .sort()
+                .forEach(function(district) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        district;
+
+                    option.textContent =
+                        district;
+
+                    districtSelect.appendChild(
+                        option
+                    );
+
+                });
+
+
+            districtSelect.disabled = false;
+
+            hideLoading();
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showError(
+                "Unable to load cities / districts."
+            );
+
+            hideLoading();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   DISTRICT SELECTED
+========================================= */
+
+
+districtSelect.addEventListener(
+    "change",
+    async function() {
+
+        resetSelect(
+            branchSelect,
+            "Select Branch"
+        );
+
+        resultBox.style.display = "none";
+
+
+        const bankCode =
+            bankSelect.value;
+
+        const stateCode =
+            stateSelect.value;
+
+        const district =
+            districtSelect.value;
+
+
+        if (
+            !bankCode ||
+            !stateCode ||
+            !district
+        ) {
+
+            branchSelect.disabled = true;
+
+            return;
+
+        }
+
+
+        branchSelect.disabled = true;
+
+
+        showLoading(
+            "🔄 Loading branches..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API +
+                    "/places?bankcode=" +
+                    encodeURIComponent(bankCode) +
+                    "&state=" +
+                    encodeURIComponent(stateCode) +
+                    "&district=" +
+                    encodeURIComponent(district)
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load branches."
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !data ||
+                !Array.isArray(data.branches)
+            ) {
+
+                throw new Error(
+                    "No branches found."
+                );
+
+            }
+
+
+            currentBranches =
+                data.branches;
+
+
+            data.branches
+                .sort()
+                .forEach(function(branch) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        branch;
+
+                    option.textContent =
+                        branch;
+
+                    branchSelect.appendChild(
+                        option
+                    );
+
+                });
+
+
+            branchSelect.disabled = false;
+
+            hideLoading();
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showError(
+                "Unable to load branches."
+            );
+
+            hideLoading();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   FIND IFSC
+========================================= */
+
+
+findButton.addEventListener(
+    "click",
+    findIFSC
+);
+
+
+async function findIFSC() {
+
+    const bankCode =
+        bankSelect.value;
+
+    const stateCode =
+        stateSelect.value;
+
+    const district =
+        districtSelect.value;
+
+    const branch =
+        branchSelect.value;
+
+
+    resultBox.style.display = "none";
+
+
+    if (
+        !bankCode ||
+        !stateCode ||
+        !district ||
+        !branch
+    ) {
+
+        showError(
+            "Please select Bank, State, City / District and Branch."
+        );
+
+        return;
+
+    }
+
+
+    showLoading(
+        "🔍 Finding IFSC code..."
+    );
+
+
+    try {
+
+        /*
+            Search the branch using
+            Razorpay search endpoint.
+        */
+
+        const searchUrl =
+            API +
+            "/search?bankcode=" +
+            encodeURIComponent(bankCode) +
+            "&state=" +
+            encodeURIComponent(stateCode) +
+            "&city=" +
+            encodeURIComponent(district) +
+            "&limit=1000";
+
+
+        const response =
+            await fetch(searchUrl);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "IFSC search failed."
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        /*
+            Search endpoint can return
+            multiple branch records.
+        */
+
+
+        let records = [];
+
+
+        if (Array.isArray(data)) {
+
+            records = data;
+
+        }
+        else if (
+            data &&
+            Array.isArray(data.data)
+        ) {
+
+            records = data.data;
+
+        }
+
+
+        /*
+            Find exact branch.
+        */
+
+
+        const record =
+            records.find(
+                function(item) {
+
+                    return String(
+                        item.BRANCH || ""
+                    )
+                    .trim()
+                    .toUpperCase()
+                    ===
+                    String(branch)
+                    .trim()
+                    .toUpperCase();
+
+                }
+            );
+
+
+        if (!record || !record.IFSC) {
+
+            /*
+                Sometimes /search may return
+                results where city/district
+                naming differs.
+
+                Try branch lookup by filtering
+                locally from returned records.
+            */
+
+            const alternative =
+                records.find(
+                    function(item) {
+
+                        const itemBranch =
+                            String(
+                                item.BRANCH || ""
+                            )
+                            .trim()
+                            .toUpperCase();
+
+                        const selectedBranch =
+                            String(branch)
+                            .trim()
+                            .toUpperCase();
+
+                        return (
+                            itemBranch ===
+                            selectedBranch
+                        );
+
+                    }
+                );
+
+
+            if (
+                !alternative ||
+                !alternative.IFSC
+            ) {
+
+                throw new Error(
+                    "IFSC code not found."
+                );
+
+            }
+
+
+            showIFSCResult(
+                alternative
+            );
+
+        }
+        else {
+
+            showIFSCResult(
+                record
+            );
+
+        }
+
+
+        hideLoading();
+
+    }
+    catch(error) {
+
+        console.error(
+            "IFSC lookup error:",
+            error
+        );
+
+        hideLoading();
+
+        showError(
+            "Unable to find the IFSC code for the selected branch. Please try again."
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   DISPLAY IFSC
+========================================= */
+
+
+function showIFSCResult(data) {
+
+    const ifsc =
+        String(
+            data.IFSC || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+    if (!ifsc) {
+
+        showError(
+            "IFSC code was not found."
+        );
+
+        return;
+
+    }
+
+
+    const bank =
+        data.BANK || "N/A";
+
+    const branch =
+        data.BRANCH || "N/A";
+
+    const address =
+        data.ADDRESS || "N/A";
+
+    const city =
+        data.CITY || "N/A";
+
+    const district =
+        data.DISTRICT || "N/A";
+
+    const state =
+        data.STATE || "N/A";
+
+
+    const pageUrl =
+        "/ifsc/" +
+        encodeURIComponent(ifsc);
+
+
+    resultBox.innerHTML = `
+
+        <h3>
+            🏦 IFSC Code Found
+        </h3>
+
+
+        <div class="result-row">
+
+            <strong>Bank:</strong><br>
+
+            ${escapeHtml(bank)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Branch:</strong><br>
+
+            ${escapeHtml(branch)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>IFSC Code:</strong><br>
+
+            <strong>
+                ${escapeHtml(ifsc)}
+            </strong>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>Address:</strong><br>
+
+            ${escapeHtml(address)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>City:</strong><br>
+
+            ${escapeHtml(city)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>District:</strong><br>
+
+            ${escapeHtml(district)}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <strong>State:</strong><br>
+
+            ${escapeHtml(state)}
+
+        </div>
+
+
+        <a
+            class="ifsc-link"
+            href="${pageUrl}">
+
+            View Complete IFSC Details →
+
+        </a>
+
+    `;
+
+
+    resultBox.style.display = "block";
+
+}
+
+
+/* =========================================
+   STATE ISO CODE
+========================================= */
+
+
+/*
+    Razorpay /places requires ISO3166
+    state codes.
+
+    Example:
+
+    Andhra Pradesh = IN-AP
+    Telangana = IN-TG
+    Maharashtra = IN-MH
+*/
+
+
+const stateCodes = {
+
+    "ANDHRA PRADESH": "IN-AP",
+    "ARUNACHAL PRADESH": "IN-AR",
+    "ASSAM": "IN-AS",
+    "BIHAR": "IN-BR",
+    "CHHATTISGARH": "IN-CT",
+    "GOA": "IN-GA",
+    "GUJARAT": "IN-GJ",
+    "HARYANA": "IN-HR",
+    "HIMACHAL PRADESH": "IN-HP",
+    "JHARKHAND": "IN-JH",
+    "KARNATAKA": "IN-KA",
+    "KERALA": "IN-KL",
+    "MADHYA PRADESH": "IN-MP",
+    "MAHARASHTRA": "IN-MH",
+    "MANIPUR": "IN-MN",
+    "MEGHALAYA": "IN-ML",
+    "MIZORAM": "IN-MZ",
+    "NAGALAND": "IN-NL",
+    "ODISHA": "IN-OR",
+    "PUNJAB": "IN-PB",
+    "RAJASTHAN": "IN-RJ",
+    "SIKKIM": "IN-SK",
+    "TAMIL NADU": "IN-TN",
+    "TELANGANA": "IN-TG",
+    "TRIPURA": "IN-TR",
+    "UTTAR PRADESH": "IN-UP",
+    "UTTARAKHAND": "IN-UT",
+    "WEST BENGAL": "IN-WB",
+    "DELHI": "IN-DL",
+    "JAMMU AND KASHMIR": "IN-JK",
+    "LADAKH": "IN-LA",
+    "CHANDIGARH": "IN-CH",
+    "PUDUCHERRY": "IN-PY",
+    "ANDAMAN AND NICOBAR ISLANDS": "IN-AN",
+    "DADRA AND NAGAR HAVELI AND DAMAN AND DIU": "IN-DH",
+    "LAKSHADWEEP": "IN-LD"
+};
+
+
+function getStateCode(state) {
+
+    const key =
+        String(state)
+            .trim()
+            .toUpperCase();
+
+
+    return (
+        stateCodes[key] ||
+        state
+    );
+
+}
+
+
+/* =========================================
+   RESET SELECT
+========================================= */
+
+
+function resetSelect(
+    select,
+    text
+) {
+
+    select.innerHTML =
+        `<option value="">${text}</option>`;
+
+    select.disabled = true;
+
+}
+
+
+/* =========================================
+   LOADING
+========================================= */
+
+
+function showLoading(message) {
+
+    loading.innerText =
+        message;
+
+    loading.style.display =
+        "block";
+
+}
+
+
+function hideLoading() {
+
+    loading.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+
+function showError(message) {
+
+    errorBox.innerText =
+        message;
+
+    errorBox.style.display =
+        "block";
+
+}
+
+
+function hideError() {
+
+    errorBox.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   CLEAR ERROR WHEN SELECTING
+========================================= */
+
+
+bankSelect.addEventListener(
+    "change",
+    hideError
+);
+
+stateSelect.addEventListener(
+    "change",
+    hideError
+);
+
+districtSelect.addEventListener(
+    "change",
+    hideError
+);
+
+branchSelect.addEventListener(
+    "change",
+    hideError
+);
+
+
+/* =========================================
+   HTML ESCAPE
+========================================= */
+
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
+```
