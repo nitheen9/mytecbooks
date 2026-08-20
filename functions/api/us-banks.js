@@ -59,14 +59,10 @@ const STATES = [
     ["MP", "Northern Mariana Islands"]
 ];
 
-
 export async function onRequest(context) {
 
-    const url =
-        new URL(context.request.url);
-
-    const type =
-        url.searchParams.get("type");
+    const url = new URL(context.request.url);
+    const type = url.searchParams.get("type");
 
 
     /* =====================================
@@ -93,87 +89,44 @@ export async function onRequest(context) {
 
     if (type === "cities") {
 
-        const state =
-            url.searchParams.get("state");
+        const state = url.searchParams.get("state");
 
         if (!state) {
-
-            return json(
-                {
-                    error: "State is required."
-                },
-                400
-            );
-
+            return json({
+                error: "State is required."
+            }, 400);
         }
 
+        const data = await fdicRequest(
+            "/locations",
+            {
+                filters: `STALP:${state}`,
+                fields: "CITY,STALP",
+                limit: 10000,
+                offset: 0
+            }
+        );
 
-        /*
-         * Get all locations for the selected
-         * state.
-         *
-         * Do NOT use CITY as a search filter here.
-         * We retrieve CITY values and build the
-         * unique city list ourselves.
-         */
+        const citySet = new Set();
 
-        const query =
-            `STALP:${escapeSearch(state)}`;
-
-
-        const data =
-            await fdicRequest(
-                "/locations",
-                {
-                    search: query,
-                    limit: 10000,
-                    fields: "CITY,STALP"
-                }
-            );
-
-
-        const citySet =
-            new Set();
-
-
-        for (
-            const item of data.data || []
-        ) {
+        for (const item of data.data || []) {
 
             const city =
-                String(
-                    item.CITY || ""
-                ).trim();
-
+                String(item.CITY || "").trim();
 
             if (city) {
-
                 citySet.add(city);
-
             }
-
         }
 
-
         const cities =
-            Array.from(citySet)
-                .sort(function (a, b) {
-
-                    return a.localeCompare(
-                        b,
-                        "en",
-                        {
-                            sensitivity: "base"
-                        }
-                    );
-
-                });
-
+            Array.from(citySet).sort(function (a, b) {
+                return a.localeCompare(b);
+            });
 
         return json({
             cities: cities
         });
-
     }
 
 
@@ -189,60 +142,42 @@ export async function onRequest(context) {
         const city =
             url.searchParams.get("city");
 
-
         if (!state || !city) {
 
-            return json(
-                {
-                    error:
-                        "State and city are required."
-                },
-                400
-            );
+            return json({
+                error:
+                    "State and city are required."
+            }, 400);
 
         }
 
+        const data = await fdicRequest(
+            "/locations",
+            {
+                filters:
+                    `STALP:${state} AND CITY:"${escapeFilter(city)}"`,
 
-        const query =
-            `STALP:${escapeSearch(state)} AND CITY:"${escapeValue(city)}"`;
+                fields:
+                    "NAME,CERT,CITY,STALP",
 
+                limit: 10000,
 
-        const data =
-            await fdicRequest(
-                "/locations",
-                {
-                    search: query,
-                    limit: 10000,
-                    fields:
-                        "NAME,CERT,CITY,STALP"
-                }
-            );
-
-
-        const bankMap =
-            new Map();
+                offset: 0
+            }
+        );
 
 
-        for (
-            const item of data.data || []
-        ) {
+        const bankMap = new Map();
+
+        for (const item of data.data || []) {
 
             const cert =
-                String(
-                    item.CERT || ""
-                ).trim();
-
+                String(item.CERT || "").trim();
 
             const name =
-                String(
-                    item.NAME || ""
-                ).trim();
+                String(item.NAME || "").trim();
 
-
-            if (
-                cert &&
-                name
-            ) {
+            if (cert && name) {
 
                 bankMap.set(
                     cert,
@@ -253,27 +188,18 @@ export async function onRequest(context) {
                 );
 
             }
-
         }
 
 
         const banks =
-            Array.from(
-                bankMap.values()
-            );
+            Array.from(bankMap.values())
+                .sort(function (a, b) {
 
+                    return a.name.localeCompare(
+                        b.name
+                    );
 
-        banks.sort(function (a, b) {
-
-            return a.name.localeCompare(
-                b.name,
-                "en",
-                {
-                    sensitivity: "base"
-                }
-            );
-
-        });
+                });
 
 
         return json({
@@ -299,51 +225,39 @@ export async function onRequest(context) {
             url.searchParams.get("cert");
 
 
-        if (
-            !state ||
-            !city ||
-            !cert
-        ) {
+        if (!state || !city || !cert) {
 
-            return json(
-                {
-                    error:
-                        "State, city and bank are required."
-                },
-                400
-            );
+            return json({
+                error:
+                    "State, city and bank are required."
+            }, 400);
 
         }
 
 
-        const query =
-            `STALP:${escapeSearch(state)} AND CITY:"${escapeValue(city)}" AND CERT:${escapeSearch(cert)}`;
+        const data = await fdicRequest(
+            "/locations",
+            {
+                filters:
+                    `STALP:${state} AND CITY:"${escapeFilter(city)}" AND CERT:${cert}`,
 
+                fields:
+                    "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE",
 
-        const data =
-            await fdicRequest(
-                "/locations",
-                {
-                    search: query,
-                    limit: 10000,
-                    fields:
-                        "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE"
-                }
-            );
+                limit: 10000,
+
+                offset: 0
+            }
+        );
 
 
         const branches = [];
 
 
-        for (
-            const item of data.data || []
-        ) {
+        for (const item of data.data || []) {
 
             const id =
-                String(
-                    item.ID || ""
-                ).trim();
-
+                String(item.ID || "").trim();
 
             const branchName =
                 String(
@@ -356,28 +270,20 @@ export async function onRequest(context) {
             if (id) {
 
                 branches.push({
-
                     id: id,
-
                     name:
                         branchName ||
                         "Bank Branch"
-
                 });
 
             }
-
         }
 
 
         branches.sort(function (a, b) {
 
             return a.name.localeCompare(
-                b.name,
-                "en",
-                {
-                    sensitivity: "base"
-                }
+                b.name
             );
 
         });
@@ -402,31 +308,28 @@ export async function onRequest(context) {
 
         if (!id) {
 
-            return json(
-                {
-                    error:
-                        "Branch ID is required."
-                },
-                400
-            );
+            return json({
+                error:
+                    "Branch ID is required."
+            }, 400);
 
         }
 
 
-        const query =
-            `ID:${escapeSearch(id)}`;
+        const data = await fdicRequest(
+            "/locations",
+            {
+                filters:
+                    `ID:${escapeFilter(id)}`,
 
+                fields:
+                    "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE",
 
-        const data =
-            await fdicRequest(
-                "/locations",
-                {
-                    search: query,
-                    limit: 1,
-                    fields:
-                        "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE"
-                }
-            );
+                limit: 1,
+
+                offset: 0
+            }
+        );
 
 
         const item =
@@ -438,13 +341,10 @@ export async function onRequest(context) {
 
         if (!item) {
 
-            return json(
-                {
-                    error:
-                        "Branch not found."
-                },
-                404
-            );
+            return json({
+                error:
+                    "Branch not found."
+            }, 404);
 
         }
 
@@ -487,7 +387,6 @@ export async function onRequest(context) {
 
                 serviceType:
                     item.SERVTYPE || ""
-
             }
 
         });
@@ -495,19 +394,16 @@ export async function onRequest(context) {
     }
 
 
-    return json(
-        {
-            error:
-                "Invalid request type."
-        },
-        400
-    );
+    return json({
+        error:
+            "Invalid request type."
+    }, 400);
 
 }
 
 
 /* =========================================
-   FDIC API REQUEST
+   FDIC REQUEST
 ========================================= */
 
 async function fdicRequest(
@@ -527,15 +423,14 @@ async function fdicRequest(
     );
 
 
-    Object.keys(params)
-        .forEach(function (key) {
+    for (const key in params) {
 
-            apiUrl.searchParams.set(
-                key,
-                String(params[key])
-            );
+        apiUrl.searchParams.set(
+            key,
+            String(params[key])
+        );
 
-        });
+    }
 
 
     const response =
@@ -552,17 +447,17 @@ async function fdicRequest(
 
     if (!response.ok) {
 
-        const errorText =
+        const text =
             await response.text();
 
         console.error(
-            "FDIC API error:",
+            "FDIC API Error:",
             response.status,
-            errorText
+            text
         );
 
         throw new Error(
-            "FDIC API returned HTTP " +
+            "FDIC API error " +
             response.status
         );
 
@@ -575,23 +470,10 @@ async function fdicRequest(
 
 
 /* =========================================
-   SEARCH VALUE
+   ESCAPE FILTER
 ========================================= */
 
-function escapeSearch(value) {
-
-    return String(value || "")
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"');
-
-}
-
-
-/* =========================================
-   SEARCH VALUE WITH QUOTES
-========================================= */
-
-function escapeValue(value) {
+function escapeFilter(value) {
 
     return String(value || "")
         .replace(/\\/g, "\\\\")
@@ -615,15 +497,12 @@ function json(
             status: status,
 
             headers: {
-
                 "Content-Type":
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
                     "public, max-age=3600"
-
             }
-
         }
     );
 
