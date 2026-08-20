@@ -75,48 +75,38 @@ export async function onRequest(context) {
     try {
 
         if (type === "banks") {
-
             return await getBanks();
-
         }
 
         if (type === "states") {
-
             return await getStates(
-                url.searchParams.get("cert")
+                url.searchParams.get("certs")
             );
-
         }
 
         if (type === "cities") {
-
             return await getCities(
-                url.searchParams.get("cert"),
+                url.searchParams.get("certs"),
                 url.searchParams.get("state")
             );
-
         }
 
         if (type === "branches") {
-
             return await getBranches(
-                url.searchParams.get("cert"),
+                url.searchParams.get("certs"),
                 url.searchParams.get("state"),
                 url.searchParams.get("city")
             );
-
         }
 
         return json(
             {
-                error:
-                    "Invalid API type."
+                error: "Invalid API type."
             },
             400
         );
 
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "US BANK API ERROR:",
@@ -131,286 +121,178 @@ export async function onRequest(context) {
             },
             500
         );
-
     }
 }
 
 
 /* =========================================
-   ACTIVE BANKS
+   BANKS
+   Merge duplicate bank names.
 ========================================= */
 
 async function getBanks() {
 
-    const allBanks = [];
+    const rows =
+        await getAllInstitutions();
 
-    const seen = new Set();
+    const bankMap =
+        new Map();
 
-    const limit = 5000;
+    for (const item of rows) {
 
-    let offset = 0;
+        const active =
+            String(
+                item.ACTIVE ?? ""
+            ).trim();
 
+        if (
+            active &&
+            active !== "1"
+        ) {
+            continue;
+        }
 
-    while (true) {
+        const name =
+            String(
+                item.NAME ?? ""
+            ).trim();
 
-        const data =
-            await fdicRequest(
-                "/institutions",
+        const cert =
+            String(
+                item.CERT ?? ""
+            ).trim();
+
+        if (
+            !name ||
+            !cert
+        ) {
+            continue;
+        }
+
+        const key =
+            normalizeBankName(name);
+
+        if (!bankMap.has(key)) {
+
+            bankMap.set(
+                key,
                 {
-                    search:
-                        "ACTIVE:1",
-
-                    fields:
-                        "NAME,CERT,CITY,STNAME,ACTIVE",
-
-                    limit:
-                        limit,
-
-                    offset:
-                        offset
+                    name: name,
+                    certs: []
                 }
             );
+        }
 
-
-        const rows =
-            extractRows(data);
-
+        const bank =
+            bankMap.get(key);
 
         if (
-            rows.length === 0
+            !bank.certs.includes(cert)
         ) {
-
-            break;
-
+            bank.certs.push(cert);
         }
-
-
-        for (
-            const item of rows
-        ) {
-
-            const active =
-                String(
-                    item.ACTIVE ?? ""
-                ).trim();
-
-
-            if (
-                active &&
-                active !== "1"
-            ) {
-
-                continue;
-
-            }
-
-
-            const cert =
-                String(
-                    item.CERT ?? ""
-                ).trim();
-
-
-            const name =
-                String(
-                    item.NAME ?? ""
-                ).trim();
-
-
-            if (
-                !cert ||
-                !name ||
-                seen.has(cert)
-            ) {
-
-                continue;
-
-            }
-
-
-            seen.add(cert);
-
-
-            const city =
-                String(
-                    item.CITY ?? ""
-                ).trim();
-
-
-            const state =
-                String(
-                    item.STNAME ?? ""
-                ).trim();
-
-
-            allBanks.push({
-
-                cert:
-                    cert,
-
-                name:
-                    name,
-
-                city:
-                    city,
-
-                state:
-                    state
-
-            });
-
-        }
-
-
-        if (
-            rows.length <
-            limit
-        ) {
-
-            break;
-
-        }
-
-
-        offset += limit;
-
-
-        if (
-            offset >= 100000
-        ) {
-
-            break;
-
-        }
-
     }
 
+    const banks =
+        Array.from(
+            bankMap.values()
+        );
 
-    allBanks.sort(
+    banks.sort(
         function (a, b) {
-
             return a.name.localeCompare(
                 b.name
             );
-
         }
     );
 
-
     return json({
-
-        count:
-            allBanks.length,
-
-        banks:
-            allBanks
-
+        count: banks.length,
+        banks: banks
     });
-
 }
 
 
 /* =========================================
-   STATES
+   STATES FOR ALL CERTS
 ========================================= */
 
-async function getStates(cert) {
+async function getStates(
+    certsParam
+) {
 
-    if (!cert) {
+    const certs =
+        parseCerts(certsParam);
+
+    if (!certs.length) {
 
         return json(
             {
                 error:
-                    "Bank certificate is required."
+                    "Bank certificate list is required."
             },
             400
         );
-
     }
 
+    const search =
+        buildCertSearch(
+            certs
+        );
 
     const rows =
         await getAllLocations(
-            `CERT:${escapeQuery(cert)}`,
+            search,
             "STALP"
         );
-
 
     const stateSet =
         new Set();
 
+    for (const item of rows) {
 
-    for (
-        const item of rows
-    ) {
-
-        const code =
+        const state =
             String(
                 item.STALP ?? ""
             )
             .trim()
             .toUpperCase();
 
-
-        if (code) {
-
-            stateSet.add(code);
-
+        if (state) {
+            stateSet.add(state);
         }
-
     }
 
-
     const states =
-        Array.from(
-            stateSet
-        )
-        .sort()
-        .map(
-            function (code) {
+        Array.from(stateSet)
+            .sort()
+            .map(
+                function (code) {
 
-                const found =
-                    STATES.find(
-                        function (item) {
+                    const found =
+                        STATES.find(
+                            function (item) {
+                                return (
+                                    item[0] === code
+                                );
+                            }
+                        );
 
-                            return (
-                                item[0] ===
-                                code
-                            );
-
-                        }
-                    );
-
-
-                return {
-
-                    code:
-                        code,
-
-                    name:
-                        found
-                            ? found[1]
-                            : code
-
-                };
-
-            }
-        );
-
+                    return {
+                        code: code,
+                        name:
+                            found
+                                ? found[1]
+                                : code
+                    };
+                }
+            );
 
     return json({
-
-        cert:
-            String(cert),
-
-        count:
-            states.length,
-
-        states:
-            states
-
+        certs: certs,
+        count: states.length,
+        states: states
     });
-
 }
 
 
@@ -419,12 +301,15 @@ async function getStates(cert) {
 ========================================= */
 
 async function getCities(
-    cert,
+    certsParam,
     state
 ) {
 
+    const certs =
+        parseCerts(certsParam);
+
     if (
-        !cert ||
+        !certs.length ||
         !state
     ) {
 
@@ -435,97 +320,70 @@ async function getCities(
             },
             400
         );
-
     }
 
-
     const stateCode =
-        String(
-            state
-        )
-        .trim()
-        .toUpperCase();
+        String(state)
+            .trim()
+            .toUpperCase();
 
+    const search =
+        "(" +
+        buildCertSearch(
+            certs
+        ) +
+        ")" +
+        " AND " +
+        `STALP:${escapeQuery(stateCode)}`;
 
     const rows =
         await getAllLocations(
-            `CERT:${escapeQuery(cert)} AND STALP:${escapeQuery(stateCode)}`,
-            "CITY"
+            search,
+            "CITY,STALP"
         );
-
 
     const cityMap =
         new Map();
 
-
-    for (
-        const item of rows
-    ) {
+    for (const item of rows) {
 
         const city =
             String(
                 item.CITY ?? ""
             ).trim();
 
-
         if (!city) {
-
             continue;
-
         }
-
 
         const key =
             city.toUpperCase();
 
-
-        if (
-            !cityMap.has(key)
-        ) {
-
+        if (!cityMap.has(key)) {
             cityMap.set(
                 key,
                 city
             );
-
         }
-
     }
-
 
     const cities =
         Array.from(
             cityMap.values()
         );
 
-
     cities.sort(
         function (a, b) {
-
-            return a.localeCompare(
-                b
-            );
-
+            return a.localeCompare(b);
         }
     );
 
-
     return json({
-
-        cert:
-            String(cert),
-
-        state:
-            stateCode,
-
-        count:
-            cities.length,
-
-        cities:
-            cities
-
+        certs: certs,
+        state: stateCode,
+        count: cities.length,
+        cities: cities
     });
-
 }
 
 
@@ -534,13 +392,16 @@ async function getCities(
 ========================================= */
 
 async function getBranches(
-    cert,
+    certsParam,
     state,
     city
 ) {
 
+    const certs =
+        parseCerts(certsParam);
+
     if (
-        !cert ||
+        !certs.length ||
         !state ||
         !city
     ) {
@@ -552,25 +413,28 @@ async function getBranches(
             },
             400
         );
-
     }
 
-
     const stateCode =
-        String(
-            state
-        )
-        .trim()
-        .toUpperCase();
+        String(state)
+            .trim()
+            .toUpperCase();
 
-
-    const requestedCity =
+    const wantedCity =
         normalizeCity(city);
 
+    const search =
+        "(" +
+        buildCertSearch(
+            certs
+        ) +
+        ")" +
+        " AND " +
+        `STALP:${escapeQuery(stateCode)}`;
 
     const rows =
         await getAllLocations(
-            `CERT:${escapeQuery(cert)} AND STALP:${escapeQuery(stateCode)}`,
+            search,
             [
                 "ID",
                 "NAME",
@@ -585,55 +449,38 @@ async function getBranches(
             ].join(",")
         );
 
-
     const branches = [];
 
-    const seen = new Set();
+    const seen =
+        new Set();
 
-
-    for (
-        const item of rows
-    ) {
-
-        const itemCity =
-            normalizeCity(
-                item.CITY
-            );
-
+    for (const item of rows) {
 
         if (
-            itemCity !==
-            requestedCity
+            normalizeCity(
+                item.CITY
+            ) !== wantedCity
         ) {
-
             continue;
-
         }
-
 
         const id =
             String(
                 item.ID ?? ""
             ).trim();
 
-
         if (
             !id ||
             seen.has(id)
         ) {
-
             continue;
-
         }
-
 
         seen.add(id);
 
-
         branches.push({
 
-            id:
-                id,
+            id: id,
 
             name:
                 String(
@@ -675,7 +522,7 @@ async function getBranches(
             cert:
                 String(
                     item.CERT ||
-                    cert
+                    ""
                 ).trim(),
 
             serviceType:
@@ -683,47 +530,91 @@ async function getBranches(
                     item.SERVTYPE ||
                     ""
                 ).trim()
-
         });
-
     }
-
 
     branches.sort(
         function (a, b) {
-
             return a.name.localeCompare(
                 b.name
             );
-
         }
     );
 
-
     return json({
-
-        cert:
-            String(cert),
-
-        state:
-            stateCode,
-
-        city:
-            String(city),
-
-        count:
-            branches.length,
-
-        branches:
-            branches
-
+        state: stateCode,
+        city: city,
+        count: branches.length,
+        branches: branches
     });
-
 }
 
 
 /* =========================================
-   PAGINATED LOCATIONS
+   ALL INSTITUTIONS
+========================================= */
+
+async function getAllInstitutions() {
+
+    const allRows = [];
+
+    const limit = 5000;
+
+    let offset = 0;
+
+    while (true) {
+
+        const data =
+            await fdicRequest(
+                "/institutions",
+                {
+                    search:
+                        "ACTIVE:1",
+
+                    fields:
+                        "NAME,CERT,CITY,STNAME,ACTIVE",
+
+                    limit:
+                        limit,
+
+                    offset:
+                        offset
+                }
+            );
+
+        const rows =
+            extractRows(data);
+
+        if (!rows.length) {
+            break;
+        }
+
+        allRows.push(
+            ...rows
+        );
+
+        if (
+            rows.length <
+            limit
+        ) {
+            break;
+        }
+
+        offset += limit;
+
+        if (
+            offset >= 100000
+        ) {
+            break;
+        }
+    }
+
+    return allRows;
+}
+
+
+/* =========================================
+   ALL LOCATIONS WITH PAGINATION
 ========================================= */
 
 async function getAllLocations(
@@ -736,7 +627,6 @@ async function getAllLocations(
     const limit = 5000;
 
     let offset = 0;
-
 
     while (true) {
 
@@ -758,179 +648,109 @@ async function getAllLocations(
                 }
             );
 
-
         const rows =
             extractRows(data);
 
-
-        if (
-            rows.length === 0
-        ) {
-
+        if (!rows.length) {
             break;
-
         }
-
 
         allRows.push(
             ...rows
         );
 
-
         if (
             rows.length <
             limit
         ) {
-
             break;
-
         }
 
-
         offset += limit;
-
 
         if (
             offset >= 100000
         ) {
-
             break;
-
         }
-
     }
-
 
     return allRows;
-
 }
 
 
 /* =========================================
-   FDIC REQUEST
+   BUILD CERT SEARCH
+
+   Example:
+   CERT:123 OR CERT:456 OR CERT:789
 ========================================= */
 
-async function fdicRequest(
-    endpoint,
-    params
+function buildCertSearch(
+    certs
 ) {
 
-    const apiUrl =
-        new URL(
-            FDIC_API +
-            endpoint
-        );
-
-
-    apiUrl.searchParams.set(
-        "format",
-        "json"
-    );
-
-
-    for (
-        const key in params
-    ) {
-
-        apiUrl.searchParams.set(
-            key,
-            String(
-                params[key]
-            )
-        );
-
-    }
-
-
-    const response =
-        await fetch(
-            apiUrl.toString(),
-            {
-                method:
-                    "GET",
-
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
+    return certs
+        .map(
+            function (cert) {
+                return (
+                    "CERT:" +
+                    escapeQuery(cert)
+                );
             }
-        );
-
-
-    const text =
-        await response.text();
-
-
-    if (
-        !response.ok
-    ) {
-
-        throw new Error(
-            "FDIC API HTTP " +
-            response.status
-        );
-
-    }
-
-
-    try {
-
-        return JSON.parse(
-            text
-        );
-
-    }
-    catch {
-
-        throw new Error(
-            "FDIC returned invalid JSON."
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   UNWRAP FDIC RESPONSE
-========================================= */
-
-function extractRows(
-    result
-) {
-
-    if (
-        !result ||
-        !Array.isArray(
-            result.data
         )
-    ) {
+        .join(" OR ");
+}
 
+
+/* =========================================
+   PARSE CERTIFICATES
+========================================= */
+
+function parseCerts(
+    value
+) {
+
+    if (!value) {
         return [];
-
     }
 
-
-    return result.data.map(
-        function (item) {
-
-            if (
-                item &&
-                item.data &&
-                typeof item.data ===
-                    "object"
-            ) {
-
-                return item.data;
-
+    return String(value)
+        .split(",")
+        .map(
+            function (item) {
+                return item.trim();
             }
+        )
+        .filter(
+            function (item) {
+                return /^\d+$/.test(item);
+            }
+        );
+}
 
 
-            return item;
+/* =========================================
+   NORMALIZE BANK NAME
 
-        }
-    );
+   Merges same visible bank names.
+========================================= */
 
+function normalizeBankName(
+    name
+) {
+
+    return String(name)
+        .toUpperCase()
+        .replace(
+            /&/g,
+            "AND"
+        )
+        .replace(
+            /[^A-Z0-9]+/g,
+            " "
+        )
+        .trim();
 }
 
 
@@ -951,12 +771,118 @@ function normalizeCity(
         " "
     )
     .trim();
-
 }
 
 
 /* =========================================
-   ESCAPE QUERY
+   FDIC REQUEST
+========================================= */
+
+async function fdicRequest(
+    endpoint,
+    params
+) {
+
+    const apiUrl =
+        new URL(
+            FDIC_API +
+            endpoint
+        );
+
+    apiUrl.searchParams.set(
+        "format",
+        "json"
+    );
+
+    for (
+        const key in params
+    ) {
+
+        apiUrl.searchParams.set(
+            key,
+            String(
+                params[key]
+            )
+        );
+    }
+
+    const response =
+        await fetch(
+            apiUrl.toString(),
+            {
+                method: "GET",
+                headers: {
+                    "Accept":
+                        "application/json"
+                }
+            }
+        );
+
+    const text =
+        await response.text();
+
+    if (!response.ok) {
+
+        throw new Error(
+            "FDIC API HTTP " +
+            response.status
+        );
+    }
+
+    try {
+
+        return JSON.parse(
+            text
+        );
+
+    } catch {
+
+        throw new Error(
+            "FDIC returned invalid JSON."
+        );
+    }
+}
+
+
+/* =========================================
+   EXTRACT CURRENT FDIC RESPONSE
+========================================= */
+
+function extractRows(
+    result
+) {
+
+    if (
+        !result ||
+        !Array.isArray(
+            result.data
+        )
+    ) {
+
+        return [];
+    }
+
+    return result.data.map(
+        function (item) {
+
+            if (
+                item &&
+                item.data &&
+                typeof item.data ===
+                    "object"
+            ) {
+
+                return item.data;
+            }
+
+            return item;
+        }
+    );
+}
+
+
+/* =========================================
+   ESCAPE SEARCH
 ========================================= */
 
 function escapeQuery(
@@ -975,7 +901,6 @@ function escapeQuery(
         /"/g,
         '\\"'
     );
-
 }
 
 
@@ -993,22 +918,15 @@ function json(
             data
         ),
         {
-            status:
-                status,
-
+            status: status,
             headers: {
-
                 "Content-Type":
                     "application/json; charset=UTF-8",
-
                 "Cache-Control":
                     "public, max-age=3600",
-
                 "Access-Control-Allow-Origin":
                     "*"
-
             }
         }
     );
-
 }
