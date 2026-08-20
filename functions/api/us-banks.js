@@ -1,244 +1,218 @@
-const FDIC_BASE = "https://banks.data.fdic.gov/api";
+const FDIC_API = "https://api.fdic.gov/banks";
 
-const STATES = {
-    AL: "Alabama",
-    AK: "Alaska",
-    AZ: "Arizona",
-    AR: "Arkansas",
-    CA: "California",
-    CO: "Colorado",
-    CT: "Connecticut",
-    DE: "Delaware",
-    FL: "Florida",
-    GA: "Georgia",
-    HI: "Hawaii",
-    ID: "Idaho",
-    IL: "Illinois",
-    IN: "Indiana",
-    IA: "Iowa",
-    KS: "Kansas",
-    KY: "Kentucky",
-    LA: "Louisiana",
-    ME: "Maine",
-    MD: "Maryland",
-    MA: "Massachusetts",
-    MI: "Michigan",
-    MN: "Minnesota",
-    MS: "Mississippi",
-    MO: "Missouri",
-    MT: "Montana",
-    NE: "Nebraska",
-    NV: "Nevada",
-    NH: "New Hampshire",
-    NJ: "New Jersey",
-    NM: "New Mexico",
-    NY: "New York",
-    NC: "North Carolina",
-    ND: "North Dakota",
-    OH: "Ohio",
-    OK: "Oklahoma",
-    OR: "Oregon",
-    PA: "Pennsylvania",
-    RI: "Rhode Island",
-    SC: "South Carolina",
-    SD: "South Dakota",
-    TN: "Tennessee",
-    TX: "Texas",
-    UT: "Utah",
-    VT: "Vermont",
-    VA: "Virginia",
-    WA: "Washington",
-    WV: "West Virginia",
-    WI: "Wisconsin",
-    WY: "Wyoming",
-    DC: "District of Columbia",
-    PR: "Puerto Rico",
-    VI: "Virgin Islands",
-    GU: "Guam",
-    AS: "American Samoa",
-    MP: "Northern Mariana Islands"
-};
+const STATES = [
+    ["AL", "Alabama"],
+    ["AK", "Alaska"],
+    ["AZ", "Arizona"],
+    ["AR", "Arkansas"],
+    ["CA", "California"],
+    ["CO", "Colorado"],
+    ["CT", "Connecticut"],
+    ["DE", "Delaware"],
+    ["FL", "Florida"],
+    ["GA", "Georgia"],
+    ["HI", "Hawaii"],
+    ["ID", "Idaho"],
+    ["IL", "Illinois"],
+    ["IN", "Indiana"],
+    ["IA", "Iowa"],
+    ["KS", "Kansas"],
+    ["KY", "Kentucky"],
+    ["LA", "Louisiana"],
+    ["ME", "Maine"],
+    ["MD", "Maryland"],
+    ["MA", "Massachusetts"],
+    ["MI", "Michigan"],
+    ["MN", "Minnesota"],
+    ["MS", "Mississippi"],
+    ["MO", "Missouri"],
+    ["MT", "Montana"],
+    ["NE", "Nebraska"],
+    ["NV", "Nevada"],
+    ["NH", "New Hampshire"],
+    ["NJ", "New Jersey"],
+    ["NM", "New Mexico"],
+    ["NY", "New York"],
+    ["NC", "North Carolina"],
+    ["ND", "North Dakota"],
+    ["OH", "Ohio"],
+    ["OK", "Oklahoma"],
+    ["OR", "Oregon"],
+    ["PA", "Pennsylvania"],
+    ["RI", "Rhode Island"],
+    ["SC", "South Carolina"],
+    ["SD", "South Dakota"],
+    ["TN", "Tennessee"],
+    ["TX", "Texas"],
+    ["UT", "Utah"],
+    ["VT", "Vermont"],
+    ["VA", "Virginia"],
+    ["WA", "Washington"],
+    ["WV", "West Virginia"],
+    ["WI", "Wisconsin"],
+    ["WY", "Wyoming"],
+    ["DC", "District of Columbia"],
+    ["PR", "Puerto Rico"],
+    ["VI", "Virgin Islands"],
+    ["GU", "Guam"],
+    ["AS", "American Samoa"],
+    ["MP", "Northern Mariana Islands"]
+];
 
 
 export async function onRequest(context) {
 
-    const url =
-        new URL(context.request.url);
+    const url = new URL(context.request.url);
 
-    const type =
-        url.searchParams.get("type");
-
+    const type = url.searchParams.get("type");
 
     try {
 
-        /* ============================
-           BANKS
-        ============================ */
-
         if (type === "banks") {
-
             return await getBanks();
         }
 
-
-        /* ============================
-           STATES
-        ============================ */
-
         if (type === "states") {
 
-            const cert =
-                url.searchParams.get("cert");
-
-            return await getStates(cert);
+            return await getStates(
+                url.searchParams.get("cert")
+            );
         }
-
-
-        /* ============================
-           CITIES
-        ============================ */
 
         if (type === "cities") {
 
-            const cert =
-                url.searchParams.get("cert");
-
-            const state =
-                url.searchParams.get("state");
-
             return await getCities(
-                cert,
-                state
+                url.searchParams.get("cert"),
+                url.searchParams.get("state")
             );
         }
-
-
-        /* ============================
-           BRANCHES
-        ============================ */
 
         if (type === "branches") {
 
-            const cert =
-                url.searchParams.get("cert");
-
-            const state =
-                url.searchParams.get("state");
-
-            const city =
-                url.searchParams.get("city");
-
             return await getBranches(
-                cert,
-                state,
-                city
+                url.searchParams.get("cert"),
+                url.searchParams.get("state"),
+                url.searchParams.get("city")
             );
         }
 
-
-        /* ============================
-           BRANCH DETAILS
-        ============================ */
-
         if (type === "branch") {
 
-            const id =
-                url.searchParams.get("id");
-
-            return await getBranch(id);
+            return await getBranch(
+                url.searchParams.get("id")
+            );
         }
 
-
-        return response({
-            error:
-                "Invalid type."
+        return json({
+            error: "Invalid type."
         }, 400);
 
     }
     catch (error) {
 
-        console.error(error);
+        console.error("US BANK API ERROR:", error);
 
-        return response({
+        return json({
             error:
                 error.message ||
-                "FDIC API error."
+                "Unable to load U.S. bank data."
         }, 500);
     }
 }
 
 
-/* =====================================
-   GET BANKS
-===================================== */
+/* =========================================
+   BANKS
+========================================= */
 
 async function getBanks() {
 
-    const data =
-        await fdicRequest(
-            "/institutions",
-            {
-                fields:
-                    "CERT,NAME,CITY,STALP",
+    const data = await fdicRequest(
+        "/institutions",
+        {
+            fields:
+                "CERT,NAME,CITY,STALP,ACTIVE",
 
-                limit:
-                    10000,
+            filters:
+                "ACTIVE:1",
 
-                offset:
-                    0,
+            limit:
+                5000,
 
-                sort:
-                    "NAME:asc"
-            }
-        );
+            offset:
+                0,
+
+            sort_by:
+                "NAME",
+
+            sort_order:
+                "ASC"
+        }
+    );
 
 
     const banks = [];
 
+    const seen = new Set();
+
 
     for (
         const item of
-        data.data || []
+        extractRows(data)
     ) {
 
         const cert =
-            item.CERT;
+            String(
+                item.CERT ?? ""
+            ).trim();
 
         const name =
-            item.NAME;
+            String(
+                item.NAME ?? ""
+            ).trim();
 
 
         if (
-            cert === undefined ||
-            !name
+            !cert ||
+            !name ||
+            seen.has(cert)
         ) {
-
             continue;
         }
 
 
+        seen.add(cert);
+
+
         banks.push({
 
-            cert:
-                String(cert),
+            cert: cert,
 
-            name:
-                String(name),
+            name: name,
 
             city:
                 String(
-                    item.CITY || ""
-                ),
+                    item.CITY ?? ""
+                ).trim(),
 
             state:
                 String(
-                    item.STALP || ""
-                )
+                    item.STALP ?? ""
+                ).trim()
+
         });
     }
 
 
-    return response({
+    banks.sort(
+        (a, b) =>
+            a.name.localeCompare(
+                b.name
+            )
+    );
+
+
+    return json({
 
         count:
             banks.length,
@@ -250,82 +224,92 @@ async function getBanks() {
 }
 
 
-/* =====================================
-   GET STATES
-===================================== */
+/* =========================================
+   STATES FOR SELECTED BANK
+========================================= */
 
 async function getStates(cert) {
 
     if (!cert) {
 
-        return response({
+        return json({
             error:
-                "cert is required."
+                "Bank certificate is required."
         }, 400);
     }
 
 
-    const data =
-        await fdicRequest(
-            "/locations",
-            {
-                filters:
-                    `CERT:${cert}`,
+    const data = await fdicRequest(
+        "/locations",
+        {
+            search:
+                `CERT:${escapeQuery(cert)}`,
 
-                fields:
-                    "STALP",
+            fields:
+                "CERT,STALP",
 
-                limit:
-                    10000,
+            limit:
+                10000,
 
-                offset:
-                    0
-            }
-        );
+            offset:
+                0
+        }
+    );
 
 
-    const set =
+    const stateSet =
         new Set();
 
 
     for (
         const item of
-        data.data || []
+        extractRows(data)
     ) {
 
         const state =
             String(
-                item.STALP || ""
+                item.STALP ?? ""
             )
             .trim()
             .toUpperCase();
 
 
         if (state) {
-
-            set.add(state);
+            stateSet.add(state);
         }
     }
 
 
     const states =
-        Array.from(set)
+        Array.from(
+            stateSet
+        )
         .sort()
         .map(
-            code => ({
+            code => {
 
-                code:
-                    code,
+                const found =
+                    STATES.find(
+                        x =>
+                            x[0] === code
+                    );
 
-                name:
-                    STATES[code] ||
-                    code
 
-            })
+                return {
+
+                    code: code,
+
+                    name:
+                        found
+                            ? found[1]
+                            : code
+
+                };
+            }
         );
 
 
-    return response({
+    return json({
 
         cert:
             String(cert),
@@ -335,13 +319,14 @@ async function getStates(cert) {
 
         states:
             states
+
     });
 }
 
 
-/* =====================================
-   GET CITIES
-===================================== */
+/* =========================================
+   CITIES FOR BANK + STATE
+========================================= */
 
 async function getCities(
     cert,
@@ -353,69 +338,86 @@ async function getCities(
         !state
     ) {
 
-        return response({
+        return json({
             error:
-                "cert and state are required."
+                "Bank and state are required."
         }, 400);
     }
 
 
     const stateCode =
         String(state)
-        .trim()
-        .toUpperCase();
+            .trim()
+            .toUpperCase();
 
 
-    const data =
-        await fdicRequest(
-            "/locations",
-            {
-                filters:
-                    `CERT:${cert} AND STALP:${stateCode}`,
+    const data = await fdicRequest(
+        "/locations",
+        {
+            search:
+                `CERT:${escapeQuery(cert)} AND STALP:${escapeQuery(stateCode)}`,
 
-                fields:
-                    "CITY",
+            fields:
+                "CERT,CITY,STALP",
 
-                limit:
-                    10000,
+            limit:
+                10000,
 
-                offset:
-                    0
-            }
-        );
+            offset:
+                0
+        }
+    );
 
 
-    const set =
-        new Set();
+    const cityMap =
+        new Map();
 
 
     for (
         const item of
-        data.data || []
+        extractRows(data)
     ) {
 
         const city =
             String(
-                item.CITY || ""
+                item.CITY ?? ""
             ).trim();
 
 
-        if (city) {
+        if (!city) {
+            continue;
+        }
 
-            set.add(city);
+
+        const key =
+            city.toUpperCase();
+
+
+        if (!cityMap.has(key)) {
+
+            cityMap.set(
+                key,
+                city
+            );
         }
     }
 
 
     const cities =
-        Array.from(set)
-        .sort(
-            (a, b) =>
-                a.localeCompare(b)
+        Array.from(
+            cityMap.values()
         );
 
 
-    return response({
+    cities.sort(
+        (a, b) =>
+            a.localeCompare(
+                b
+            )
+    );
+
+
+    return json({
 
         cert:
             String(cert),
@@ -428,13 +430,14 @@ async function getCities(
 
         cities:
             cities
+
     });
 }
 
 
-/* =====================================
-   GET BRANCHES
-===================================== */
+/* =========================================
+   BRANCHES
+========================================= */
 
 async function getBranches(
     cert,
@@ -448,56 +451,51 @@ async function getBranches(
         !city
     ) {
 
-        return response({
+        return json({
             error:
-                "cert, state and city are required."
+                "Bank, state and city are required."
         }, 400);
     }
 
 
     const stateCode =
         String(state)
-        .trim()
-        .toUpperCase();
+            .trim()
+            .toUpperCase();
 
 
     const cityName =
         String(city)
-        .trim();
+            .trim();
 
 
-    const filters =
-        `CERT:${cert} AND ` +
-        `STALP:${stateCode} AND ` +
-        `CITY:"${cityName}"`;
+    const data = await fdicRequest(
+        "/locations",
+        {
+            search:
+                `CERT:${escapeQuery(cert)} AND STALP:${escapeQuery(stateCode)} AND CITY:${escapeQuery(cityName)}`,
 
+            fields:
+                [
+                    "ID",
+                    "CERT",
+                    "NAME",
+                    "OFFNAME",
+                    "ADDRESS",
+                    "CITY",
+                    "STALP",
+                    "ZIP",
+                    "COUNTY",
+                    "SERVTYPE"
+                ].join(","),
 
-    const data =
-        await fdicRequest(
-            "/locations",
-            {
-                filters:
-                    filters,
+            limit:
+                10000,
 
-                fields:
-                    [
-                        "ID",
-                        "CERT",
-                        "NAME",
-                        "OFFNAME",
-                        "ADDRESS",
-                        "CITY",
-                        "STALP",
-                        "ZIP"
-                    ].join(","),
-
-                limit:
-                    10000,
-
-                offset:
-                    0
-            }
-        );
+            offset:
+                0
+        }
+    );
 
 
     const branches = [];
@@ -505,53 +503,67 @@ async function getBranches(
 
     for (
         const item of
-        data.data || []
+        extractRows(data)
     ) {
 
-        if (
-            item.ID === undefined
-        ) {
+        const id =
+            String(
+                item.ID ?? ""
+            ).trim();
 
+
+        if (!id) {
             continue;
         }
 
 
         branches.push({
 
-            id:
-                String(item.ID),
+            id: id,
 
             name:
                 String(
                     item.OFFNAME ||
                     item.NAME ||
-                    "Branch"
-                ),
+                    "Bank Branch"
+                ).trim(),
 
             address:
                 String(
-                    item.ADDRESS || ""
-                ),
+                    item.ADDRESS ||
+                    ""
+                ).trim(),
 
             city:
                 String(
-                    item.CITY || ""
-                ),
+                    item.CITY ||
+                    ""
+                ).trim(),
 
             state:
                 String(
-                    item.STALP || ""
-                ),
+                    item.STALP ||
+                    ""
+                ).trim(),
 
             zip:
                 String(
-                    item.ZIP || ""
-                ),
+                    item.ZIP ||
+                    ""
+                ).trim(),
 
-            cert:
+            county:
                 String(
-                    item.CERT || cert
-                )
+                    item.COUNTY ||
+                    ""
+                ).trim(),
+
+            serviceType:
+                String(
+                    item.SERVTYPE ||
+                    ""
+                ).trim()
+
         });
     }
 
@@ -564,7 +576,7 @@ async function getBranches(
     );
 
 
-    return response({
+    return json({
 
         cert:
             String(cert),
@@ -580,47 +592,61 @@ async function getBranches(
 
         branches:
             branches
+
     });
 }
 
 
-/* =====================================
-   BRANCH DETAILS
-===================================== */
+/* =========================================
+   SINGLE BRANCH
+========================================= */
 
 async function getBranch(id) {
 
     if (!id) {
 
-        return response({
+        return json({
             error:
-                "id is required."
+                "Branch ID is required."
         }, 400);
     }
 
 
-    const data =
-        await fdicRequest(
-            "/locations",
-            {
-                filters:
-                    `ID:${id}`,
+    const data = await fdicRequest(
+        "/locations",
+        {
+            search:
+                `ID:${escapeQuery(id)}`,
 
-                limit:
-                    1,
+            fields:
+                [
+                    "ID",
+                    "NAME",
+                    "OFFNAME",
+                    "ADDRESS",
+                    "CITY",
+                    "STALP",
+                    "ZIP",
+                    "COUNTY",
+                    "CERT",
+                    "SERVTYPE"
+                ].join(","),
 
-                offset:
-                    0
-            }
-        );
+            limit:
+                1
+        }
+    );
+
+
+    const rows =
+        extractRows(data);
 
 
     if (
-        !data.data ||
-        data.data.length === 0
+        rows.length === 0
     ) {
 
-        return response({
+        return json({
             error:
                 "Branch not found."
         }, 404);
@@ -628,10 +654,10 @@ async function getBranch(id) {
 
 
     const item =
-        data.data[0];
+        rows[0];
 
 
-    return response({
+    return json({
 
         branch: {
 
@@ -656,23 +682,24 @@ async function getBranch(id) {
             zip:
                 item.ZIP || "",
 
-            cert:
-                item.CERT || "",
-
             county:
                 item.COUNTY || "",
 
+            cert:
+                item.CERT || "",
+
             serviceType:
                 item.SERVTYPE || ""
+
         }
 
     });
 }
 
 
-/* =====================================
+/* =========================================
    FDIC API REQUEST
-===================================== */
+========================================= */
 
 async function fdicRequest(
     endpoint,
@@ -681,7 +708,7 @@ async function fdicRequest(
 
     const apiUrl =
         new URL(
-            FDIC_BASE +
+            FDIC_API +
             endpoint
         );
 
@@ -698,7 +725,9 @@ async function fdicRequest(
 
         apiUrl.searchParams.set(
             key,
-            String(params[key])
+            String(
+                params[key]
+            )
         );
     }
 
@@ -709,10 +738,13 @@ async function fdicRequest(
     );
 
 
-    const result =
+    const response =
         await fetch(
             apiUrl.toString(),
             {
+                method:
+                    "GET",
+
                 headers: {
                     "Accept":
                         "application/json"
@@ -722,70 +754,124 @@ async function fdicRequest(
 
 
     const text =
-        await result.text();
+        await response.text();
 
 
-    console.log(
-        "FDIC STATUS:",
-        result.status
-    );
-
-
-    if (!result.ok) {
+    if (!response.ok) {
 
         console.error(
+            "FDIC ERROR:",
+            response.status,
             text.substring(
                 0,
                 1000
             )
         );
 
+
         throw new Error(
-            "FDIC returned HTTP " +
-            result.status
+            "FDIC API returned HTTP " +
+            response.status
         );
     }
-
-
-    let jsonData;
 
 
     try {
 
-        jsonData =
-            JSON.parse(text);
+        return JSON.parse(
+            text
+        );
 
     }
-    catch {
+    catch (error) {
 
         console.error(
+            "FDIC NON-JSON:",
             text.substring(
                 0,
                 1000
             )
         );
 
+
         throw new Error(
-            "FDIC did not return JSON."
+            "FDIC returned invalid JSON."
         );
     }
-
-
-    return jsonData;
 }
 
 
-/* =====================================
-   RESPONSE
-===================================== */
+/* =========================================
+   RESPONSE DATA HELPER
+========================================= */
 
-function response(
+function extractRows(data) {
+
+    /*
+     * Current FDIC API responses are normally
+     * available in data, but this helper also
+     * handles a nested data.data response.
+     */
+
+    if (
+        data &&
+        Array.isArray(data.data)
+    ) {
+
+        return data.data;
+    }
+
+
+    if (
+        data &&
+        data.data &&
+        Array.isArray(
+            data.data.data
+        )
+    ) {
+
+        return data.data.data;
+    }
+
+
+    return [];
+}
+
+
+/* =========================================
+   FILTER ESCAPE
+========================================= */
+
+function escapeQuery(value) {
+
+    return String(
+        value || ""
+    )
+        .trim()
+        .replace(
+            /\\/g,
+            "\\\\"
+        )
+        .replace(
+            /"/g,
+            '\\"'
+        );
+}
+
+
+/* =========================================
+   JSON RESPONSE
+========================================= */
+
+function json(
     data,
     status = 200
 ) {
 
     return new Response(
+
         JSON.stringify(data),
+
         {
             status:
                 status,
@@ -800,6 +886,7 @@ function response(
 
                 "Access-Control-Allow-Origin":
                     "*"
+
             }
         }
     );
