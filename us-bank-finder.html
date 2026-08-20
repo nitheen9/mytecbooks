@@ -1349,8 +1349,25 @@ async function loadBranches(
         branches.sort(
             function (a, b) {
 
-                return a.name.localeCompare(
-                    b.name
+                const nameCompare =
+                    a.name.localeCompare(
+                        b.name
+                    );
+
+
+                if (nameCompare !== 0) {
+
+                    return nameCompare;
+
+                }
+
+
+                return formatBranchLocation(
+                    a
+                ).localeCompare(
+                    formatBranchLocation(
+                        b
+                    )
                 );
 
             }
@@ -1372,11 +1389,14 @@ async function loadBranches(
 
 
             /*
-             * ONLY branch name displayed.
+             * Show location details too because some banks
+             * return the same branch name for multiple offices.
              */
 
             option.textContent =
-                branch.name;
+                formatBranchOptionText(
+                    branch
+                );
 
 
             /*
@@ -1695,6 +1715,117 @@ findButton.addEventListener(
 
     }
 );
+
+
+/* =========================================
+   FORMAT BRANCH OPTION TEXT
+========================================= */
+
+function formatBranchOptionText(
+    branch
+) {
+
+    const name =
+        String(
+            branch.name ||
+            "Bank Branch"
+        ).trim();
+
+
+    const location =
+        formatBranchLocation(
+            branch
+        );
+
+
+    if (!location) {
+
+        return name;
+
+    }
+
+
+    return (
+        name +
+        " — " +
+        location
+    );
+
+}
+
+
+function formatBranchLocation(
+    branch
+) {
+
+    const parts = [];
+
+    const address =
+        String(
+            branch.address ||
+            ""
+        ).trim();
+
+
+    const city =
+        String(
+            branch.city ||
+            selectedCity ||
+            ""
+        ).trim();
+
+
+    const state =
+        String(
+            branch.state ||
+            (
+                selectedState
+                    ? selectedState.code
+                    : ""
+            )
+        ).trim();
+
+
+    const zip =
+        String(
+            branch.zip ||
+            ""
+        ).trim();
+
+
+    if (address) {
+
+        parts.push(
+            address
+        );
+
+    }
+
+
+    const cityStateZip =
+        [
+            city,
+            state,
+            zip
+        ]
+        .filter(Boolean)
+        .join(", ");
+
+
+    if (cityStateZip) {
+
+        parts.push(
+            cityStateZip
+        );
+
+    }
+
+
+    return parts.join(
+        " | "
+    );
+
+}
 
 
 /* =========================================
