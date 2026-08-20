@@ -12,13 +12,13 @@
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. bank branches by bank, state, city and branch. Find branch addresses, ZIP codes, counties and FDIC information.">
+      content="Search active U.S. bank branches by bank, state, city and branch. Find bank addresses, ZIP codes and FDIC information.">
 
 <link rel="icon"
       type="image/png"
       href="/favicon.png">
 
-<title>USA Bank Branch Finder - Search Bank, State, City & Branch</title>
+<title>USA Bank Branch Finder - Active Banks, States, Cities & Branches</title>
 
 <style>
 
@@ -38,6 +38,7 @@ body {
     padding: 20px;
     background: var(--light);
     color: #222;
+
     font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -69,7 +70,9 @@ h1 {
     background: white;
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,.05);
+
+    box-shadow:
+        0 4px 15px rgba(0,0,0,.05);
 }
 
 .search-card h2 {
@@ -95,8 +98,12 @@ h1 {
 .search-input {
     width: 100%;
     padding: 14px;
-    border: 2px solid var(--border);
+
+    border:
+        2px solid var(--border);
+
     border-radius: 8px;
+
     font-size: 16px;
     outline: none;
     background: white;
@@ -113,23 +120,39 @@ h1 {
 
 .dropdown-list {
     position: absolute;
+
     z-index: 1000;
+
     left: 0;
     right: 0;
+
     top: 76px;
+
     background: white;
-    border: 1px solid var(--border);
+
+    border:
+        1px solid var(--border);
+
     border-radius: 8px;
+
     max-height: 320px;
+
     overflow-y: auto;
-    box-shadow: 0 8px 25px rgba(0,0,0,.12);
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.12);
+
     display: none;
 }
 
 .dropdown-item {
     padding: 12px 14px;
+
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
+
+    border-bottom:
+        1px solid #f0f0f0;
+
     line-height: 1.45;
 }
 
@@ -155,14 +178,24 @@ h1 {
 
 .search-button {
     width: 100%;
+
     margin-top: 25px;
+
     padding: 14px;
+
     border: none;
+
     border-radius: 8px;
-    background: var(--dark);
+
+    background:
+        var(--dark);
+
     color: white;
+
     font-size: 16px;
+
     font-weight: bold;
+
     cursor: pointer;
 }
 
@@ -172,31 +205,51 @@ h1 {
 
 .loading {
     margin-top: 18px;
+
     padding: 14px;
+
     background: #eef3ff;
-    border-left: 5px solid var(--primary);
+
+    border-left:
+        5px solid var(--primary);
+
     border-radius: 6px;
+
     display: none;
+
     font-weight: bold;
+
     color: #555;
 }
 
 .error {
     margin-top: 18px;
+
     padding: 14px;
+
     background: #fde8e8;
+
     color: #c62828;
+
     border-radius: 6px;
+
     display: none;
+
     font-weight: bold;
 }
 
 .result {
     margin-top: 22px;
+
     padding: 20px;
+
     background: #f1f4f9;
-    border-left: 5px solid var(--primary);
+
+    border-left:
+        5px solid var(--primary);
+
     border-radius: 8px;
+
     display: none;
 }
 
@@ -207,8 +260,12 @@ h1 {
 
 .result-row {
     padding: 12px 0;
-    border-bottom: 1px solid var(--border);
+
+    border-bottom:
+        1px solid var(--border);
+
     line-height: 1.6;
+
     word-break: break-word;
 }
 
@@ -218,9 +275,13 @@ h1 {
 
 footer {
     text-align: center;
+
     margin-top: 30px;
+
     color: #777;
+
     font-size: 13px;
+
     line-height: 1.6;
 }
 
@@ -243,17 +304,18 @@ footer {
 
 </head>
 
+
 <body>
 
 <div class="container">
 
 <h1>
-🏦 USA Bank Branch Finder
+🏦 USA Active Bank Branch Finder
 </h1>
 
 <p class="intro">
-Search U.S. bank branches by bank,
-state, city and branch.
+Search active U.S. bank branches by
+bank, state, city and branch.
 </p>
 
 <div class="search-card">
@@ -263,8 +325,8 @@ Find a U.S. Bank Branch
 </h2>
 
 <p>
-Select a bank first, then search for
-the state, city and branch.
+Select an active bank first, then search
+for the state, city and branch.
 </p>
 
 
@@ -280,7 +342,7 @@ Bank
     id="bankInput"
     class="search-input"
     type="text"
-    placeholder="Loading banks..."
+    placeholder="Loading active banks..."
     autocomplete="off">
 
 <div
@@ -395,15 +457,15 @@ Branch
 
 <footer>
 
-USA Bank Branch Finder<br>
+USA Active Bank Branch Finder<br>
 
 Bank and branch information is retrieved
 from FDIC BankFind data.
 
 <br>
 
-Please verify important banking information
-with the bank before financial transactions.
+Please verify important banking
+information with the bank before financial transactions.
 
 </footer>
 
@@ -413,6 +475,7 @@ with the bank before financial transactions.
 <script>
 
 const API = "/api/us-banks";
+
 
 const bankInput =
     document.getElementById("bankInput");
@@ -426,6 +489,7 @@ const cityInput =
 const branchInput =
     document.getElementById("branchInput");
 
+
 const bankDropdown =
     document.getElementById("bankDropdown");
 
@@ -437,6 +501,7 @@ const cityDropdown =
 
 const branchDropdown =
     document.getElementById("branchDropdown");
+
 
 const findButton =
     document.getElementById("findButton");
@@ -456,6 +521,7 @@ let states = [];
 let cities = [];
 let branches = [];
 
+
 let selectedBank = null;
 let selectedState = null;
 let selectedCity = null;
@@ -472,7 +538,7 @@ loadBanks();
 async function loadBanks() {
 
     showLoading(
-        "🔄 Loading U.S. banks..."
+        "🔄 Loading active U.S. banks..."
     );
 
     try {
@@ -486,6 +552,7 @@ async function loadBanks() {
             await response.json();
 
         if (!response.ok) {
+
             throw new Error(
                 data.error ||
                 "Unable to load banks."
@@ -493,22 +560,26 @@ async function loadBanks() {
         }
 
         banks =
-            Array.isArray(data.banks)
+            Array.isArray(
+                data.banks
+            )
                 ? data.banks
                 : [];
 
         if (
             banks.length === 0
         ) {
+
             throw new Error(
-                "No banks were returned by the API."
+                "No active banks were returned."
             );
         }
 
-        bankInput.disabled = false;
+        bankInput.disabled =
+            false;
 
         bankInput.placeholder =
-            "Search bank name or FDIC number...";
+            "Search active bank name or FDIC number...";
 
         hideLoading();
 
@@ -523,7 +594,7 @@ async function loadBanks() {
         hideLoading();
 
         showError(
-            "Unable to load U.S. banks. " +
+            "Unable to load active U.S. banks. " +
             error.message
         );
     }
@@ -531,7 +602,7 @@ async function loadBanks() {
 
 
 /* =========================================
-   BANK SEARCH
+   BANK INPUT
 ========================================= */
 
 bankInput.addEventListener(
@@ -593,129 +664,114 @@ function renderBanks() {
                         .toLowerCase()
                         .includes(search)
                 );
-
             }
         );
 
 
-    /*
-     * Show more results when searching.
-     */
-
-    const maxResults =
-        search.length >= 2
-            ? 1000
-            : 100;
-
-
-    showBankDropdown(
-        filtered.slice(
-            0,
-            maxResults
-        )
-    );
-}
-
-
-/* =========================================
-   BANK DROPDOWN
-========================================= */
-
-function showBankDropdown(
-    items
-) {
-
-    bankDropdown.innerHTML = "";
+    bankDropdown.innerHTML =
+        "";
 
 
     if (
-        items.length === 0
+        filtered.length === 0
     ) {
 
         showEmpty(
             bankDropdown,
-            "No banks found"
+            "No active banks found"
         );
 
         return;
     }
 
 
-    items.forEach(
-        function (bank) {
+    filtered
+        .slice(
+            0,
+            search.length >= 2
+                ? 1000
+                : 100
+        )
+        .forEach(
+            function (bank) {
 
-            const div =
-                document.createElement(
-                    "div"
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className =
+                    "dropdown-item";
+
+
+                div.innerHTML = `
+
+                    <div class="dropdown-main">
+                        ${escapeHtml(
+                            bank.name
+                        )}
+                    </div>
+
+                    <div class="dropdown-sub">
+                        FDIC #${escapeHtml(
+                            bank.cert
+                        )}
+                        ${
+                            bank.city
+                                ? " • " +
+                                  escapeHtml(
+                                      bank.city
+                                  )
+                                : ""
+                        }
+                        ${
+                            bank.state
+                                ? ", " +
+                                  escapeHtml(
+                                      bank.state
+                                  )
+                                : ""
+                        }
+                    </div>
+
+                `;
+
+
+                div.addEventListener(
+                    "mousedown",
+                    function (event) {
+
+                        event.preventDefault();
+
+
+                        selectedBank =
+                            bank;
+
+
+                        bankInput.value =
+                            bank.label;
+
+
+                        hideDropdown(
+                            bankDropdown
+                        );
+
+
+                        loadStates(
+                            bank.cert
+                        );
+
+                    }
                 );
 
 
-            div.className =
-                "dropdown-item";
+                bankDropdown.appendChild(
+                    div
+                );
 
-
-            div.innerHTML = `
-
-                <div class="dropdown-main">
-                    ${escapeHtml(
-                        bank.name
-                    )}
-                </div>
-
-                <div class="dropdown-sub">
-                    FDIC #${escapeHtml(
-                        bank.cert
-                    )}
-                    ${bank.city
-                        ? " • " +
-                          escapeHtml(
-                              bank.city
-                          )
-                        : ""}
-                    ${bank.state
-                        ? ", " +
-                          escapeHtml(
-                              bank.state
-                          )
-                        : ""}
-                </div>
-
-            `;
-
-
-            div.addEventListener(
-                "mousedown",
-                function (event) {
-
-                    event.preventDefault();
-
-                    selectedBank =
-                        bank;
-
-                    bankInput.value =
-                        bank.label ||
-                        bank.name +
-                        " — FDIC #" +
-                        bank.cert;
-
-                    hideDropdown(
-                        bankDropdown
-                    );
-
-                    loadStates(
-                        bank.cert
-                    );
-
-                }
-            );
-
-
-            bankDropdown.appendChild(
-                div
-            );
-
-        }
-    );
+            }
+        );
 
 
     bankDropdown.style.display =
@@ -781,6 +837,7 @@ async function loadStates(
 
 
         if (!response.ok) {
+
             throw new Error(
                 data.error ||
                 "Unable to load states."
@@ -789,7 +846,9 @@ async function loadStates(
 
 
         states =
-            Array.isArray(data.states)
+            Array.isArray(
+                data.states
+            )
                 ? data.states
                 : [];
 
@@ -822,7 +881,7 @@ async function loadStates(
 
 
 /* =========================================
-   STATE SEARCH
+   STATE INPUT
 ========================================= */
 
 stateInput.addEventListener(
@@ -930,15 +989,19 @@ function renderStates() {
 
                     event.preventDefault();
 
+
                     selectedState =
                         state;
+
 
                     stateInput.value =
                         state.name;
 
+
                     hideDropdown(
                         stateDropdown
                     );
+
 
                     loadCities(
                         selectedBank.cert,
@@ -1016,6 +1079,7 @@ async function loadCities(
 
 
         if (!response.ok) {
+
             throw new Error(
                 data.error ||
                 "Unable to load cities."
@@ -1024,7 +1088,9 @@ async function loadCities(
 
 
         cities =
-            Array.isArray(data.cities)
+            Array.isArray(
+                data.cities
+            )
                 ? data.cities
                 : [];
 
@@ -1057,7 +1123,7 @@ async function loadCities(
 
 
 /* =========================================
-   CITY SEARCH
+   CITY INPUT
 ========================================= */
 
 cityInput.addEventListener(
@@ -1122,7 +1188,10 @@ function renderCities() {
 
 
     filtered
-        .slice(0, 1000)
+        .slice(
+            0,
+            1000
+        )
         .forEach(
             function (city) {
 
@@ -1146,15 +1215,19 @@ function renderCities() {
 
                         event.preventDefault();
 
+
                         selectedCity =
                             city;
+
 
                         cityInput.value =
                             city;
 
+
                         hideDropdown(
                             cityDropdown
                         );
+
 
                         loadBranches(
                             selectedBank.cert,
@@ -1200,7 +1273,8 @@ async function loadBranches(
     );
 
 
-    branchInput.disabled = true;
+    branchInput.disabled =
+        true;
 
 
     showLoading(
@@ -1228,6 +1302,7 @@ async function loadBranches(
 
 
         if (!response.ok) {
+
             throw new Error(
                 data.error ||
                 "Unable to load branches."
@@ -1236,7 +1311,9 @@ async function loadBranches(
 
 
         branches =
-            Array.isArray(data.branches)
+            Array.isArray(
+                data.branches
+            )
                 ? data.branches
                 : [];
 
@@ -1269,7 +1346,7 @@ async function loadBranches(
 
 
 /* =========================================
-   BRANCH SEARCH
+   BRANCH INPUT
 ========================================= */
 
 branchInput.addEventListener(
@@ -1340,7 +1417,10 @@ function renderBranches() {
 
 
     filtered
-        .slice(0, 1000)
+        .slice(
+            0,
+            1000
+        )
         .forEach(
             function (branch) {
 
@@ -1367,12 +1447,14 @@ function renderBranches() {
                             branch.address ||
                             ""
                         )}
-                        ${branch.zip
-                            ? " • " +
-                              escapeHtml(
-                                  branch.zip
-                              )
-                            : ""}
+                        ${
+                            branch.zip
+                                ? " • " +
+                                  escapeHtml(
+                                      branch.zip
+                                  )
+                                : ""
+                        }
                     </div>
 
                 `;
@@ -1384,11 +1466,14 @@ function renderBranches() {
 
                         event.preventDefault();
 
+
                         selectedBranch =
                             branch;
 
+
                         branchInput.value =
                             branch.name;
+
 
                         hideDropdown(
                             branchDropdown
@@ -1413,8 +1498,6 @@ function renderBranches() {
 
 /* =========================================
    FIND DETAILS
-
-   NO EXTRA API CALL.
 ========================================= */
 
 findButton.addEventListener(
@@ -1467,130 +1550,109 @@ findButton.addEventListener(
         }
 
 
-        showResult(
-            selectedBranch
-        );
+        /*
+         * Use the branch record already loaded.
+         * No second API request.
+         */
 
+        resultBox.innerHTML = `
+
+            <h3>
+                🏦 Bank Branch Details
+            </h3>
+
+            <div class="result-row">
+                <strong>Bank:</strong><br>
+                ${escapeHtml(
+                    selectedBank.name
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>FDIC Certificate:</strong><br>
+                ${escapeHtml(
+                    selectedBank.cert
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>Branch:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.name ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>Address:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.address ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>City:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.city ||
+                    selectedCity ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>State:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.state ||
+                    selectedState.name ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>ZIP Code:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.zip ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>County:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.county ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>Service Type:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.serviceType ||
+                    "N/A"
+                )}
+            </div>
+
+            <div class="result-row">
+                <strong>Branch ID:</strong><br>
+                ${escapeHtml(
+                    selectedBranch.id ||
+                    "N/A"
+                )}
+            </div>
+
+        `;
+
+
+        resultBox.style.display =
+            "block";
     }
 );
 
 
 /* =========================================
-   SHOW DETAILS
+   DROPDOWNS
 ========================================= */
-
-function showResult(
-    branch
-) {
-
-    resultBox.innerHTML = `
-
-        <h3>
-            🏦 Bank Branch Details
-        </h3>
-
-        <div class="result-row">
-            <strong>Bank:</strong><br>
-            ${escapeHtml(
-                selectedBank.name
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>Branch:</strong><br>
-            ${escapeHtml(
-                branch.name ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>Address:</strong><br>
-            ${escapeHtml(
-                branch.address ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>City:</strong><br>
-            ${escapeHtml(
-                branch.city ||
-                selectedCity ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>State:</strong><br>
-            ${escapeHtml(
-                branch.state ||
-                selectedState.name ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>ZIP Code:</strong><br>
-            ${escapeHtml(
-                branch.zip ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>County:</strong><br>
-            ${escapeHtml(
-                branch.county ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>FDIC Certificate:</strong><br>
-            ${escapeHtml(
-                branch.cert ||
-                selectedBank.cert ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>Service Type:</strong><br>
-            ${escapeHtml(
-                branch.serviceType ||
-                "N/A"
-            )}
-        </div>
-
-        <div class="result-row">
-            <strong>Branch ID:</strong><br>
-            ${escapeHtml(
-                branch.id ||
-                "N/A"
-            )}
-        </div>
-
-    `;
-
-
-    resultBox.style.display =
-        "block";
-}
-
-
-/* =========================================
-   DROPDOWN HELPERS
-========================================= */
-
-function hideDropdown(
-    element
-) {
-
-    element.style.display =
-        "none";
-}
-
 
 function showEmpty(
     element,
@@ -1625,6 +1687,15 @@ function showEmpty(
 }
 
 
+function hideDropdown(
+    element
+) {
+
+    element.style.display =
+        "none";
+}
+
+
 document.addEventListener(
     "click",
     function (event) {
@@ -1650,7 +1721,6 @@ document.addEventListener(
             hideDropdown(
                 branchDropdown
             );
-
         }
 
     }
@@ -1658,7 +1728,7 @@ document.addEventListener(
 
 
 /* =========================================
-   RESET HELPERS
+   RESET
 ========================================= */
 
 function resetInput(
@@ -1745,7 +1815,8 @@ function clearFromCity() {
         "Select city first"
     );
 
-    branchInput.disabled = true;
+    branchInput.disabled =
+        true;
 
     resultBox.style.display =
         "none";
@@ -1825,7 +1896,6 @@ function escapeHtml(
         /'/g,
         "&#039;"
     );
-
 }
 
 </script>
