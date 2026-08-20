@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<meta name="google-site-verification"
+      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+<meta name="robots"
+      content="index, follow">
+
+<meta name="description"
+      content="India School Address Finder. Search schools by state, district, block and school name. Find UDISE code, address, village, PIN code and school details.">
+
+<link rel="icon"
+      type="image/png"
+      href="/favicon.png">
+
+<title>India School Address Finder - Search Schools by State, District & Block</title>
+
+
+<!-- Google Analytics -->
+
+<script async
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
+</script>
+
+<script>
+
+window.dataLayer = window.dataLayer || [];
+
+function gtag() {
+    dataLayer.push(arguments);
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-BP9YJW8LB9');
+
+</script>
+
+
+<style>
+
+:root {
+
+    --primary:#1976d2;
+    --primary2:#42a5f5;
+    --dark:#172033;
+    --light:#f3f7fc;
+    --border:#d9e2ef;
+    --success:#168a4b;
+
+}
+
+* {
+    box-sizing:border-box;
+}
+
+body {
+
+    margin:0;
+
+    padding:20px;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef6ff,
+            #f9fbff
+        );
+
+    color:var(--dark);
+
+}
+
+.container {
+
+    max-width:850px;
+
+    margin:0 auto;
+
+}
+
+h1 {
+
+    text-align:center;
+
+    margin:10px 0 12px;
+
+    font-size:30px;
+
+}
+
+.intro {
+
+    text-align:center;
+
+    color:#667085;
+
+    line-height:1.6;
+
+    margin-bottom:28px;
+
+}
+
+.search-card {
+
+    background:#fff;
+
+    padding:25px;
+
+    border-radius:15px;
+
+    box-shadow:
+        0 5px 25px rgba(25,118,210,.10);
+
+    margin-bottom:25px;
+
+}
+
+.search-card h2 {
+
+    margin-top:0;
+
+    color:#1557a6;
+
+}
+
+.search-card p {
+
+    color:#667085;
+
+    line-height:1.6;
+
+}
+
+.field {
+
+    margin-top:18px;
+
+}
+
+.field label {
+
+    display:block;
+
+    font-weight:700;
+
+    margin-bottom:7px;
+
+}
+
+select {
+
+    width:100%;
+
+    padding:14px;
+
+    border:2px solid var(--border);
+
+    border-radius:9px;
+
+    font-size:16px;
+
+    background:#fff;
+
+    color:#222;
+
+    outline:none;
+
+}
+
+select:focus {
+
+    border-color:var(--primary);
+
+}
+
+select:disabled {
+
+    background:#eef2f7;
+
+    color:#8993a4;
+
+    cursor:not-allowed;
+
+}
+
+.search-button {
+
+    width:100%;
+
+    margin-top:23px;
+
+    padding:15px;
+
+    border:0;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1565c0,
+            #42a5f5
+        );
+
+    color:#fff;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+}
+
+.search-button:hover {
+
+    opacity:.92;
+
+}
+
+.loading {
+
+    display:none;
+
+    margin-top:18px;
+
+    padding:14px;
+
+    border-left:5px solid var(--primary);
+
+    background:#eaf4ff;
+
+    border-radius:7px;
+
+    color:#315b84;
+
+    font-weight:700;
+
+}
+
+.error {
+
+    display:none;
+
+    margin-top:18px;
+
+    padding:14px;
+
+    background:#fff0f0;
+
+    color:#c62828;
+
+    border-radius:7px;
+
+    font-weight:600;
+
+}
+
+.result {
+
+    display:none;
+
+    margin-top:22px;
+
+    padding:20px;
+
+    background:#f1f7ff;
+
+    border-left:5px solid var(--primary);
+
+    border-radius:9px;
+
+}
+
+.result h3 {
+
+    margin-top:0;
+
+    color:#1557a6;
+
+}
+
+.result-row {
+
+    padding:11px 0;
+
+    border-bottom:1px solid #dbe6f2;
+
+    line-height:1.6;
+
+    word-break:break-word;
+
+}
+
+.result-row:last-child {
+
+    border-bottom:0;
+
+}
+
+.school-count {
+
+    display:inline-block;
+
+    margin-bottom:15px;
+
+    padding:5px 10px;
+
+    background:#1976d2;
+
+    color:#fff;
+
+    border-radius:20px;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+}
+
+.school-link {
+
+    display:inline-block;
+
+    margin-top:18px;
+
+    padding:12px 18px;
+
+    background:var(--dark);
+
+    color:#fff;
+
+    text-decoration:none;
+
+    border-radius:8px;
+
+    font-weight:bold;
+
+}
+
+.school-link:hover {
+
+    background:#303b50;
+
+}
+
+.info-box {
+
+    margin-top:20px;
+
+    padding:15px;
+
+    background:#f8fbff;
+
+    border:1px solid #dbe8f7;
+
+    border-radius:8px;
+
+    color:#53657a;
+
+    font-size:14px;
+
+    line-height:1.6;
+
+}
+
+footer {
+
+    text-align:center;
+
+    color:#788494;
+
+    font-size:13px;
+
+    margin:30px 0 10px;
+
+    line-height:1.6;
+
+}
+
+@media(max-width:600px) {
+
+    body {
+
+        padding:12px;
+
+    }
+
+    h1 {
+
+        font-size:24px;
+
+    }
+
+    .search-card {
+
+        padding:18px;
+
+    }
+
+    select {
+
+        font-size:16px;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<h1>
+🏫 India School Address Finder
+</h1>
+
+
+<p class="intro">
+
+Search Indian schools by state, district,
+block and school name. Find UDISE code,
+location, PIN code and school details.
+
+</p>
+
+
+<div class="search-card">
+
+
+<h2>
+🔎 Find School & Address
+</h2>
+
+
+<p>
+
+Select a state, district and block to
+find schools. Then select a school to
+view its complete information.
+
+</p>
+
+
+<!-- STATE -->
+
+<div class="field">
+
+<label for="stateSelect">
+State
+</label>
+
+<select id="stateSelect">
+
+<option value="">
+Loading States...
+</option>
+
+</select>
+
+</div>
+
+
+<!-- DISTRICT -->
+
+<div class="field">
+
+<label for="districtSelect">
+District
+</label>
+
+<select id="districtSelect"
+        disabled>
+
+<option value="">
+Select District
+</option>
+
+</select>
+
+</div>
+
+
+<!-- BLOCK -->
+
+<div class="field">
+
+<label for="blockSelect">
+Block / Mandal
+</label>
+
+<select id="blockSelect"
+        disabled>
+
+<option value="">
+Select Block / Mandal
+</option>
+
+</select>
+
+</div>
+
+
+<!-- SCHOOL -->
+
+<div class="field">
+
+<label for="schoolSelect">
+School
+</label>
+
+<select id="schoolSelect"
+        disabled>
+
+<option value="">
+Select School
+</option>
+
+</select>
+
+</div>
+
+
+<button
+    class="search-button"
+    id="findButton"
+    type="button">
+
+🏫 Find School Details
+
+</button>
+
+
+<div id="loading"
+     class="loading">
+
+🔄 Loading...
+
+</div>
+
+
+<div id="error"
+     class="error">
+</div>
+
+
+<div id="result"
+     class="result">
+</div>
+
+
+<div class="info-box">
+
+<strong>About the data:</strong><br>
+
+School information is based on school
+directory data. UDISE+ is the official
+school education information system of
+the Department of School Education &
+Literacy, Ministry of Education,
+Government of India.
+
+</div>
+
+
+</div>
+
+
+<footer>
+
+India School Address Finder<br>
+
+School information should be verified
+with the school or education department
+before important use.
+
+</footer>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================================
+   DATA FILE
+========================================= */
+
+const DATA_URL = "/school-data.json";
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const stateSelect =
+    document.getElementById("stateSelect");
+
+const districtSelect =
+    document.getElementById("districtSelect");
+
+const blockSelect =
+    document.getElementById("blockSelect");
+
+const schoolSelect =
+    document.getElementById("schoolSelect");
+
+const findButton =
+    document.getElementById("findButton");
+
+const loading =
+    document.getElementById("loading");
+
+const errorBox =
+    document.getElementById("error");
+
+const resultBox =
+    document.getElementById("result");
+
+
+/* =========================================
+   GLOBAL DATA
+========================================= */
+
+let schools = [];
+
+
+/* =========================================
+   LOAD SCHOOL DATA
+========================================= */
+
+async function loadSchoolData() {
+
+    showLoading(
+        "🔄 Loading school database..."
+    );
+
+    try {
+
+        const response =
+            await fetch(
+                DATA_URL,
+                {
+                    cache:"no-store"
+                }
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " + response.status
+            );
+
+        }
+
+        const data =
+            await response.json();
+
+
+        /*
+            Supports:
+
+            [
+                {...},
+                {...}
+            ]
+
+            OR
+
+            {
+                "schools":[...]
+            }
+        */
+
+        if (Array.isArray(data)) {
+
+            schools = data;
+
+        }
+        else if (
+            data &&
+            Array.isArray(data.schools)
+        ) {
+
+            schools = data.schools;
+
+        }
+        else {
+
+            throw new Error(
+                "Invalid school-data.json format."
+            );
+
+        }
+
+
+        if (!schools.length) {
+
+            throw new Error(
+                "School database is empty."
+            );
+
+        }
+
+
+        loadStates();
+
+        hideLoading();
+
+    }
+    catch(error) {
+
+        console.error(
+            "School data error:",
+            error
+        );
+
+        hideLoading();
+
+        showError(
+            "Unable to load school data. Please check that school-data.json is uploaded in the website root."
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   LOAD STATES
+========================================= */
+
+function loadStates() {
+
+    resetSelect(
+        stateSelect,
+        "Select State"
+    );
+
+    const states =
+        uniqueValues(
+            schools,
+            [
+                "state",
+                "State",
+                "state_name"
+            ]
+        );
+
+
+    states
+        .sort(compareText)
+        .forEach(function(state) {
+
+            addOption(
+                stateSelect,
+                state,
+                state
+            );
+
+        });
+
+
+    stateSelect.disabled = false;
+
+}
+
+
+/* =========================================
+   STATE SELECT
+========================================= */
+
+stateSelect.addEventListener(
+    "change",
+    function() {
+
+        resetSelect(
+            districtSelect,
+            "Select District"
+        );
+
+        resetSelect(
+            blockSelect,
+            "Select Block / Mandal"
+        );
+
+        resetSelect(
+            schoolSelect,
+            "Select School"
+        );
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const state =
+            stateSelect.value;
+
+
+        if (!state) {
+
+            return;
+
+        }
+
+
+        const filtered =
+            schools.filter(function(item) {
+
+                return sameText(
+                    getValue(
+                        item,
+                        [
+                            "state",
+                            "State",
+                            "state_name"
+                        ]
+                    ),
+                    state
+                );
+
+            });
+
+
+        const districts =
+            uniqueValues(
+                filtered,
+                [
+                    "district",
+                    "District",
+                    "district_name"
+                ]
+            );
+
+
+        districts
+            .sort(compareText)
+            .forEach(function(district) {
+
+                addOption(
+                    districtSelect,
+                    district,
+                    district
+                );
+
+            });
+
+
+        districtSelect.disabled =
+            false;
+
+    }
+);
+
+
+/* =========================================
+   DISTRICT SELECT
+========================================= */
+
+districtSelect.addEventListener(
+    "change",
+    function() {
+
+        resetSelect(
+            blockSelect,
+            "Select Block / Mandal"
+        );
+
+        resetSelect(
+            schoolSelect,
+            "Select School"
+        );
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const state =
+            stateSelect.value;
+
+        const district =
+            districtSelect.value;
+
+
+        if (!state || !district) {
+
+            return;
+
+        }
+
+
+        const filtered =
+            schools.filter(function(item) {
+
+                return (
+
+                    sameText(
+                        getValue(
+                            item,
+                            [
+                                "state",
+                                "State",
+                                "state_name"
+                            ]
+                        ),
+                        state
+                    )
+
+                    &&
+
+                    sameText(
+                        getValue(
+                            item,
+                            [
+                                "district",
+                                "District",
+                                "district_name"
+                            ]
+                        ),
+                        district
+                    )
+
+                );
+
+            });
+
+
+        const blocks =
+            uniqueValues(
+                filtered,
+                [
+                    "block",
+                    "Block",
+                    "block_name",
+                    "udise_block_name"
+                ]
+            );
+
+
+        blocks
+            .sort(compareText)
+            .forEach(function(block) {
+
+                addOption(
+                    blockSelect,
+                    block,
+                    block
+                );
+
+            });
+
+
+        blockSelect.disabled =
+            false;
+
+    }
+);
+
+
+/* =========================================
+   BLOCK SELECT
+========================================= */
+
+blockSelect.addEventListener(
+    "change",
+    function() {
+
+        resetSelect(
+            schoolSelect,
+            "Select School"
+        );
+
+        resultBox.style.display =
+            "none";
+
+        hideError();
+
+
+        const state =
+            stateSelect.value;
+
+        const district =
+            districtSelect.value;
+
+        const block =
+            blockSelect.value;
+
+
+        if (
+            !state ||
+            !district ||
+            !block
+        ) {
+
+            return;
+
+        }
+
+
+        const filtered =
+            schools.filter(function(item) {
+
+                return (
+
+                    sameText(
+                        getValue(
+                            item,
+                            [
+                                "state",
+                                "State",
+                                "state_name"
+                            ]
+                        ),
+                        state
+                    )
+
+                    &&
+
+                    sameText(
+                        getValue(
+                            item,
+                            [
+                                "district",
+                                "District",
+                                "district_name"
+                            ]
+                        ),
+                        district
+                    )
+
+                    &&
+
+                    sameText(
+                        getValue(
+                            item,
+                            [
+                                "block",
+                                "Block",
+                                "block_name",
+                                "udise_block_name"
+                            ]
+                        ),
+                        block
+                    )
+
+                );
+
+            });
+
+
+        filtered
+            .sort(function(a,b) {
+
+                return compareText(
+                    getSchoolName(a),
+                    getSchoolName(b)
+                );
+
+            })
+            .forEach(function(item, index) {
+
+                const name =
+                    getSchoolName(item);
+
+                const udise =
+                    getValue(
+                        item,
+                        [
+                            "udise",
+                            "UDISE",
+                            "udise_code",
+                            "UDISE_CODE"
+                        ]
+                    );
+
+
+                const text =
+                    udise
+                        ? name +
+                          " (" +
+                          udise +
+                          ")"
+                        : name;
+
+
+                addOption(
+                    schoolSelect,
+                    String(index),
+                    text
+                );
+
+            });
+
+
+        /*
+            Store filtered schools
+        */
+
+        schoolSelect._schools =
+            filtered;
+
+
+        schoolSelect.disabled =
+            false;
+
+    }
+);
+
+
+/* =========================================
+   FIND SCHOOL
+========================================= */
+
+findButton.addEventListener(
+    "click",
+    function() {
+
+        const index =
+            schoolSelect.value;
+
+
+        if (
+            index === "" ||
+            !schoolSelect._schools
+        ) {
+
+            showError(
+                "Please select a school."
+            );
+
+            return;
+
+        }
+
+
+        const school =
+            schoolSelect._schools[
+                Number(index)
+            ];
+
+
+        if (!school) {
+
+            showError(
+                "School information was not found."
+            );
+
+            return;
+
+        }
+
+
+        showSchoolResult(
+            school
+        );
+
+    }
+);
+
+
+/* =========================================
+   SHOW SCHOOL
+========================================= */
+
+function showSchoolResult(
+    school
+) {
+
+    const name =
+        getSchoolName(school);
+
+    const udise =
+        getValue(
+            school,
+            [
+                "udise",
+                "UDISE",
+                "udise_code",
+                "UDISE_CODE"
+            ]
+        );
+
+    const state =
+        getValue(
+            school,
+            [
+                "state",
+                "State",
+                "state_name"
+            ]
+        );
+
+    const district =
+        getValue(
+            school,
+            [
+                "district",
+                "District",
+                "district_name"
+            ]
+        );
+
+    const block =
+        getValue(
+            school,
+            [
+                "block",
+                "Block",
+                "block_name",
+                "udise_block_name"
+            ]
+        );
+
+    const village =
+        getValue(
+            school,
+            [
+                "village",
+                "Village",
+                "location",
+                "loc_name"
+            ]
+        );
+
+    const pin =
+        getValue(
+            school,
+            [
+                "pin",
+                "PIN",
+                "pincode",
+                "pin_code",
+                "Pin Code"
+            ]
+        );
+
+    const address =
+        getValue(
+            school,
+            [
+                "address",
+                "Address",
+                "school_address"
+            ]
+        );
+
+    const category =
+        getValue(
+            school,
+            [
+                "school_category",
+                "School Category",
+                "category"
+            ]
+        );
+
+    const management =
+        getValue(
+            school,
+            [
+                "management",
+                "school_management",
+                "sch_mgmt_name"
+            ]
+        );
+
+    const type =
+        getValue(
+            school,
+            [
+                "school_type",
+                "School Type",
+                "type"
+            ]
+        );
+
+    const medium =
+        getValue(
+            school,
+            [
+                "medium",
+                "Medium",
+                "instruction_medium"
+            ]
+        );
+
+
+    let html = "";
+
+
+    html += `
+        <h3>
+            🏫 ${escapeHtml(name)}
+        </h3>
+    `;
+
+
+    if (udise) {
+
+        html += `
+            <div class="school-count">
+                UDISE Code: ${escapeHtml(udise)}
+            </div>
+        `;
+
+    }
+
+
+    html += `
+        <div class="result-row">
+
+            <strong>School Name:</strong><br>
+
+            ${escapeHtml(name)}
+
+        </div>
+    `;
+
+
+    if (udise) {
+
+        html += `
+            <div class="result-row">
+
+                <strong>UDISE Code:</strong><br>
+
+                ${escapeHtml(udise)}
+
+            </div>
+        `;
+
+    }
+
+
+    html += `
+        <div class="result-row">
+
+            <strong>State:</strong><br>
+
+            ${escapeHtml(
+                state || "N/A"
+            )}
+
+        </div>
+
+        <div class="result-row">
+
+            <strong>District:</strong><br>
+
+            ${escapeHtml(
+                district || "N/A"
+            )}
+
+        </div>
+
+        <div class="result-row">
+
+            <strong>Block / Mandal:</strong><br>
+
+            ${escapeHtml(
+                block || "N/A"
+            )}
+
+        </div>
+
+        <div class="result-row">
+
+            <strong>Village / Town:</strong><br>
+
+            ${escapeHtml(
+                village || "N/A"
+            )}
+
+        </div>
+    `;
+
+
+    if (address) {
+
+        html += `
+            <div class="result-row">
+
+                <strong>Address:</strong><br>
+
+                ${escapeHtml(address)}
+
+            </div>
+        `;
+
+    }
+
+
+    html += `
+        <div class="result-row">
+
+            <strong>PIN Code:</strong><br>
+
+            ${escapeHtml(
+                pin || "N/A"
+            )}
+
+        </div>
+    `;
+
+
+    if (category) {
+
+        html += `
+            <div class="result-row">
+
+                <strong>School Category:</strong><br>
+
+                ${escapeHtml(category)}
+
+            </div>
+        `;
+
+    }
+
+
+    if (management) {
+
+        html += `
+            <div class="result-row">
+
+                <strong>Management:</strong><br>
+
+                ${escapeHtml(management)}
+
+            </div>
+        `;
+
+    }
+
+
+    if (type) {
+
+        html += `
+            <div class="result-row">
+
+                <strong>School Type:</strong><br>
+
+                ${escapeHtml(type)}
+
+            </div>
+        `;
+
+    }
+
+
+    if (medium) {
+
+        html += `
+            <div class="result-row">
+
+                <strong>Medium:</strong><br>
+
+                ${escapeHtml(medium)}
+
+            </div>
+        `;
+
+    }
+
+
+    resultBox.innerHTML =
+        html;
+
+
+    resultBox.style.display =
+        "block";
+
+
+    resultBox.scrollIntoView({
+        behavior:"smooth",
+        block:"nearest"
+    });
+
+}
+
+
+/* =========================================
+   GET SCHOOL NAME
+========================================= */
+
+function getSchoolName(
+    item
+) {
+
+    return getValue(
+        item,
+        [
+            "school_name",
+            "School Name",
+            "schoolName",
+            "name",
+            "Name"
+        ]
+    ) || "Unnamed School";
+
+}
+
+
+/* =========================================
+   GET VALUE
+========================================= */
+
+function getValue(
+    item,
+    fields
+) {
+
+    for (
+        let i = 0;
+        i < fields.length;
+        i++
+    ) {
+
+        const value =
+            item[fields[i]];
+
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== ""
+        ) {
+
+            return String(value).trim();
+
+        }
+
+    }
+
+
+    return "";
+
+}
+
+
+/* =========================================
+   UNIQUE VALUES
+========================================= */
+
+function uniqueValues(
+    items,
+    fields
+) {
+
+    const set =
+        new Map();
+
+
+    items.forEach(function(item) {
+
+        const value =
+            getValue(
+                item,
+                fields
+            );
+
+
+        if (value) {
+
+            const key =
+                value.toUpperCase();
+
+
+            if (!set.has(key)) {
+
+                set.set(
+                    key,
+                    value
+                );
+
+            }
+
+        }
+
+    });
+
+
+    return Array.from(
+        set.values()
+    );
+
+}
+
+
+/* =========================================
+   ADD OPTION
+========================================= */
+
+function addOption(
+    select,
+    value,
+    text
+) {
+
+    const option =
+        document.createElement(
+            "option"
+        );
+
+    option.value =
+        value;
+
+    option.textContent =
+        text;
+
+    select.appendChild(
+        option
+    );
+
+}
+
+
+/* =========================================
+   RESET SELECT
+========================================= */
+
+function resetSelect(
+    select,
+    text
+) {
+
+    select.innerHTML =
+        "";
+
+    const option =
+        document.createElement(
+            "option"
+        );
+
+    option.value =
+        "";
+
+    option.textContent =
+        text;
+
+    select.appendChild(
+        option
+    );
+
+    select.disabled =
+        true;
+
+    select._schools =
+        null;
+
+}
+
+
+/* =========================================
+   TEXT COMPARE
+========================================= */
+
+function compareText(
+    a,
+    b
+) {
+
+    return String(a)
+        .localeCompare(
+            String(b),
+            undefined,
+            {
+                sensitivity:"base"
+            }
+        );
+
+}
+
+
+/* =========================================
+   SAME TEXT
+========================================= */
+
+function sameText(
+    a,
+    b
+) {
+
+    return String(a)
+        .trim()
+        .toUpperCase()
+        ===
+        String(b)
+        .trim()
+        .toUpperCase();
+
+}
+
+
+/* =========================================
+   LOADING
+========================================= */
+
+function showLoading(
+    message
+) {
+
+    loading.innerText =
+        message;
+
+    loading.style.display =
+        "block";
+
+}
+
+
+function hideLoading() {
+
+    loading.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+function showError(
+    message
+) {
+
+    errorBox.innerText =
+        message;
+
+    errorBox.style.display =
+        "block";
+
+}
+
+
+function hideError() {
+
+    errorBox.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   ESCAPE HTML
+========================================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+loadSchoolData();
+
+</script>
+
+
+</body>
+
+</html>
