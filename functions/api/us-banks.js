@@ -52,19 +52,27 @@ const STATES = [
     ["WV", "West Virginia"],
     ["WI", "Wisconsin"],
     ["WY", "Wyoming"],
-    ["PR", "Puerto Rico"]
+    ["PR", "Puerto Rico"],
+    ["VI", "Virgin Islands"],
+    ["GU", "Guam"],
+    ["AS", "American Samoa"],
+    ["MP", "Northern Mariana Islands"]
 ];
+
+
+/* =========================================
+   MAIN
+========================================= */
 
 export async function onRequest(context) {
 
+    const url =
+        new URL(context.request.url);
+
+    const type =
+        url.searchParams.get("type");
+
     try {
-
-        const url =
-            new URL(context.request.url);
-
-        const type =
-            url.searchParams.get("type");
-
 
         /* ================================
            STATES
@@ -74,16 +82,15 @@ export async function onRequest(context) {
 
             return json({
 
-                states: STATES.map(
-                    function (item) {
+                states:
+                    STATES.map(function (s) {
 
                         return {
-                            code: item[0],
-                            name: item[1]
+                            code: s[0],
+                            name: s[1]
                         };
 
-                    }
-                )
+                    })
 
             });
 
@@ -96,9 +103,10 @@ export async function onRequest(context) {
 
         if (type === "cities") {
 
-            return await cities(
-                url.searchParams.get("state")
-            );
+            const state =
+                url.searchParams.get("state");
+
+            return await getCities(state);
 
         }
 
@@ -109,9 +117,15 @@ export async function onRequest(context) {
 
         if (type === "banks") {
 
-            return await banks(
-                url.searchParams.get("state"),
-                url.searchParams.get("city")
+            const state =
+                url.searchParams.get("state");
+
+            const city =
+                url.searchParams.get("city");
+
+            return await getBanks(
+                state,
+                city
             );
 
         }
@@ -123,10 +137,19 @@ export async function onRequest(context) {
 
         if (type === "branches") {
 
-            return await branches(
-                url.searchParams.get("state"),
-                url.searchParams.get("city"),
-                url.searchParams.get("cert")
+            const state =
+                url.searchParams.get("state");
+
+            const city =
+                url.searchParams.get("city");
+
+            const cert =
+                url.searchParams.get("cert");
+
+            return await getBranches(
+                state,
+                city,
+                cert
             );
 
         }
@@ -138,9 +161,10 @@ export async function onRequest(context) {
 
         if (type === "branch") {
 
-            return await branch(
-                url.searchParams.get("id")
-            );
+            const id =
+                url.searchParams.get("id");
+
+            return await getBranch(id);
 
         }
 
@@ -156,13 +180,16 @@ export async function onRequest(context) {
     }
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "US BANK ERROR:",
+            error
+        );
 
         return json(
             {
                 error:
                     error.message ||
-                    "Server error."
+                    "Unable to load data."
             },
             500
         );
@@ -172,11 +199,11 @@ export async function onRequest(context) {
 }
 
 
-/* ========================================
-   CITIES
-======================================== */
+/* =========================================
+   GET CITIES
+========================================= */
 
-async function cities(state) {
+async function getCities(state) {
 
     if (!state) {
 
@@ -191,16 +218,41 @@ async function cities(state) {
     }
 
 
-    const records =
-        await getLocations(state);
+    /*
+     * FDIC location search.
+     *
+     * Request locations for the selected
+     * state.
+     */
+
+    const data =
+        await fdicRequest(
+            "/locations",
+            {
+
+                filters:
+                    `STALP:${state}`,
+
+                fields:
+                    "CITY",
+
+                limit:
+                    10000,
+
+                offset:
+                    0
+
+            }
+        );
 
 
-    const cityMap =
+    const cities =
         new Map();
 
 
     for (
-        const item of records
+        const item of
+        data.data || []
     ) {
 
         const city =
@@ -218,9 +270,9 @@ async function cities(state) {
             city.toUpperCase();
 
 
-        if (!cityMap.has(key)) {
+        if (!cities.has(key)) {
 
-            cityMap.set(
+            cities.set(
                 key,
                 city
             );
@@ -232,7 +284,7 @@ async function cities(state) {
 
     const result =
         Array.from(
-            cityMap.values()
+            cities.values()
         );
 
 
@@ -247,23 +299,27 @@ async function cities(state) {
 
     return json({
 
-        cities: result
+        cities:
+            result
 
     });
 
 }
 
 
-/* ========================================
-   BANKS
-======================================== */
+/* =========================================
+   GET BANKS
+========================================= */
 
-async function banks(
+async function getBanks(
     state,
     city
 ) {
 
-    if (!state || !city) {
+    if (
+        !state ||
+        !city
+    ) {
 
         return json(
             {
@@ -276,11 +332,28 @@ async function banks(
     }
 
 
-    const records =
-        await getLocations(state);
+    const data =
+        await fdicRequest(
+            "/locations",
+            {
+
+                filters:
+                    `STALP:${state}`,
+
+                fields:
+                    "NAME,CERT,CITY",
+
+                limit:
+                    10000,
+
+                offset:
+                    0
+
+            }
+        );
 
 
-    const wantedCity =
+    const requestedCity =
         normalize(city);
 
 
@@ -289,12 +362,14 @@ async function banks(
 
 
     for (
-        const item of records
+        const item of
+        data.data || []
     ) {
 
         if (
             normalize(item.CITY)
-            !== wantedCity
+            !==
+            requestedCity
         ) {
 
             continue;
@@ -322,8 +397,11 @@ async function banks(
             bankMap.set(
                 cert,
                 {
-                    cert: cert,
-                    name: name
+                    cert:
+                        cert,
+
+                    name:
+                        name
                 }
             );
 
@@ -332,13 +410,13 @@ async function banks(
     }
 
 
-    const result =
+    const banks =
         Array.from(
             bankMap.values()
         );
 
 
-    result.sort(
+    banks.sort(
         function (a, b) {
 
             return a.name.localeCompare(
@@ -351,18 +429,19 @@ async function banks(
 
     return json({
 
-        banks: result
+        banks:
+            banks
 
     });
 
 }
 
 
-/* ========================================
-   BRANCHES
-======================================== */
+/* =========================================
+   GET BRANCHES
+========================================= */
 
-async function branches(
+async function getBranches(
     state,
     city,
     cert
@@ -385,19 +464,36 @@ async function branches(
     }
 
 
-    const records =
-        await getLocations(state);
+    const data =
+        await fdicRequest(
+            "/locations",
+            {
+
+                filters:
+                    `STALP:${state}`,
+
+                fields:
+                    "ID,NAME,OFFNAME,CITY,CERT",
+
+                limit:
+                    10000,
+
+                offset:
+                    0
+
+            }
+        );
 
 
-    const wantedCity =
+    const requestedCity =
         normalize(city);
 
 
-    const wantedCert =
+    const requestedCert =
         String(cert).trim();
 
 
-    const result = [];
+    const branches = [];
 
 
     const seen =
@@ -405,12 +501,14 @@ async function branches(
 
 
     for (
-        const item of records
+        const item of
+        data.data || []
     ) {
 
         if (
             normalize(item.CITY)
-            !== wantedCity
+            !==
+            requestedCity
         ) {
 
             continue;
@@ -422,7 +520,8 @@ async function branches(
             String(
                 item.CERT || ""
             ).trim()
-            !== wantedCert
+            !==
+            requestedCert
         ) {
 
             continue;
@@ -449,9 +548,10 @@ async function branches(
         seen.add(id);
 
 
-        result.push({
+        branches.push({
 
-            id: id,
+            id:
+                id,
 
             name:
                 String(
@@ -465,7 +565,7 @@ async function branches(
     }
 
 
-    result.sort(
+    branches.sort(
         function (a, b) {
 
             return a.name.localeCompare(
@@ -478,18 +578,19 @@ async function branches(
 
     return json({
 
-        branches: result
+        branches:
+            branches
 
     });
 
 }
 
 
-/* ========================================
-   BRANCH
-======================================== */
+/* =========================================
+   BRANCH DETAILS
+========================================= */
 
-async function branch(id) {
+async function getBranch(id) {
 
     if (!id) {
 
@@ -505,29 +606,37 @@ async function branch(id) {
 
 
     const data =
-        await fdic(
+        await fdicRequest(
             "/locations",
             {
+
                 filters:
-                    "ID:" +
-                    escapeFilter(id),
+                    `ID:${id}`,
 
                 fields:
-                    "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE",
+                    [
+                        "ID",
+                        "NAME",
+                        "OFFNAME",
+                        "CITY",
+                        "STALP",
+                        "ADDRESS",
+                        "ZIP",
+                        "COUNTY",
+                        "CERT"
+                    ].join(","),
 
-                limit: 1
+                limit:
+                    1
+
             }
         );
 
 
-    const item =
-        data.data &&
-        data.data.length
-            ? data.data[0]
-            : null;
-
-
-    if (!item) {
+    if (
+        !data.data ||
+        !data.data.length
+    ) {
 
         return json(
             {
@@ -538,6 +647,10 @@ async function branch(id) {
         );
 
     }
+
+
+    const item =
+        data.data[0];
 
 
     return json({
@@ -571,10 +684,7 @@ async function branch(id) {
                 item.COUNTY || "",
 
             cert:
-                item.CERT || "",
-
-            serviceType:
-                item.SERVTYPE || ""
+                item.CERT || ""
 
         }
 
@@ -583,88 +693,11 @@ async function branch(id) {
 }
 
 
-/* ========================================
-   GET FDIC LOCATIONS
-======================================== */
-
-async function getLocations(state) {
-
-    const all = [];
-
-    let offset = 0;
-
-    const limit = 1000;
-
-
-    while (true) {
-
-        const data =
-            await fdic(
-                "/locations",
-                {
-                    filters:
-                        "STALP:" +
-                        escapeFilter(state),
-
-                    fields:
-                        "ID,NAME,OFFNAME,CITY,STALP,ADDRESS,ZIP,COUNTY,CERT,SERVTYPE",
-
-                    limit: limit,
-
-                    offset: offset
-                }
-            );
-
-
-        const rows =
-            Array.isArray(data.data)
-                ? data.data
-                : [];
-
-
-        all.push(
-            ...rows
-        );
-
-
-        if (
-            rows.length <
-            limit
-        ) {
-
-            break;
-
-        }
-
-
-        offset += limit;
-
-
-        /*
-         * Prevent an accidentally huge request.
-         */
-
-        if (
-            offset >= 50000
-        ) {
-
-            break;
-
-        }
-
-    }
-
-
-    return all;
-
-}
-
-
-/* ========================================
+/* =========================================
    FDIC REQUEST
-======================================== */
+========================================= */
 
-async function fdic(
+async function fdicRequest(
     endpoint,
     params
 ) {
@@ -694,7 +727,7 @@ async function fdic(
 
 
     console.log(
-        "FDIC:",
+        "FDIC REQUEST:",
         apiUrl.toString()
     );
 
@@ -718,45 +751,60 @@ async function fdic(
     if (!response.ok) {
 
         console.error(
-            "FDIC HTTP:",
+            "FDIC ERROR:",
             response.status,
-            text
+            text.substring(
+                0,
+                500
+            )
         );
 
+
         throw new Error(
-            "FDIC HTTP " +
+            "FDIC API HTTP " +
             response.status
         );
 
     }
 
 
-    try {
+    /*
+     * Important:
+     * Check response before JSON.parse.
+     */
 
-        return JSON.parse(text);
-
-    }
-    catch (error) {
+    if (
+        !text.trim().startsWith("{")
+    ) {
 
         console.error(
-            "FDIC returned non-JSON:",
-            text.substring(0, 500)
+            "FDIC returned:",
+            text.substring(
+                0,
+                500
+            )
         );
 
+
         throw new Error(
-            "FDIC returned invalid JSON."
+            "FDIC returned HTML instead of JSON."
         );
 
     }
+
+
+    return JSON.parse(text);
 
 }
 
 
-/* ========================================
-   NORMALIZE
-======================================== */
+/* =========================================
+   NORMALIZE CITY
+========================================= */
 
-function normalize(value) {
+function normalize(
+    value
+) {
 
     return String(
         value || ""
@@ -771,30 +819,9 @@ function normalize(value) {
 }
 
 
-/* ========================================
-   ESCAPE FILTER
-======================================== */
-
-function escapeFilter(value) {
-
-    return String(
-        value || ""
-    )
-        .replace(
-            /\\/g,
-            "\\\\"
-        )
-        .replace(
-            /"/g,
-            '\\"'
-        );
-
-}
-
-
-/* ========================================
+/* =========================================
    JSON RESPONSE
-======================================== */
+========================================= */
 
 function json(
     data,
@@ -802,9 +829,12 @@ function json(
 ) {
 
     return new Response(
+
         JSON.stringify(data),
+
         {
-            status: status,
+            status:
+                status,
 
             headers: {
 
@@ -817,6 +847,7 @@ function json(
             }
 
         }
+
     );
 
 }
