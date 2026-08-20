@@ -580,82 +580,46 @@
 
 <script>
 
-
-/* =========================================
-   API
-========================================= */
-
-
-const API = "https://ifsc.razorpay.com";
+const API = "/api/ifsc";
 
 
 /* =========================================
    ELEMENTS
 ========================================= */
 
-
 const bankSelect =
     document.getElementById("bankSelect");
-
 
 const stateSelect =
     document.getElementById("stateSelect");
 
-
 const districtSelect =
     document.getElementById("districtSelect");
-
 
 const branchSelect =
     document.getElementById("branchSelect");
 
-
 const findButton =
     document.getElementById("findButton");
-
 
 const loading =
     document.getElementById("loading");
 
-
 const errorBox =
     document.getElementById("error");
 
-
 const resultBox =
     document.getElementById("result");
-
-
-/*
-    Store selected data
-*/
-
-
-let currentBranches = [];
 
 
 /* =========================================
    BANK LIST
 ========================================= */
 
-
-/*
-    Razorpay does not provide a simple
-    /banks endpoint.
-
-    We therefore use the bank codes that
-    are available from the public IFSC
-    dataset.
-
-    This list can be expanded later.
-*/
-
-
 const banks = [
 
     ["ABHY", "Abhyudaya Co-operative Bank"],
     ["AIRP", "Airtel Payments Bank"],
-    ["ALLA", "Allahabad Bank"],
     ["AUBL", "AU Small Finance Bank"],
     ["AXIS", "Axis Bank"],
     ["BARB", "Bank of Baroda"],
@@ -673,7 +637,6 @@ const banks = [
     ["ICIC", "ICICI Bank"],
     ["IDIB", "Indian Bank"],
     ["IDFB", "IDFC FIRST Bank"],
-    ["INDB", "Indian Bank"],
     ["IOBA", "Indian Overseas Bank"],
     ["JAKA", "Jammu and Kashmir Bank"],
     ["JSFB", "Jana Small Finance Bank"],
@@ -691,16 +654,9 @@ const banks = [
     ["TMBL", "Tamilnad Mercantile Bank"],
     ["UBIN", "Union Bank of India"],
     ["UCBA", "UCO Bank"],
-    ["UTIB", "Axis Bank"],
-    ["YESB", "Yes Bank"],
-    ["ZCBL", "Zila Cooperative Bank"]
+    ["YESB", "Yes Bank"]
 
 ];
-
-
-/* =========================================
-   LOAD BANKS
-========================================= */
 
 
 function loadBanks() {
@@ -731,9 +687,8 @@ loadBanks();
 
 
 /* =========================================
-   BANK SELECTED
+   BANK
 ========================================= */
-
 
 bankSelect.addEventListener(
     "change",
@@ -755,21 +710,17 @@ bankSelect.addEventListener(
         );
 
         resultBox.style.display = "none";
+        hideError();
+
 
         const bankCode =
             bankSelect.value;
 
 
         if (!bankCode) {
-
-            stateSelect.disabled = true;
-
             return;
-
         }
 
-
-        stateSelect.disabled = true;
 
         showLoading(
             "🔄 Loading states..."
@@ -781,7 +732,7 @@ bankSelect.addEventListener(
             const response =
                 await fetch(
                     API +
-                    "/places?bankcode=" +
+                    "?bankcode=" +
                     encodeURIComponent(bankCode)
                 );
 
@@ -789,7 +740,7 @@ bankSelect.addEventListener(
             if (!response.ok) {
 
                 throw new Error(
-                    "Unable to load states."
+                    "State request failed."
                 );
 
             }
@@ -816,18 +767,7 @@ bankSelect.addEventListener(
                 .forEach(function(state) {
 
                     const option =
-                        document.createElement(
-                            "option"
-                        );
-
-                    /*
-                        Convert state name to
-                        ISO code.
-
-                        Razorpay places endpoint
-                        requires ISO3166 state code
-                        for the next request.
-                    */
+                        document.createElement("option");
 
                     option.value =
                         getStateCode(state);
@@ -846,17 +786,19 @@ bankSelect.addEventListener(
 
             hideLoading();
 
-
         }
         catch(error) {
 
-            console.error(error);
+            console.error(
+                "State loading error:",
+                error
+            );
+
+            hideLoading();
 
             showError(
                 "Unable to load states. Please try again."
             );
-
-            hideLoading();
 
         }
 
@@ -865,9 +807,8 @@ bankSelect.addEventListener(
 
 
 /* =========================================
-   STATE SELECTED
+   STATE
 ========================================= */
-
 
 stateSelect.addEventListener(
     "change",
@@ -884,6 +825,7 @@ stateSelect.addEventListener(
         );
 
         resultBox.style.display = "none";
+        hideError();
 
 
         const bankCode =
@@ -894,15 +836,8 @@ stateSelect.addEventListener(
 
 
         if (!bankCode || !stateCode) {
-
-            districtSelect.disabled = true;
-
             return;
-
         }
-
-
-        districtSelect.disabled = true;
 
 
         showLoading(
@@ -915,7 +850,7 @@ stateSelect.addEventListener(
             const response =
                 await fetch(
                     API +
-                    "/places?bankcode=" +
+                    "?bankcode=" +
                     encodeURIComponent(bankCode) +
                     "&state=" +
                     encodeURIComponent(stateCode)
@@ -925,7 +860,7 @@ stateSelect.addEventListener(
             if (!response.ok) {
 
                 throw new Error(
-                    "Unable to load districts."
+                    "District request failed."
                 );
 
             }
@@ -952,9 +887,7 @@ stateSelect.addEventListener(
                 .forEach(function(district) {
 
                     const option =
-                        document.createElement(
-                            "option"
-                        );
+                        document.createElement("option");
 
                     option.value =
                         district;
@@ -976,13 +909,16 @@ stateSelect.addEventListener(
         }
         catch(error) {
 
-            console.error(error);
-
-            showError(
-                "Unable to load cities / districts."
+            console.error(
+                "District loading error:",
+                error
             );
 
             hideLoading();
+
+            showError(
+                "Unable to load cities / districts. Please try again."
+            );
 
         }
 
@@ -991,9 +927,8 @@ stateSelect.addEventListener(
 
 
 /* =========================================
-   DISTRICT SELECTED
+   DISTRICT
 ========================================= */
-
 
 districtSelect.addEventListener(
     "change",
@@ -1005,6 +940,7 @@ districtSelect.addEventListener(
         );
 
         resultBox.style.display = "none";
+        hideError();
 
 
         const bankCode =
@@ -1022,15 +958,8 @@ districtSelect.addEventListener(
             !stateCode ||
             !district
         ) {
-
-            branchSelect.disabled = true;
-
             return;
-
         }
-
-
-        branchSelect.disabled = true;
 
 
         showLoading(
@@ -1043,7 +972,7 @@ districtSelect.addEventListener(
             const response =
                 await fetch(
                     API +
-                    "/places?bankcode=" +
+                    "?bankcode=" +
                     encodeURIComponent(bankCode) +
                     "&state=" +
                     encodeURIComponent(stateCode) +
@@ -1055,7 +984,7 @@ districtSelect.addEventListener(
             if (!response.ok) {
 
                 throw new Error(
-                    "Unable to load branches."
+                    "Branch request failed."
                 );
 
             }
@@ -1077,18 +1006,12 @@ districtSelect.addEventListener(
             }
 
 
-            currentBranches =
-                data.branches;
-
-
             data.branches
                 .sort()
                 .forEach(function(branch) {
 
                     const option =
-                        document.createElement(
-                            "option"
-                        );
+                        document.createElement("option");
 
                     option.value =
                         branch;
@@ -1110,13 +1033,16 @@ districtSelect.addEventListener(
         }
         catch(error) {
 
-            console.error(error);
-
-            showError(
-                "Unable to load branches."
+            console.error(
+                "Branch loading error:",
+                error
             );
 
             hideLoading();
+
+            showError(
+                "Unable to load branches. Please try again."
+            );
 
         }
 
@@ -1127,7 +1053,6 @@ districtSelect.addEventListener(
 /* =========================================
    FIND IFSC
 ========================================= */
-
 
 findButton.addEventListener(
     "click",
@@ -1151,6 +1076,7 @@ async function findIFSC() {
 
 
     resultBox.style.display = "none";
+    hideError();
 
 
     if (
@@ -1177,19 +1103,18 @@ async function findIFSC() {
     try {
 
         /*
-            Search the branch using
-            Razorpay search endpoint.
-        */
+         * Use Razorpay SEARCH API through
+         * our Cloudflare proxy.
+         */
 
         const searchUrl =
             API +
-            "/search?bankcode=" +
+            "?bankcode=" +
             encodeURIComponent(bankCode) +
             "&state=" +
             encodeURIComponent(stateCode) +
-            "&city=" +
-            encodeURIComponent(district) +
-            "&limit=1000";
+            "&district=" +
+            encodeURIComponent(district);
 
 
         const response =
@@ -1210,113 +1135,92 @@ async function findIFSC() {
 
 
         /*
-            Search endpoint can return
-            multiple branch records.
-        */
+         * /places gives branch names only.
+         *
+         * Therefore search the branch
+         * using the /search endpoint directly
+         * through a second Cloudflare proxy.
+         */
+
+
+        const searchResponse =
+            await fetch(
+                "/api/ifsc-search" +
+                "?bankcode=" +
+                encodeURIComponent(bankCode) +
+                "&state=" +
+                encodeURIComponent(stateCode) +
+                "&city=" +
+                encodeURIComponent(district) +
+                "&limit=1000"
+            );
+
+
+        if (!searchResponse.ok) {
+
+            throw new Error(
+                "IFSC search failed."
+            );
+
+        }
+
+
+        const searchData =
+            await searchResponse.json();
 
 
         let records = [];
 
 
-        if (Array.isArray(data)) {
+        if (Array.isArray(searchData)) {
 
-            records = data;
+            records = searchData;
 
         }
         else if (
-            data &&
-            Array.isArray(data.data)
+            searchData &&
+            Array.isArray(searchData.data)
         ) {
 
-            records = data.data;
+            records =
+                searchData.data;
 
         }
 
 
-        /*
-            Find exact branch.
-        */
+        const selected =
+            String(branch)
+                .trim()
+                .toUpperCase();
 
 
         const record =
-            records.find(
-                function(item) {
+            records.find(function(item) {
 
-                    return String(
-                        item.BRANCH || ""
-                    )
-                    .trim()
-                    .toUpperCase()
-                    ===
-                    String(branch)
-                    .trim()
-                    .toUpperCase();
+                return String(
+                    item.BRANCH || ""
+                )
+                .trim()
+                .toUpperCase()
+                ===
+                selected;
 
-                }
-            );
+            });
 
 
-        if (!record || !record.IFSC) {
+        if (
+            !record ||
+            !record.IFSC
+        ) {
 
-            /*
-                Sometimes /search may return
-                results where city/district
-                naming differs.
-
-                Try branch lookup by filtering
-                locally from returned records.
-            */
-
-            const alternative =
-                records.find(
-                    function(item) {
-
-                        const itemBranch =
-                            String(
-                                item.BRANCH || ""
-                            )
-                            .trim()
-                            .toUpperCase();
-
-                        const selectedBranch =
-                            String(branch)
-                            .trim()
-                            .toUpperCase();
-
-                        return (
-                            itemBranch ===
-                            selectedBranch
-                        );
-
-                    }
-                );
-
-
-            if (
-                !alternative ||
-                !alternative.IFSC
-            ) {
-
-                throw new Error(
-                    "IFSC code not found."
-                );
-
-            }
-
-
-            showIFSCResult(
-                alternative
-            );
-
-        }
-        else {
-
-            showIFSCResult(
-                record
+            throw new Error(
+                "IFSC code not found."
             );
 
         }
 
+
+        showIFSCResult(record);
 
         hideLoading();
 
@@ -1324,14 +1228,14 @@ async function findIFSC() {
     catch(error) {
 
         console.error(
-            "IFSC lookup error:",
+            "IFSC error:",
             error
         );
 
         hideLoading();
 
         showError(
-            "Unable to find the IFSC code for the selected branch. Please try again."
+            "Unable to find the IFSC code for the selected branch."
         );
 
     }
@@ -1340,18 +1244,15 @@ async function findIFSC() {
 
 
 /* =========================================
-   DISPLAY IFSC
+   RESULT
 ========================================= */
-
 
 function showIFSCResult(data) {
 
     const ifsc =
-        String(
-            data.IFSC || ""
-        )
-        .trim()
-        .toUpperCase();
+        String(data.IFSC || "")
+            .trim()
+            .toUpperCase();
 
 
     if (!ifsc) {
@@ -1365,25 +1266,6 @@ function showIFSCResult(data) {
     }
 
 
-    const bank =
-        data.BANK || "N/A";
-
-    const branch =
-        data.BRANCH || "N/A";
-
-    const address =
-        data.ADDRESS || "N/A";
-
-    const city =
-        data.CITY || "N/A";
-
-    const district =
-        data.DISTRICT || "N/A";
-
-    const state =
-        data.STATE || "N/A";
-
-
     const pageUrl =
         "/ifsc/" +
         encodeURIComponent(ifsc);
@@ -1395,24 +1277,25 @@ function showIFSCResult(data) {
             🏦 IFSC Code Found
         </h3>
 
-
         <div class="result-row">
 
             <strong>Bank:</strong><br>
 
-            ${escapeHtml(bank)}
+            ${escapeHtml(
+                data.BANK || "N/A"
+            )}
 
         </div>
-
 
         <div class="result-row">
 
             <strong>Branch:</strong><br>
 
-            ${escapeHtml(branch)}
+            ${escapeHtml(
+                data.BRANCH || "N/A"
+            )}
 
         </div>
-
 
         <div class="result-row">
 
@@ -1424,42 +1307,45 @@ function showIFSCResult(data) {
 
         </div>
 
-
         <div class="result-row">
 
             <strong>Address:</strong><br>
 
-            ${escapeHtml(address)}
+            ${escapeHtml(
+                data.ADDRESS || "N/A"
+            )}
 
         </div>
-
 
         <div class="result-row">
 
             <strong>City:</strong><br>
 
-            ${escapeHtml(city)}
+            ${escapeHtml(
+                data.CITY || "N/A"
+            )}
 
         </div>
-
 
         <div class="result-row">
 
             <strong>District:</strong><br>
 
-            ${escapeHtml(district)}
+            ${escapeHtml(
+                data.DISTRICT || "N/A"
+            )}
 
         </div>
-
 
         <div class="result-row">
 
             <strong>State:</strong><br>
 
-            ${escapeHtml(state)}
+            ${escapeHtml(
+                data.STATE || "N/A"
+            )}
 
         </div>
-
 
         <a
             class="ifsc-link"
@@ -1472,27 +1358,15 @@ function showIFSCResult(data) {
     `;
 
 
-    resultBox.style.display = "block";
+    resultBox.style.display =
+        "block";
 
 }
 
 
 /* =========================================
-   STATE ISO CODE
+   STATE CODES
 ========================================= */
-
-
-/*
-    Razorpay /places requires ISO3166
-    state codes.
-
-    Example:
-
-    Andhra Pradesh = IN-AP
-    Telangana = IN-TG
-    Maharashtra = IN-MH
-*/
-
 
 const stateCodes = {
 
@@ -1532,6 +1406,7 @@ const stateCodes = {
     "ANDAMAN AND NICOBAR ISLANDS": "IN-AN",
     "DADRA AND NAGAR HAVELI AND DAMAN AND DIU": "IN-DH",
     "LAKSHADWEEP": "IN-LD"
+
 };
 
 
@@ -1542,7 +1417,6 @@ function getStateCode(state) {
             .trim()
             .toUpperCase();
 
-
     return (
         stateCodes[key] ||
         state
@@ -1552,9 +1426,8 @@ function getStateCode(state) {
 
 
 /* =========================================
-   RESET SELECT
+   RESET
 ========================================= */
-
 
 function resetSelect(
     select,
@@ -1564,7 +1437,8 @@ function resetSelect(
     select.innerHTML =
         `<option value="">${text}</option>`;
 
-    select.disabled = true;
+    select.disabled =
+        true;
 
 }
 
@@ -1572,7 +1446,6 @@ function resetSelect(
 /* =========================================
    LOADING
 ========================================= */
-
 
 function showLoading(message) {
 
@@ -1597,7 +1470,6 @@ function hideLoading() {
    ERROR
 ========================================= */
 
-
 function showError(message) {
 
     errorBox.innerText =
@@ -1618,67 +1490,19 @@ function hideError() {
 
 
 /* =========================================
-   CLEAR ERROR WHEN SELECTING
+   ESCAPE HTML
 ========================================= */
-
-
-bankSelect.addEventListener(
-    "change",
-    hideError
-);
-
-stateSelect.addEventListener(
-    "change",
-    hideError
-);
-
-districtSelect.addEventListener(
-    "change",
-    hideError
-);
-
-branchSelect.addEventListener(
-    "change",
-    hideError
-);
-
-
-/* =========================================
-   HTML ESCAPE
-========================================= */
-
 
 function escapeHtml(value) {
 
     return String(value ?? "")
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
-
 
 </script>
 
