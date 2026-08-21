@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+   content="width=device-width, initial-scale=1.0">
+
+<meta name="google-site-verification"
+   content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+<meta name="robots"
+   content="index, follow">
+
+<meta name="description"
+   content="USA SIC Code Search. Search United States Standard Industrial Classification SIC codes by code or industry description.">
+
+<link rel="icon"
+      type="image/png"
+      href="/favicon.png">
+
+<title>USA SIC Code Search - Standard Industrial Classification</title>
+
+<!-- Google Analytics -->
+
+<script async
+        src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
+
+<script>
+
+window.dataLayer = window.dataLayer || [];
+
+function gtag() {
+    dataLayer.push(arguments);
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-BP9YJW8LB9');
+
+</script>
+
+<style>
+
+:root {
+
+    --primary: #f48120;
+    --dark: #1e1e24;
+    --light: #f9f9fb;
+    --border: #e0e0e6;
+    --white: #ffffff;
+
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background: var(--light);
+
+    color: var(--dark);
+
+    margin: 0;
+
+    padding: 20px;
+
+}
+
+.container {
+
+    max-width: 850px;
+
+    margin: 0 auto;
+
+}
+
+h1 {
+
+    text-align: center;
+
+    color: var(--dark);
+
+    margin: 10px 0 12px;
+
+    font-size: 30px;
+
+}
+
+.intro {
+
+    text-align: center;
+
+    color: #666;
+
+    line-height: 1.6;
+
+    margin-bottom: 28px;
+
+}
+
+
+/* =========================
+   SEARCH CARD
+========================= */
+
+.search-card {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,0.05);
+
+    margin-bottom: 20px;
+
+}
+
+.search-card h2 {
+
+    margin-top: 0;
+
+    color: var(--dark);
+
+}
+
+.search-card p {
+
+    color: #666;
+
+    line-height: 1.6;
+
+}
+
+
+/* =========================
+   SEARCH BOX
+========================= */
+
+.search-box {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
+
+}
+
+input {
+
+    flex: 1;
+
+    padding: 14px;
+
+    border:
+        2px solid var(--border);
+
+    border-radius: 8px;
+
+    font-size: 16px;
+
+    outline: none;
+
+    min-width: 0;
+
+}
+
+input:focus {
+
+    border-color:
+        var(--primary);
+
+}
+
+button {
+
+    padding: 14px 25px;
+
+    background: var(--dark);
+
+    color: white;
+
+    border: none;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+}
+
+button:hover {
+
+    background: #333;
+
+}
+
+
+/* =========================
+   RESULTS
+========================= */
+
+.results {
+
+    margin-top: 20px;
+
+    padding: 20px;
+
+    border-radius: 8px;
+
+    background: #f1f1f6;
+
+    border-left:
+        5px solid var(--primary);
+
+    display: none;
+
+}
+
+.results h3 {
+
+    margin-top: 0;
+
+    color: var(--dark);
+
+}
+
+.data-row {
+
+    margin-bottom: 12px;
+
+    padding-bottom: 12px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    line-height: 1.6;
+
+    word-break: break-word;
+
+}
+
+.data-row:last-child {
+
+    border: none;
+
+    margin: 0;
+
+    padding: 0;
+
+}
+
+.sic-code {
+
+    display: inline-block;
+
+    background: var(--primary);
+
+    color: white;
+
+    padding: 5px 10px;
+
+    border-radius: 5px;
+
+    font-weight: bold;
+
+}
+
+.badge {
+
+    display: inline-block;
+
+    background: #333;
+
+    color: white;
+
+    padding: 3px 8px;
+
+    border-radius: 4px;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================
+   ERROR
+========================= */
+
+.error {
+
+    color: #d9383a;
+
+    font-weight: bold;
+
+    background: #fde8e8;
+
+    padding: 15px;
+
+    border-radius: 6px;
+
+    display: none;
+
+    margin-top: 20px;
+
+}
+
+
+/* =========================
+   LOADING
+========================= */
+
+.loading {
+
+    color: #555;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================
+   RESULT LINK
+========================= */
+
+.osha-link {
+
+    display: inline-block;
+
+    margin-top: 15px;
+
+    color: #0b57d0;
+
+    font-weight: bold;
+
+    text-decoration: none;
+
+}
+
+.osha-link:hover {
+
+    text-decoration: underline;
+
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+
+    text-align: center;
+
+    color: #777;
+
+    font-size: 13px;
+
+    margin: 30px 0 10px;
+
+    line-height: 1.6;
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding: 12px;
+
+    }
+
+    h1 {
+
+        font-size: 24px;
+
+    }
+
+    .search-card {
+
+        padding: 18px;
+
+    }
+
+    .search-box {
+
+        flex-direction: column;
+
+    }
+
+    button {
+
+        width: 100%;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>
+🇺🇸 USA SIC Code Search
+</h1>
+
+<p class="intro">
+
+Search the United States
+Standard Industrial Classification (SIC)
+codes by SIC number or industry description.
+
+</p>
+
+<!-- =========================
+     SIC CODE SEARCH
+========================= -->
+
+<div class="search-card">
+
+<h2>
+🔢 Search by SIC Code
+</h2>
+
+<p>
+
+Enter a USA SIC code such as <strong>5812</strong>, <strong>3571</strong> or <strong>7372</strong>.
+
+</p>
+
+<div class="search-box">
+
+<input
+ type="text"
+ id="sicCodeInput"
+ placeholder="Enter SIC code e.g. 5812"
+ maxlength="4"
+ inputmode="numeric"
+ autocomplete="off">
+
+<button
+ onclick="searchSICCode()">
+
+Search
+
+</button>
+
+</div>
+
+<div
+    id="code-error"
+    class="error">
+</div>
+
+<div
+    id="code-results"
+    class="results">
+</div>
+
+</div>
+
+<!-- =========================
+     DESCRIPTION SEARCH
+========================= -->
+
+<div class="search-card">
+
+<h2>
+🔎 Search by Industry Description
+</h2>
+
+<p>
+
+Enter an industry description or keyword
+such as <strong>restaurant</strong>, <strong>computer</strong>, <strong>construction</strong> or <strong>bank</strong>.
+
+</p>
+
+<div class="search-box">
+
+<input
+ type="text"
+ id="descriptionInput"
+ placeholder="Search industry description"
+ autocomplete="off">
+
+<button
+ onclick="searchDescription()">
+
+Search
+
+</button>
+
+</div>
+
+<div
+    id="description-error"
+    class="error">
+</div>
+
+<div
+    id="description-results"
+    class="results">
+</div>
+
+</div>
+
+<footer>
+
+USA SIC Code Search<br>
+
+Standard Industrial Classification (SIC)
+information is based on the U.S. SIC system.
+
+</footer>
+
+</div>
+
+<script>
+
+
+/* =========================================
+   SIC DATA
+=========================================
+
+   Put your complete USA SIC data here
+   OR load it from:
+
+   /data/usa-sic.json
+
+   Expected format:
+
+   [
+       {
+           "code": "5812",
+           "description": "Eating Places"
+       }
+   ]
+
+========================================= */
+
+
+/*
+   For now this is a sample.
+
+   Replace/add your complete SIC dataset
+   in /data/usa-sic.json.
+*/
+
+let sicData = [
+
+    {
+        code: "0111",
+        description: "Wheat"
+    },
+
+    {
+        code: "0112",
+        description: "Rice"
+    },
+
+    {
+        code: "0115",
+        description: "Corn"
+    },
+
+    {
+        code: "2011",
+        description: "Meat Packing Plants"
+    },
+
+    {
+        code: "2021",
+        description: "Creamery Butter"
+    },
+
+    {
+        code: "3571",
+        description: "Electronic Computers"
+    },
+
+    {
+        code: "3577",
+        description:
+            "Computer Peripheral Equipment"
+    },
+
+    {
+        code: "5812",
+        description:
+            "Eating Places"
+    },
+
+    {
+        code: "7311",
+        description:
+            "Advertising Agencies"
+    },
+
+    {
+        code: "7319",
+        description:
+            "Advertising, Not Elsewhere Classified"
+    },
+
+    {
+        code: "7372",
+        description:
+            "Prepackaged Software"
+    },
+
+    {
+        code: "7389",
+        description:
+            "Business Services, Not Elsewhere Classified"
+    },
+
+    {
+        code: "8041",
+        description:
+            "Offices and Clinics of Chiropractors"
+    },
+
+    {
+        code: "8042",
+        description:
+            "Offices and Clinics of Optometrists"
+    },
+
+    {
+        code: "8052",
+        description:
+            "Intermediate Care Facilities"
+    },
+
+    {
+        code: "8661",
+        description:
+            "Religious Organizations"
+    }
+
+];
+
+
+/* =========================================
+   LOAD COMPLETE DATA
+=========================================
+
+   If /data/usa-sic.json exists,
+   it will replace the sample data.
+
+========================================= */
+
+async function loadSICData() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/data/usa-sic.json",
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            console.log(
+                "Using built-in SIC data."
+            );
+
+            return;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            Array.isArray(data) &&
+            data.length > 0
+        ) {
+
+            sicData = data;
+
+        }
+
+    }
+    catch(error) {
+
+        console.log(
+            "Using built-in SIC data.",
+            error
+        );
+
+    }
+
+}
+
+
+/* Load data */
+
+loadSICData();
+
+
+/* =========================================
+   SEARCH SIC CODE
+========================================= */
+
+function searchSICCode() {
+
+    const input =
+        document
+            .getElementById(
+                "sicCodeInput"
+            )
+            .value
+            .trim();
+
+
+    const error =
+        document
+            .getElementById(
+                "code-error"
+            );
+
+
+    const results =
+        document
+            .getElementById(
+                "code-results"
+            );
+
+
+    error.style.display =
+        "none";
+
+    results.style.display =
+        "none";
+
+
+    /* Validate */
+
+    if (!/^\d{1,4}$/.test(input)) {
+
+        error.innerText =
+            "Please enter a valid USA SIC code.";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    results.innerHTML =
+        '<div class="loading">🔄 Searching SIC code...</div>';
+
+    results.style.display =
+        "block";
+
+
+    const matches =
+        sicData.filter(
+            function(item) {
+
+                return String(
+                    item.code
+                ) === input;
+
+            }
+        );
+
+
+    if (matches.length === 0) {
+
+        results.style.display =
+            "none";
+
+        error.innerText =
+            "No USA SIC code found for " +
+            input +
+            ".";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    matches.forEach(
+        function(item) {
+
+            html += `
+
+                <h3>
+                    🇺🇸 USA SIC ${escapeHtml(item.code)}
+                </h3>
+
+
+                <div class="data-row">
+
+                    <strong>
+                        SIC Code:
+                    </strong>
+
+                    <br>
+
+                    <span class="sic-code">
+                        ${escapeHtml(item.code)}
+                    </span>
+
+                </div>
+
+
+                <div class="data-row">
+
+                    <strong>
+                        Industry Description:
+                    </strong>
+
+                    <br>
+
+                    ${escapeHtml(
+                        item.description
+                    )}
+
+                </div>
+
+
+                <div class="data-row">
+
+                    <strong>
+                        Classification:
+                    </strong>
+
+                    <br>
+
+                    United States
+                    Standard Industrial
+                    Classification (SIC)
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    results.innerHTML =
+        html;
+
+
+    results.style.display =
+        "block";
+
+}
+
+
+/* =========================================
+   SEARCH DESCRIPTION
+========================================= */
+
+function searchDescription() {
+
+    const input =
+        document
+            .getElementById(
+                "descriptionInput"
+            )
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    const error =
+        document
+            .getElementById(
+                "description-error"
+            );
+
+
+    const results =
+        document
+            .getElementById(
+                "description-results"
+            );
+
+
+    error.style.display =
+        "none";
+
+    results.style.display =
+        "none";
+
+
+    if (input.length < 2) {
+
+        error.innerText =
+            "Please enter at least 2 characters.";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    results.innerHTML =
+        '<div class="loading">🔄 Searching industry descriptions...</div>';
+
+    results.style.display =
+        "block";
+
+
+    const words =
+        input
+            .split(/\s+/)
+            .filter(
+                function(word) {
+                    return word.length > 0;
+                }
+            );
+
+
+    const matches =
+        sicData.filter(
+            function(item) {
+
+                const description =
+                    String(
+                        item.description || ""
+                    )
+                    .toLowerCase();
+
+
+                /*
+                    Every search word must be
+                    present in the description.
+                */
+
+                return words.every(
+                    function(word) {
+
+                        return description
+                            .includes(word);
+
+                    }
+                );
+
+            }
+        );
+
+
+    if (matches.length === 0) {
+
+        results.style.display =
+            "none";
+
+        error.innerText =
+            "No USA SIC industries found for \"" +
+            input +
+            "\".";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    /*
+        Maximum displayed results.
+        Change this number if required.
+    */
+
+    const displayMatches =
+        matches.slice(0, 100);
+
+
+    let html = "";
+
+
+    html += `
+
+        <h3>
+            🇺🇸 USA SIC Search Results
+        </h3>
+
+        <p>
+            Found
+            <strong>
+                ${matches.length}
+            </strong>
+            matching SIC record(s).
+        </p>
+
+    `;
+
+
+    displayMatches.forEach(
+        function(item) {
+
+            html += `
+
+                <div class="data-row">
+
+                    <strong>
+                        SIC Code:
+                    </strong>
+
+                    <br>
+
+                    <span class="sic-code">
+                        ${escapeHtml(item.code)}
+                    </span>
+
+
+                    <br><br>
+
+
+                    <strong>
+                        Industry Description:
+                    </strong>
+
+                    <br>
+
+                    ${escapeHtml(
+                        item.description
+                    )}
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    if (matches.length > 100) {
+
+        html += `
+
+            <p>
+                Showing the first
+                <strong>100</strong>
+                matching records.
+            </p>
+
+        `;
+
+    }
+
+
+    results.innerHTML =
+        html;
+
+
+    results.style.display =
+        "block";
+
+}
+
+
+/* =========================================
+   ENTER KEY
+========================================= */
+
+document
+    .getElementById(
+        "sicCodeInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                searchSICCode();
+
+            }
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "descriptionInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                searchDescription();
+
+            }
+
+        }
+    );
+
+
+/* =========================================
+   HTML ESCAPE
+========================================= */
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
