@@ -12,20 +12,19 @@
       content="index, follow">
 
 <meta name="description"
-      content="Find U.S. companies and SEC EDGAR company information including CIK, address, city, state, country, ZIP code, SIC, ticker, exchange and filing information.">
+      content="USA Company Finder. Search SEC EDGAR companies by company name, ticker and exchange. View company information, registered address, state, city, ZIP code, CIK and recent SEC filings.">
 
 <link rel="icon"
       type="image/png"
       href="/favicon.png">
 
-<title>USA Company Finder - SEC EDGAR Company Information</title>
+<title>USA Company Finder - SEC Company Database</title>
 
 
 <!-- Google Analytics -->
 
 <script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
-</script>
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
 
 <script>
 
@@ -50,6 +49,7 @@ gtag('config', 'G-BP9YJW8LB9');
     --primary-dark: #0d47a1;
     --secondary: #00a6ff;
     --dark: #172033;
+    --muted: #667085;
     --light: #f3f8ff;
     --border: #d8e3f0;
     --white: #ffffff;
@@ -107,7 +107,7 @@ h1 {
 
     text-align: center;
 
-    color: #667085;
+    color: var(--muted);
 
     line-height: 1.6;
 
@@ -169,19 +169,25 @@ select {
 
     font-size: 16px;
 
+    outline: none;
+
 }
 
 select:focus {
 
-    outline: none;
-
     border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(25,118,210,.10);
 
 }
 
 select:disabled {
 
     background: #f1f5f9;
+
+    color: #8a94a6;
 
 }
 
@@ -193,11 +199,11 @@ select:disabled {
 
     padding: 14px;
 
+    border-radius: 8px;
+
     background: #e8f3ff;
 
     border-left: 5px solid var(--primary);
-
-    border-radius: 8px;
 
     color: var(--primary-dark);
 
@@ -213,11 +219,11 @@ select:disabled {
 
     padding: 14px;
 
+    border-radius: 8px;
+
     background: #fff0f0;
 
     border-left: 5px solid #e53935;
-
-    border-radius: 8px;
 
     color: #c62828;
 
@@ -229,22 +235,22 @@ select:disabled {
 
     display: none;
 
-    margin-top: 25px;
+    margin-top: 24px;
 
-    padding: 25px;
+    padding: 24px;
+
+    border-radius: 12px;
 
     background:
         linear-gradient(
             135deg,
             #eef7ff,
-            #f8fbff
+            #f7fbff
         );
 
     border: 1px solid #cfe3f8;
 
     border-left: 6px solid var(--primary);
-
-    border-radius: 10px;
 
 }
 
@@ -256,7 +262,7 @@ select:disabled {
 
 }
 
-.row {
+.result-row {
 
     padding: 13px 0;
 
@@ -268,7 +274,7 @@ select:disabled {
 
 }
 
-.row:last-child {
+.result-row:last-child {
 
     border-bottom: none;
 
@@ -288,21 +294,61 @@ select:disabled {
 
     padding: 5px 10px;
 
+    border-radius: 6px;
+
     background: var(--primary);
 
     color: white;
 
-    border-radius: 6px;
+    font-weight: 700;
+
+    font-size: 13px;
+
+}
+
+.cik {
+
+    font-family: monospace;
 
     font-weight: 700;
 
 }
 
-.sec-button {
+.filing {
+
+    margin-top: 8px;
+
+    padding: 12px;
+
+    background: white;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+}
+
+.filing a {
+
+    color: var(--primary-dark);
+
+    font-weight: 700;
+
+    text-decoration: none;
+
+}
+
+.filing a:hover {
+
+    text-decoration: underline;
+
+}
+
+.edgar-button {
 
     display: inline-block;
 
-    margin-top: 22px;
+    margin-top: 20px;
 
     padding: 12px 18px;
 
@@ -318,9 +364,9 @@ select:disabled {
 
 }
 
-.sec-button:hover {
+.edgar-button:hover {
 
-    background: #08306b;
+    background: #1565c0;
 
 }
 
@@ -328,11 +374,11 @@ footer {
 
     text-align: center;
 
-    margin-top: 30px;
-
     color: #6b7280;
 
     font-size: 13px;
+
+    margin: 30px 0 10px;
 
     line-height: 1.6;
 
@@ -361,6 +407,7 @@ footer {
 
 <body>
 
+
 <div class="container">
 
 
@@ -371,9 +418,10 @@ footer {
 
 <p class="intro">
 
-Search companies registered with the U.S. Securities
-and Exchange Commission and view available EDGAR
-company information.
+Search SEC EDGAR company records and
+view company information, address,
+state, city, ZIP code, CIK, ticker,
+exchange and recent filings.
 
 </p>
 
@@ -387,7 +435,8 @@ company information.
 
 
 <p>
-Select a company to view detailed SEC EDGAR information.
+Select a company from the SEC company
+ticker database.
 </p>
 
 
@@ -428,10 +477,10 @@ Loading companies...
 
 <footer>
 
-Company information is retrieved from
-public SEC EDGAR data.<br>
+USA Company Finder<br>
 
-U.S. Securities and Exchange Commission.
+Company information is retrieved
+from SEC EDGAR public data.
 
 </footer>
 
@@ -447,26 +496,20 @@ const companySelect =
         "companySelect"
     );
 
-
 const loading =
     document.getElementById(
         "loading"
     );
-
 
 const errorBox =
     document.getElementById(
         "error"
     );
 
-
 const resultBox =
     document.getElementById(
         "result"
     );
-
-
-let companies = [];
 
 
 /* =========================================
@@ -479,20 +522,20 @@ loadCompanies();
 async function loadCompanies() {
 
     showLoading(
-        "🔄 Loading SEC companies..."
+        "🔄 Loading SEC company list..."
     );
 
     try {
 
         const response =
             await fetch(
-                "/company_tickers_exchange.json"
+                "https://www.sec.gov/files/company_tickers_exchange.json"
             );
 
         if (!response.ok) {
 
             throw new Error(
-                "Company list could not be loaded."
+                "SEC company list error"
             );
 
         }
@@ -501,42 +544,56 @@ async function loadCompanies() {
             await response.json();
 
 
-        companies =
-            Object.values(data);
-
-
         companySelect.innerHTML =
             '<option value="">Select Company</option>';
 
 
-        companies
-            .sort(function(a, b) {
+        const records =
+            data.data || [];
+
+
+        records.sort(
+            function(a, b) {
 
                 return String(
-                    a.title || ""
+                    a[1] || ""
                 ).localeCompare(
                     String(
-                        b.title || ""
+                        b[1] || ""
                     )
                 );
 
-            })
-            .forEach(function(company) {
+            }
+        );
+
+
+        records.forEach(
+            function(company) {
+
+                const cik =
+                    String(
+                        company[0]
+                    ).padStart(
+                        10,
+                        "0"
+                    );
+
+                const name =
+                    company[1] ||
+                    "Unknown Company";
+
+                const ticker =
+                    company[2] ||
+                    "N/A";
+
+                const exchange =
+                    company[3] ||
+                    "N/A";
+
 
                 const option =
                     document.createElement(
                         "option"
-                    );
-
-
-                /*
-                    SEC ticker JSON normally
-                    contains cik_str.
-                */
-
-                const cik =
-                    String(
-                        company.cik_str || ""
                     );
 
 
@@ -545,18 +602,19 @@ async function loadCompanies() {
 
 
                 option.textContent =
-                    (company.title || "Unknown") +
+                    name +
                     " (" +
-                    (company.ticker || "N/A") +
+                    ticker +
                     ") - " +
-                    (company.exchange || "N/A");
+                    exchange;
 
 
                 companySelect.appendChild(
                     option
                 );
 
-            });
+            }
+        );
 
 
         hideLoading();
@@ -570,11 +628,9 @@ async function loadCompanies() {
         companySelect.innerHTML =
             '<option value="">Unable to load companies</option>';
 
-
         showError(
-            "Unable to load SEC company data. Please check that company_tickers_exchange.json is uploaded in the website root."
+            "Unable to load SEC company data. Please try again."
         );
-
 
         hideLoading();
 
@@ -602,14 +658,12 @@ companySelect.addEventListener(
 
 
         if (!cik) {
-
             return;
-
         }
 
 
         showLoading(
-            "🔄 Loading company information from SEC..."
+            "🔄 Loading company information..."
         );
 
 
@@ -617,17 +671,18 @@ companySelect.addEventListener(
 
             const response =
                 await fetch(
-                    "/company/" +
+                    "/usa-company/" +
                     encodeURIComponent(
                         cik
-                    )
+                    ) +
+                    "/"
                 );
 
 
             if (!response.ok) {
 
                 throw new Error(
-                    "SEC company information unavailable."
+                    "Company API error"
                 );
 
             }
@@ -637,10 +692,14 @@ companySelect.addEventListener(
                 await response.json();
 
 
-            if (!data || !data.company) {
+            if (
+                !data ||
+                data.error
+            ) {
 
                 throw new Error(
-                    "Invalid SEC company response."
+                    data.error ||
+                    "Company data unavailable"
                 );
 
             }
@@ -652,7 +711,6 @@ companySelect.addEventListener(
 
 
             hideLoading();
-
 
         }
         catch(error) {
@@ -672,60 +730,121 @@ companySelect.addEventListener(
 
 
 /* =========================================
-   DISPLAY COMPANY
+   SHOW COMPANY
 ========================================= */
 
-function showCompany(data) {
+function showCompany(
+    company
+) {
 
-    const company =
-        data.company || {};
+    const name =
+        escapeHtml(
+            company.name ||
+            "N/A"
+        );
+
+    const cik =
+        escapeHtml(
+            company.cik ||
+            "N/A"
+        );
+
+    const ticker =
+        escapeHtml(
+            company.ticker ||
+            "N/A"
+        );
+
+    const exchange =
+        escapeHtml(
+            company.exchange ||
+            "N/A"
+        );
+
+    const sic =
+        escapeHtml(
+            company.sic ||
+            "N/A"
+        );
+
+    const sicDescription =
+        escapeHtml(
+            company.sicDescription ||
+            "N/A"
+        );
+
+    const ein =
+        escapeHtml(
+            company.ein ||
+            "N/A"
+        );
+
+    const state =
+        escapeHtml(
+            company.state ||
+            "N/A"
+        );
+
+    const city =
+        escapeHtml(
+            company.city ||
+            "N/A"
+        );
+
+    const zip =
+        escapeHtml(
+            company.zip ||
+            "N/A"
+        );
+
+    const street1 =
+        escapeHtml(
+            company.street1 ||
+            ""
+        );
+
+    const street2 =
+        escapeHtml(
+            company.street2 ||
+            ""
+        );
+
+    const phone =
+        escapeHtml(
+            company.phone ||
+            "N/A"
+        );
+
+    const fiscalYearEnd =
+        escapeHtml(
+            company.fiscalYearEnd ||
+            "N/A"
+        );
 
 
-    const address =
-        data.address || {};
+    let address =
+        street1;
 
 
-    const mailing =
-        data.mailingAddress || {};
+    if (street2) {
 
-
-    const tickers =
-        data.tickers || [];
-
-
-    const exchanges =
-        data.exchanges || [];
-
-
-    let tickerHtml =
-        "N/A";
-
-
-    if (tickers.length) {
-
-        tickerHtml =
-            tickers
-                .map(function(item) {
-
-                    return (
-                        escapeHtml(
-                            item.ticker
-                        ) +
-                        " (" +
-                        escapeHtml(
-                            item.exchange || "N/A"
-                        ) +
-                        ")"
-                    );
-
-                })
-                .join("<br>");
+        address +=
+            "<br>" +
+            street2;
 
     }
 
 
-    let formerNamesHtml =
-        "None listed";
+    if (!address) {
+
+        address =
+            "N/A";
+
+    }
+
+
+    let formerNames =
+        "";
 
 
     if (
@@ -735,221 +854,326 @@ function showCompany(data) {
         company.formerNames.length
     ) {
 
-        formerNamesHtml =
+        formerNames =
             company.formerNames
-                .map(function(item) {
+                .map(
+                    function(item) {
 
-                    return (
-                        escapeHtml(
-                            item.name || ""
-                        ) +
-                        " (" +
-                        escapeHtml(
-                            item.from || ""
-                        ) +
-                        " - " +
-                        escapeHtml(
-                            item.to || ""
-                        ) +
-                        ")"
-                    );
+                        return (
+                            escapeHtml(
+                                item.name ||
+                                "N/A"
+                            ) +
+                            " (" +
+                            escapeHtml(
+                                item.from ||
+                                ""
+                            ) +
+                            " to " +
+                            escapeHtml(
+                                item.to ||
+                                ""
+                            ) +
+                            ")"
+                        );
 
-                })
+                    }
+                )
                 .join("<br>");
+
+    }
+    else {
+
+        formerNames =
+            "None listed";
 
     }
 
 
-    const secUrl =
+    let filingsHtml =
+        "";
+
+
+    if (
+        Array.isArray(
+            company.recentFilings
+        ) &&
+        company.recentFilings.length
+    ) {
+
+        company.recentFilings
+            .forEach(
+                function(filing) {
+
+                    filingsHtml += `
+
+                    <div class="filing">
+
+                        <strong>
+                            ${escapeHtml(
+                                filing.form ||
+                                "N/A"
+                            )}
+                        </strong>
+
+                        -
+                        ${escapeHtml(
+                            filing.filingDate ||
+                            "N/A"
+                        )}
+
+                        <br>
+
+                        <a
+                            href="${escapeHtml(
+                                filing.url ||
+                                "#"
+                            )}"
+                            target="_blank"
+                            rel="noopener noreferrer">
+
+                            View SEC Filing →
+
+                        </a>
+
+                    </div>
+
+                    `;
+
+                }
+            );
+
+    }
+    else {
+
+        filingsHtml =
+            "No recent filings available.";
+
+    }
+
+
+    const edgarUrl =
         "https://www.sec.gov/edgar/browse/?CIK=" +
         encodeURIComponent(
-            company.cik || ""
+            cik
         );
 
 
     resultBox.innerHTML = `
 
-<h2>
-🏢 ${escapeHtml(
-    company.name || "N/A"
-)}
-</h2>
+        <h2>
+            🏢 ${name}
+        </h2>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Company Name:
-</span>
+            <span class="label">
+            Company Name:
+            </span>
 
-<br>
+            <br>
 
-${escapeHtml(
-    company.name || "N/A"
-)}
+            ${name}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-CIK:
-</span>
+            <span class="label">
+            Ticker:
+            </span>
 
-<br>
+            <br>
 
-<span class="badge">
-${escapeHtml(
-    company.cik || "N/A"
-)}
-</span>
+            <span class="badge">
+            ${ticker}
+            </span>
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Ticker / Exchange:
-</span>
+            <span class="label">
+            Exchange:
+            </span>
 
-<br>
+            <br>
 
-${tickerHtml}
+            ${exchange}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-SIC:
-</span>
+            <span class="label">
+            SEC CIK:
+            </span>
 
-<br>
+            <br>
 
-${escapeHtml(
-    company.sic || "N/A"
-)}
+            <span class="cik">
+            ${cik}
+            </span>
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-SIC Description:
-</span>
+            <span class="label">
+            SIC Code:
+            </span>
 
-<br>
+            <br>
 
-${escapeHtml(
-    company.sicDescription || "N/A"
-)}
+            ${sic}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-State of Incorporation:
-</span>
+            <span class="label">
+            Industry / SIC Description:
+            </span>
 
-<br>
+            <br>
 
-${escapeHtml(
-    company.stateOfIncorporation || "N/A"
-)}
+            ${sicDescription}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Fiscal Year End:
-</span>
+            <span class="label">
+            EIN:
+            </span>
 
-<br>
+            <br>
 
-${escapeHtml(
-    company.fiscalYearEnd || "N/A"
-)}
+            ${ein}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Business Address:
-</span>
+            <span class="label">
+            Business Address:
+            </span>
 
-<br>
+            <br>
 
-${formatAddress(
-    address
-)}
+            ${address}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Mailing Address:
-</span>
+            <span class="label">
+            City:
+            </span>
 
-<br>
+            <br>
 
-${formatAddress(
-    mailing
-)}
+            ${city}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Phone:
-</span>
+            <span class="label">
+            State:
+            </span>
 
-<br>
+            <br>
 
-${escapeHtml(
-    company.phone || "N/A"
-)}
+            ${state}
 
-</div>
+        </div>
 
 
-<div class="row">
+        <div class="result-row">
 
-<span class="label">
-Former Company Names:
-</span>
+            <span class="label">
+            ZIP Code:
+            </span>
 
-<br>
+            <br>
 
-${formerNamesHtml}
+            ${zip}
 
-</div>
+        </div>
 
 
-<a
-    class="sec-button"
-    href="${secUrl}"
-    target="_blank"
-    rel="noopener">
+        <div class="result-row">
 
-View Company on SEC EDGAR →
+            <span class="label">
+            Phone:
+            </span>
 
-</a>
+            <br>
 
-`;
+            ${phone}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="label">
+            Fiscal Year End:
+            </span>
+
+            <br>
+
+            ${fiscalYearEnd}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="label">
+            Former Company Names:
+            </span>
+
+            <br>
+
+            ${formerNames}
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="label">
+            Recent SEC Filings:
+            </span>
+
+            ${filingsHtml}
+
+        </div>
+
+
+        <a
+            class="edgar-button"
+            href="${edgarUrl}"
+            target="_blank"
+            rel="noopener noreferrer">
+
+            View Company on SEC EDGAR →
+
+        </a>
+
+    `;
 
 
     resultBox.style.display =
@@ -965,86 +1189,12 @@ View Company on SEC EDGAR →
 
 
 /* =========================================
-   ADDRESS
-========================================= */
-
-function formatAddress(address) {
-
-    if (!address) {
-
-        return "N/A";
-
-    }
-
-
-    const parts = [];
-
-
-    if (address.street1) {
-
-        parts.push(
-            address.street1
-        );
-
-    }
-
-
-    if (address.street2) {
-
-        parts.push(
-            address.street2
-        );
-
-    }
-
-
-    const cityState =
-        [
-            address.city,
-            address.stateOrCountry,
-            address.zip
-        ]
-        .filter(Boolean)
-        .join(", ");
-
-
-    if (cityState) {
-
-        parts.push(
-            cityState
-        );
-
-    }
-
-
-    if (address.stateOrCountryDescription) {
-
-        parts.push(
-            address.stateOrCountryDescription
-        );
-
-    }
-
-
-    if (!parts.length) {
-
-        return "N/A";
-
-    }
-
-
-    return parts
-        .map(escapeHtml)
-        .join("<br>");
-
-}
-
-
-/* =========================================
    LOADING
 ========================================= */
 
-function showLoading(message) {
+function showLoading(
+    message
+) {
 
     loading.innerText =
         message;
@@ -1067,7 +1217,9 @@ function hideLoading() {
    ERROR
 ========================================= */
 
-function showError(message) {
+function showError(
+    message
+) {
 
     errorBox.innerText =
         message;
@@ -1090,7 +1242,9 @@ function hideError() {
    HTML ESCAPE
 ========================================= */
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
     return String(
         value ?? ""
