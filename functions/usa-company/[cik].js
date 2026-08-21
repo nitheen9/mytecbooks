@@ -1285,21 +1285,8 @@ ${filingsHtml}
     View Company on SEC EDGAR →
 
 </a>
-
-<a
-    class="button secondary"
-    href="/">
-
-    ← MyTecBooks
-
-</a>
-
 </div>
-
-
 </div>
-
-
 <footer>
 
 SEC EDGAR information is retrieved
