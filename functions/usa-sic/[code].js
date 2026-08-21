@@ -2,66 +2,93 @@ export async function onRequest(context) {
 
     const { code } = context.params;
 
-    /* =========================================
-       VALIDATE SIC CODE
-    ========================================= */
-
     if (!code) {
         return notFound("SIC code was not provided.");
     }
 
     const sicCode = String(code).trim();
 
+    /*
+        U.S. SIC codes can be searched at
+        2, 3 or 4 digit level.
+    */
+
     if (!/^\d{2,4}$/.test(sicCode)) {
-        return notFound("Invalid U.S. SIC code.");
+        return notFound(
+            "Invalid U.S. SIC code. Please use a 2, 3 or 4 digit SIC code."
+        );
     }
-
-
-    /* =========================================
-       LOAD SIC DATABASE
-    ========================================= */
-
-    let sicData;
 
     try {
 
         /*
-            IMPORTANT:
-
-            This file must exist:
-
-            functions/data/sic-codes.js
-
-            It should export:
-
-            export const sicCodes = [
-                {
-                    code: "0111",
-                    title: "Wheat",
-                    description: "...",
-                    division: "...",
-                    majorGroup: "...",
-                    industryGroup: "..."
-                }
-            ];
+            Official OSHA SIC Manual URL
         */
 
-        const module =
-            await import("../data/sic-codes.js");
+        const url =
+            "https://www.osha.gov/sic-manual/" +
+            encodeURIComponent(sicCode);
 
-        sicData =
-            module.sicCodes;
+        const response = await fetch(url, {
+            headers: {
+                "User-Agent":
+                    "MyTecBooks U.S. SIC Search"
+            }
+        });
+
+        if (!response.ok) {
+
+            return notFound(
+                "U.S. SIC code " +
+                sicCode +
+                " was not found in the OSHA SIC Manual."
+            );
+        }
+
+        const html = await response.text();
+
+        const data =
+            parseSicPage(
+                html,
+                sicCode
+            );
+
+        if (!data.description) {
+
+            return notFound(
+                "U.S. SIC code " +
+                sicCode +
+                " was not found."
+            );
+        }
+
+        const page =
+            createPage(data);
+
+        return new Response(
+            page,
+            {
+                status: 200,
+                headers: {
+                    "Content-Type":
+                        "text/html; charset=UTF-8",
+
+                    "Cache-Control":
+                        "public, max-age=86400, s-maxage=604800"
+                }
+            }
+        );
 
     }
     catch (error) {
 
         console.error(
-            "Unable to load SIC database:",
+            "U.S. SIC error:",
             error
         );
 
         return new Response(
-            "Unable to load U.S. SIC database.",
+            "Unable to load U.S. SIC information.",
             {
                 status: 500,
                 headers: {
@@ -71,278 +98,458 @@ export async function onRequest(context) {
             }
         );
     }
-
-
-    if (!Array.isArray(sicData)) {
-
-        return new Response(
-            "Invalid SIC database.",
-            {
-                status: 500,
-                headers: {
-                    "Content-Type":
-                        "text/plain; charset=UTF-8"
-                }
-            }
-        );
-    }
-
-
-    /* =========================================
-       FIND SIC
-    ========================================= */
-
-    const office =
-        sicData.find(function(item) {
-
-            return String(item.code)
-                .padStart(4, "0") ===
-                sicCode.padStart(4, "0");
-
-        });
-
-
-    if (!office) {
-
-        return notFound(
-            "U.S. SIC code " +
-            sicCode +
-            " was not found."
-        );
-
-    }
-
-
-    /* =========================================
-       RELATED SIC CODES
-    ========================================= */
-
-    const related =
-        findRelated(
-            office,
-            sicData
-        );
-
-
-    /* =========================================
-       CREATE PAGE
-    ========================================= */
-
-    const html =
-        createPage(
-            office,
-            related
-        );
-
-
-    return new Response(
-        html,
-        {
-            status: 200,
-
-            headers: {
-                "Content-Type":
-                    "text/html; charset=UTF-8",
-
-                "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400"
-            }
-        }
-    );
 }
 
 
 /* =========================================
-   RELATED SIC CODES
+   PARSE OSHA PAGE
 ========================================= */
 
-function findRelated(
-    current,
-    sicData
+function parseSicPage(
+    html,
+    requestedCode
 ) {
 
-    const currentCode =
-        String(current.code)
-            .padStart(4, "0");
+    /*
+        Convert HTML into reasonably
+        searchable text.
+    */
 
-    const majorGroup =
-        String(
-            current.majorGroup || ""
-        )
-        .trim()
-        .toLowerCase();
-
-    const industryGroup =
-        String(
-            current.industryGroup || ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    let related =
-        sicData.filter(function(item) {
-
-            const itemCode =
-                String(item.code)
-                    .padStart(4, "0");
-
-            if (
-                itemCode ===
-                currentCode
-            ) {
-                return false;
-            }
-
-
-            const itemMajor =
-                String(
-                    item.majorGroup || ""
-                )
-                .trim()
-                .toLowerCase();
-
-
-            const itemIndustry =
-                String(
-                    item.industryGroup || ""
-                )
-                .trim()
-                .toLowerCase();
-
-
-            /*
-                Prefer same industry group.
-            */
-
-            if (
-                industryGroup &&
-                itemIndustry ===
-                industryGroup
-            ) {
-                return true;
-            }
-
-
-            /*
-                Otherwise same major group.
-            */
-
-            if (
-                majorGroup &&
-                itemMajor ===
-                majorGroup
-            ) {
-                return true;
-            }
-
-
-            return false;
-
-        });
+    let text =
+        html
+            .replace(
+                /<script[\s\S]*?<\/script>/gi,
+                " "
+            )
+            .replace(
+                /<style[\s\S]*?<\/style>/gi,
+                " "
+            )
+            .replace(
+                /<noscript[\s\S]*?<\/noscript>/gi,
+                " "
+            )
+            .replace(
+                /<[^>]+>/g,
+                " "
+            )
+            .replace(
+                /&nbsp;/gi,
+                " "
+            )
+            .replace(
+                /&amp;/gi,
+                "&"
+            )
+            .replace(
+                /&#039;/gi,
+                "'"
+            )
+            .replace(
+                /&quot;/gi,
+                '"'
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim();
 
 
     /*
-        Limit related results
-        so the page does not become huge.
+        OSHA pages normally contain:
+
+        Division A: ...
+        Major Group 01: ...
+        Industry Group 011: ...
+        0111 Wheat
+        Establishments primarily...
     */
 
-    return related.slice(0, 20);
+
+    let division =
+        "";
+
+    let majorGroup =
+        "";
+
+    let industryGroup =
+        "";
+
+    let description =
+        "";
+
+
+    /*
+        Division
+    */
+
+    const divisionMatch =
+        text.match(
+            /Division\s+([A-J])\s*:\s*([^|]+?)(?=\s+Major Group|\s+\d{2,4}\s)/i
+        );
+
+    if (divisionMatch) {
+
+        division =
+            cleanText(
+                divisionMatch[1] +
+                ": " +
+                divisionMatch[2]
+            );
+
+    }
+
+
+    /*
+        Major Group
+    */
+
+    const majorMatch =
+        text.match(
+            /Major Group\s+(\d{2})\s*:\s*(.+?)(?=\s+Industry Group|\s+\d{2,4}\s+[A-Z])/i
+        );
+
+    if (majorMatch) {
+
+        majorGroup =
+            cleanText(
+                majorMatch[1] +
+                ": " +
+                majorMatch[2]
+            );
+
+    }
+
+
+    /*
+        Industry Group
+    */
+
+    const industryMatch =
+        text.match(
+            /Industry Group\s+(\d{3})\s*:\s*(.+?)(?=\s+\d{4}\s+[A-Z]|\s+\d{3,4}\s+[A-Z])/i
+        );
+
+    if (industryMatch) {
+
+        industryGroup =
+            cleanText(
+                industryMatch[1] +
+                ": " +
+                industryMatch[2]
+            );
+
+    }
+
+
+    /*
+        Main SIC title.
+
+        Example:
+
+        0111 Wheat
+    */
+
+    const codeRegex =
+        new RegExp(
+            "(?:^|\\s)" +
+            requestedCode +
+            "\\s+([^\\.]+?)(?=\\s+Establishments|\\s+SIC|$)",
+            "i"
+        );
+
+    const codeMatch =
+        text.match(
+            codeRegex
+        );
+
+    if (codeMatch) {
+
+        description =
+            cleanText(
+                codeMatch[1]
+            );
+
+    }
+
+
+    /*
+        Fallback:
+        Look for the first occurrence
+        of the requested code.
+    */
+
+    if (!description) {
+
+        const fallbackRegex =
+            new RegExp(
+                requestedCode +
+                "\\s+([A-Za-z][A-Za-z0-9 ,;&'()\\-\\.]+)",
+                "i"
+            );
+
+        const fallback =
+            text.match(
+                fallbackRegex
+            );
+
+        if (fallback) {
+
+            description =
+                cleanText(
+                    fallback[1]
+                );
+
+        }
+
+    }
+
+
+    /*
+        Establishment description
+    */
+
+    let details =
+        "";
+
+    const detailsMatch =
+        text.match(
+            /Establishments\s+primarily\s+engaged\s+in\s+(.+?)(?=\s+(?:Wheat farms|SIC|Related|Source|$))/i
+        );
+
+    if (detailsMatch) {
+
+        details =
+            cleanText(
+                "Establishments primarily engaged in " +
+                detailsMatch[1]
+            );
+
+    }
+
+
+    /*
+        Get examples / bullet-like
+        text after the main description.
+    */
+
+    const examples =
+        extractExamples(
+            text,
+            requestedCode
+        );
+
+
+    return {
+
+        code:
+            requestedCode,
+
+        description:
+            description ||
+            "",
+
+        division:
+            division ||
+            "Not available",
+
+        majorGroup:
+            majorGroup ||
+            "Not available",
+
+        industryGroup:
+            industryGroup ||
+            "Not available",
+
+        details:
+            details ||
+            "See the official OSHA SIC Manual for the complete industry description.",
+
+        examples:
+            examples
+
+    };
+
 }
 
 
 /* =========================================
-   CREATE PAGE
+   EXAMPLES
+========================================= */
+
+function extractExamples(
+    text,
+    code
+) {
+
+    const result = [];
+
+
+    /*
+        Find section after
+        "Establishments..."
+    */
+
+    const index =
+        text.search(
+            /Establishments\s+primarily\s+engaged/i
+        );
+
+
+    if (index < 0) {
+        return result;
+    }
+
+
+    let section =
+        text.substring(
+            index
+        );
+
+
+    /*
+        Limit amount of text.
+    */
+
+    section =
+        section.substring(
+            0,
+            1800
+        );
+
+
+    /*
+        Remove the descriptive sentence.
+    */
+
+    section =
+        section.replace(
+            /Establishments\s+primarily\s+engaged\s+in\s+.+?\.\s*/i,
+            ""
+        );
+
+
+    /*
+        Split possible examples.
+    */
+
+    section
+        .split(
+            /\s{2,}|;\s*|\s+\|\s+/g
+        )
+        .map(
+            item =>
+                cleanText(item)
+        )
+        .filter(
+            item =>
+                item.length > 2 &&
+                item.length < 150
+        )
+        .slice(
+            0,
+            20
+        )
+        .forEach(
+            item => {
+
+                if (
+                    !result.includes(item)
+                ) {
+
+                    result.push(item);
+
+                }
+
+            }
+        );
+
+
+    return result;
+}
+
+
+/* =========================================
+   PAGE
 ========================================= */
 
 function createPage(
-    office,
-    related
+    data
 ) {
 
     const code =
         escapeHtml(
-            String(office.code)
-                .padStart(4, "0")
-        );
-
-    const title =
-        escapeHtml(
-            office.title ||
-            office.description ||
-            "U.S. SIC Industry"
+            data.code
         );
 
     const description =
         escapeHtml(
-            office.description ||
-            office.title ||
-            "U.S. Standard Industrial Classification industry."
+            data.description
         );
 
     const division =
         escapeHtml(
-            office.division ||
-            "N/A"
+            data.division
         );
 
     const majorGroup =
         escapeHtml(
-            office.majorGroup ||
-            "N/A"
+            data.majorGroup
         );
 
     const industryGroup =
         escapeHtml(
-            office.industryGroup ||
-            "N/A"
+            data.industryGroup
+        );
+
+    const details =
+        escapeHtml(
+            data.details
         );
 
 
-    const relatedHtml =
-        related.length > 0
+    const title =
+        `${data.code} - ${data.description} | U.S. SIC Code`;
 
-        ?
-
-        related.map(function(item) {
-
-            const itemCode =
-                String(item.code)
-                    .padStart(4, "0");
-
-            const itemTitle =
-                item.title ||
-                item.description ||
-                "U.S. SIC Industry";
+    const metaDescription =
+        `U.S. SIC Code ${data.code}: ${data.description}. View industry classification, division, major group, industry group and detailed information.`;
 
 
-            return `
-                <div class="related-row">
+    let examplesHtml =
+        "";
 
-                    <a
-                        href="/usa-sic/${encodeURIComponent(itemCode)}/">
 
-                        <strong>
-                            ${escapeHtml(itemCode)}
-                        </strong>
+    if (
+        Array.isArray(data.examples) &&
+        data.examples.length > 0
+    ) {
 
-                        -
-                        ${escapeHtml(itemTitle)}
+        examplesHtml = `
 
-                    </a>
+            <div class="section">
 
-                </div>
-            `;
+                <h2>
+                    Examples
+                </h2>
 
-        }).join("")
+                <ul>
 
-        :
+                    ${data.examples
+                        .map(
+                            item =>
+                                `<li>${escapeHtml(item)}</li>`
+                        )
+                        .join("")
+                    }
 
-        `
-            <p>
-                No related SIC codes found.
-            </p>
+                </ul>
+
+            </div>
+
         `;
+
+    }
 
 
     return `<!DOCTYPE html>
@@ -356,30 +563,25 @@ function createPage(
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
-
 <meta name="robots"
       content="index, follow">
 
-
 <meta name="description"
-      content="${description} - U.S. SIC Code ${code}.">
-
+      content="${escapeHtml(metaDescription)}">
 
 <link rel="icon"
       type="image/png"
       href="/favicon.png">
 
-
 <title>
-U.S. SIC ${code} - ${title}
+${escapeHtml(title)}
 </title>
 
 
 <!-- Google Analytics -->
 
 <script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
-</script>
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
 
 <script>
 
@@ -409,11 +611,9 @@ gtag('config', 'G-BP9YJW8LB9');
 
 }
 
-
 * {
     box-sizing: border-box;
 }
-
 
 body {
 
@@ -435,7 +635,6 @@ body {
 
 }
 
-
 .container {
 
     max-width: 850px;
@@ -444,19 +643,17 @@ body {
 
 }
 
-
 h1 {
 
     text-align: center;
 
-    margin: 10px 0 10px;
+    margin: 10px 0 12px;
 
     font-size: 30px;
 
 }
 
-
-.intro {
+.subtitle {
 
     text-align: center;
 
@@ -468,7 +665,6 @@ h1 {
 
 }
 
-
 .card {
 
     background: white;
@@ -478,37 +674,32 @@ h1 {
     border-radius: 12px;
 
     box-shadow:
-        0 4px 15px
-        rgba(0,0,0,.05);
-
-    margin-bottom: 25px;
+        0 4px 18px
+        rgba(0,0,0,.06);
 
     border-top:
         5px solid var(--primary);
 
 }
 
-
 .card h2 {
-
-    margin-top: 0;
 
     color: #333;
 
-}
+    margin-top: 0;
 
+}
 
 .data-row {
 
-    padding: 14px 0;
+    padding: 15px 0;
 
     border-bottom:
         1px solid var(--border);
 
-    line-height: 1.6;
+    line-height: 1.7;
 
 }
-
 
 .data-row:last-child {
 
@@ -516,46 +707,104 @@ h1 {
 
 }
 
-
 .label {
 
     font-weight: 700;
 
     display: block;
 
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 
 }
-
 
 .code {
 
     display: inline-block;
 
-    padding: 7px 12px;
-
     background: var(--dark);
 
     color: white;
 
+    padding: 7px 12px;
+
     border-radius: 6px;
 
-    font-weight: bold;
+    font-weight: 700;
 
-    font-size: 18px;
+    letter-spacing: 1px;
 
 }
 
+.section {
+
+    margin-top: 25px;
+
+    padding: 20px;
+
+    background: #f5f5f8;
+
+    border-left:
+        5px solid var(--primary);
+
+    border-radius: 8px;
+
+}
+
+.section h2 {
+
+    margin-top: 0;
+
+}
+
+.section ul {
+
+    margin-bottom: 0;
+
+    padding-left: 22px;
+
+}
+
+.section li {
+
+    margin-bottom: 8px;
+
+    line-height: 1.6;
+
+}
+
+.source {
+
+    margin-top: 25px;
+
+    padding: 15px;
+
+    background: #fff8ef;
+
+    border-radius: 8px;
+
+    line-height: 1.6;
+
+    font-size: 14px;
+
+}
+
+.source a {
+
+    color: #b85c00;
+
+    font-weight: 700;
+
+}
 
 .back {
 
     display: inline-block;
 
-    margin-top: 20px;
+    margin-top: 25px;
 
     padding: 12px 18px;
 
-    background: var(--primary);
+    background: var(--dark);
 
     color: white;
 
@@ -563,52 +812,9 @@ h1 {
 
     border-radius: 7px;
 
-    font-weight: bold;
+    font-weight: 700;
 
 }
-
-
-.back:hover {
-
-    opacity: .9;
-
-}
-
-
-.related-row {
-
-    padding: 12px 0;
-
-    border-bottom:
-        1px solid var(--border);
-
-}
-
-
-.related-row:last-child {
-
-    border-bottom: none;
-
-}
-
-
-.related-row a {
-
-    color: #1769aa;
-
-    text-decoration: none;
-
-    line-height: 1.5;
-
-}
-
-
-.related-row a:hover {
-
-    text-decoration: underline;
-
-}
-
 
 footer {
 
@@ -623,7 +829,6 @@ footer {
     line-height: 1.6;
 
 }
-
 
 @media(max-width:600px) {
 
@@ -648,19 +853,18 @@ footer {
 
 <body>
 
-
 <div class="container">
 
 
 <h1>
-🇺🇸 U.S. SIC ${code}
+🇺🇸 U.S. SIC Code ${code}
 </h1>
 
 
-<p class="intro">
+<p class="subtitle">
 
-Standard Industrial Classification
-information for SIC ${code}.
+Standard Industrial Classification:
+<strong>${description}</strong>
 
 </p>
 
@@ -669,7 +873,7 @@ information for SIC ${code}.
 
 
 <h2>
-${title}
+🏭 SIC ${code} — ${description}
 </h2>
 
 
@@ -730,11 +934,50 @@ ${industryGroup}
 </div>
 
 
-<a
-    class="back"
-    href="/usa-sic-search.html">
+<div class="data-row">
 
-    ← U.S. SIC Code Search
+<span class="label">
+Industry Details
+</span>
+
+${details}
+
+</div>
+
+
+${examplesHtml}
+
+
+<div class="source">
+
+<strong>
+Official Source:
+</strong>
+
+<br>
+
+U.S. Occupational Safety and Health Administration
+(OSHA) SIC Manual.
+
+<br><br>
+
+<a
+href="https://www.osha.gov/sic-manual/${code}"
+target="_blank"
+rel="noopener noreferrer">
+
+View SIC ${code} on OSHA →
+
+</a>
+
+</div>
+
+
+<a
+class="back"
+href="/usa-sic-search.html">
+
+← U.S. SIC Code Search
 
 </a>
 
@@ -742,35 +985,18 @@ ${industryGroup}
 </div>
 
 
-<div class="card">
-
-
-<h2>
-🔎 Related U.S. SIC Codes
-</h2>
-
-
-${relatedHtml}
-
-
-</div>
-
-
 <footer>
 
-U.S. Standard Industrial Classification
-(SIC) information.
+U.S. SIC Code Search<br>
 
-<br>
-
-SIC classification information is based
-on the U.S. SIC system.
+Classification information is based on
+the OSHA Standard Industrial Classification
+(SIC) Manual.
 
 </footer>
 
 
 </div>
-
 
 </body>
 
@@ -782,7 +1008,9 @@ on the U.S. SIC system.
    NOT FOUND
 ========================================= */
 
-function notFound(message) {
+function notFound(
+    message
+) {
 
     return new Response(
 
@@ -808,32 +1036,37 @@ U.S. SIC Code Not Found
 
 body {
 
-    margin: 0;
-
-    padding: 40px 20px;
-
     font-family:
         Arial,
         sans-serif;
 
-    background: #f9f9fb;
+    background:
+        #f9f9fb;
 
-    text-align: center;
+    padding:
+        40px 20px;
+
+    text-align:
+        center;
 
 }
 
-
 .box {
 
-    max-width: 600px;
+    max-width:
+        650px;
 
-    margin: auto;
+    margin:
+        auto;
 
-    background: white;
+    background:
+        white;
 
-    padding: 30px;
+    padding:
+        30px;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
     box-shadow:
         0 4px 18px
@@ -841,29 +1074,38 @@ body {
 
 }
 
-
 h1 {
 
-    color: #1e1e24;
+    color:
+        #1e1e24;
 
 }
 
-
 a {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    margin-top: 20px;
+    margin-top:
+        20px;
 
-    padding: 12px 18px;
+    padding:
+        12px 18px;
 
-    background: #f48120;
+    background:
+        #f48120;
 
-    color: white;
+    color:
+        white;
 
-    text-decoration: none;
+    text-decoration:
+        none;
 
-    border-radius: 7px;
+    border-radius:
+        7px;
+
+    font-weight:
+        bold;
 
 }
 
@@ -871,30 +1113,25 @@ a {
 
 </head>
 
-
 <body>
 
-
 <div class="box">
-
 
 <h1>
 🇺🇸 U.S. SIC Code Not Found
 </h1>
 
-
 <p>
 ${escapeHtml(message)}
 </p>
 
-
 <a href="/usa-sic-search.html">
+
 ← U.S. SIC Code Search
+
 </a>
 
-
 </div>
-
 
 </body>
 
@@ -905,13 +1142,41 @@ ${escapeHtml(message)}
             status: 404,
 
             headers: {
+
                 "Content-Type":
                     "text/html; charset=UTF-8"
+
             }
 
         }
 
     );
+
+}
+
+
+/* =========================================
+   CLEAN TEXT
+========================================= */
+
+function cleanText(
+    value
+) {
+
+    return String(value || "")
+
+        .replace(
+            /\s+/g,
+            " "
+        )
+
+        .replace(
+            /\s+([,.])/g,
+            "$1"
+        )
+
+        .trim();
+
 }
 
 
@@ -919,9 +1184,13 @@ ${escapeHtml(message)}
    HTML ESCAPE
 ========================================= */
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
-    return String(value ?? "")
+    return String(
+        value ?? ""
+    )
 
         .replace(
             /&/g,
@@ -947,4 +1216,5 @@ function escapeHtml(value) {
             /'/g,
             "&#039;"
         );
+
 }
