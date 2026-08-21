@@ -1,75 +1,66 @@
 export async function onRequest(context) {
 
-    const {
-        cik
-    } = context.params;
+    const { cik } = context.params;
 
+    /* =========================================
+       VALIDATE CIK
+    ========================================= */
 
     if (!cik) {
-
-        return notFound(
-            "Company CIK is missing."
-        );
-
+        return notFound("CIK was not provided.");
     }
 
-
-    const cleanCIK =
+    const cleanCik =
         String(cik)
             .replace(/\D/g, "")
-            .padStart(
-                10,
-                "0"
-            );
+            .padStart(10, "0");
 
-
-    if (!/^\d{10}$/.test(cleanCIK)) {
-
-        return notFound(
-            "Invalid SEC CIK."
-        );
-
+    if (!/^\d{10}$/.test(cleanCik)) {
+        return notFound("Invalid SEC CIK.");
     }
 
+
+    /* =========================================
+       SEC API
+    ========================================= */
 
     const apiUrl =
         "https://data.sec.gov/submissions/CIK" +
-        cleanCIK +
+        cleanCik +
         ".json";
 
 
     try {
 
-        const response =
-            await fetch(
-                apiUrl,
-                {
-                    headers: {
+        const response = await fetch(apiUrl, {
 
-                        "User-Agent":
-                            "MyTecBooks mytecbooks.pages.dev contact@example.com",
+            headers: {
 
-                        "Accept":
-                            "application/json",
+                "User-Agent":
+                    "MyTecBooks mytecbooks.pages.dev contact@example.com",
 
-                        "Accept-Encoding":
-                            "gzip, deflate"
+                "Accept":
+                    "application/json"
 
-                    }
-                }
-            );
+            }
+
+        });
 
 
         if (!response.ok) {
 
-            console.error(
-                "SEC API status:",
+            if (response.status === 404) {
+
+                return notFound(
+                    "SEC company/entity not found for CIK " +
+                    cleanCik
+                );
+
+            }
+
+            throw new Error(
+                "SEC API returned HTTP " +
                 response.status
-            );
-
-
-            return notFound(
-                "SEC company information is unavailable."
             );
 
         }
@@ -79,16 +70,26 @@ export async function onRequest(context) {
             await response.json();
 
 
+        if (!data || !data.name) {
+
+            return notFound(
+                "No SEC company information found."
+            );
+
+        }
+
+
         const html =
             createPage(
                 data,
-                cleanCIK
+                cleanCik
             );
 
 
         return new Response(
             html,
             {
+
                 status: 200,
 
                 headers: {
@@ -105,7 +106,7 @@ export async function onRequest(context) {
         );
 
     }
-    catch(error) {
+    catch (error) {
 
         console.error(
             "SEC company error:",
@@ -114,15 +115,133 @@ export async function onRequest(context) {
 
 
         return new Response(
-            "Unable to load company information.",
+
+            `<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>SEC Company Error</title>
+
+<style>
+
+body {
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    background:
+        #f4f8ff;
+
+    margin: 0;
+
+    padding: 30px 15px;
+
+    color: #172033;
+
+}
+
+.box {
+
+    max-width: 650px;
+
+    margin: 50px auto;
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 5px 25px
+        rgba(0,0,0,.08);
+
+    text-align: center;
+
+}
+
+h1 {
+
+    color: #0d47a1;
+
+}
+
+a {
+
+    display: inline-block;
+
+    margin-top: 20px;
+
+    padding: 12px 18px;
+
+    background: #1976d2;
+
+    color: white;
+
+    text-decoration: none;
+
+    border-radius: 8px;
+
+    font-weight: 700;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>⚠️ Unable to Load SEC Data</h1>
+
+<p>
+
+The SEC company information could not
+be loaded right now.
+
+</p>
+
+<p>
+
+Please try again later.
+
+</p>
+
+<a href="/">
+
+← Back to MyTecBooks
+
+</a>
+
+</div>
+
+</body>
+
+</html>`,
+
             {
+
                 status: 500,
 
                 headers: {
+
                     "Content-Type":
-                        "text/plain; charset=UTF-8"
+                        "text/html; charset=UTF-8"
+
                 }
+
             }
+
         );
 
     }
@@ -134,87 +253,97 @@ export async function onRequest(context) {
    CREATE COMPANY PAGE
 ========================================= */
 
-function createPage(
-    data,
-    cik
-) {
-
-    const name =
-        data.name ||
-        "N/A";
+function createPage(data, cik) {
 
 
-    const tickers =
-        Array.isArray(
-            data.tickers
-        )
-        ? data.tickers
-        : [];
+    const companyName =
+        escapeHtml(
+            data.name ||
+            "N/A"
+        );
 
 
-    const exchanges =
-        Array.isArray(
-            data.exchanges
-        )
-        ? data.exchanges
-        : [];
-
-
-    const ticker =
-        tickers.length
-        ? tickers.join(", ")
-        : "N/A";
-
-
-    const exchange =
-        exchanges.length
-        ? exchanges.join(", ")
-        : "N/A";
+    const entityType =
+        escapeHtml(
+            data.entityType ||
+            "N/A"
+        );
 
 
     const sic =
-        data.sic ||
-        "N/A";
+        escapeHtml(
+            data.sic ||
+            "N/A"
+        );
 
 
     const sicDescription =
-        data.sicDescription ||
-        "N/A";
-
-
-    const category =
-        data.category ||
-        "N/A";
-
-
-    const fiscalYearEnd =
-        data.fiscalYearEnd ||
-        "N/A";
+        escapeHtml(
+            data.sicDescription ||
+            "N/A"
+        );
 
 
     const ein =
-        data.ein ||
-        "N/A";
+        escapeHtml(
+            data.ein ||
+            "N/A"
+        );
 
 
     const stateOfIncorporation =
-        data.stateOfIncorporation ||
-        "N/A";
+        escapeHtml(
+            data.stateOfIncorporation ||
+            "N/A"
+        );
 
+
+    const fiscalYearEnd =
+        escapeHtml(
+            data.fiscalYearEnd ||
+            "N/A"
+        );
+
+
+    const category =
+        escapeHtml(
+            data.category ||
+            "N/A"
+        );
+
+
+    const formerNames =
+        Array.isArray(data.formerNames)
+            ? data.formerNames
+            : [];
+
+
+    const tickers =
+        Array.isArray(data.tickers)
+            ? data.tickers
+            : [];
+
+
+    const exchanges =
+        Array.isArray(data.exchanges)
+            ? data.exchanges
+            : [];
+
+
+    /* =========================================
+       ADDRESS
+    ========================================= */
 
     const addresses =
-        data.addresses ||
-        {};
+        data.addresses || {};
 
 
     const business =
-        addresses.business ||
-        {};
+        addresses.business || {};
 
 
     const mailing =
-        addresses.mailing ||
-        {};
+        addresses.mailing || {};
 
 
     const businessAddress =
@@ -229,56 +358,244 @@ function createPage(
         );
 
 
-    const phone =
-        business.phone ||
-        mailing.phone ||
-        "N/A";
+    /* =========================================
+       TICKERS
+    ========================================= */
+
+    let tickerHtml =
+        "<span class=\"muted\">N/A</span>";
 
 
-    const formerNames =
-        Array.isArray(
-            data.formerNames
-        )
-        ? data.formerNames
-        : [];
+    if (tickers.length > 0) {
+
+        tickerHtml =
+            tickers
+                .map(function(ticker, index) {
+
+                    const exchange =
+                        exchanges[index] ||
+                        "";
+
+                    return `
+                        <span class="ticker">
+
+                            ${escapeHtml(
+                                ticker
+                            )}
+
+                            ${
+                                exchange
+                                    ? " - " +
+                                      escapeHtml(
+                                          exchange
+                                      )
+                                    : ""
+                            }
+
+                        </span>
+                    `;
+
+                })
+                .join("");
+
+    }
 
 
-    const formerNameText =
-        formerNames.length
-        ? formerNames
-            .map(
-                function(item) {
+    /* =========================================
+       FORMER NAMES
+    ========================================= */
 
-                    return item.name +
-                        " (" +
-                        item.from +
-                        " to " +
-                        item.to +
-                        ")";
+    let formerNamesHtml =
+        "<span class=\"muted\">None listed</span>";
 
-                }
-            )
-            .join("<br>")
-        : "N/A";
 
+    if (formerNames.length > 0) {
+
+        formerNamesHtml =
+            "<ul>";
+
+        formerNames.forEach(
+            function(item) {
+
+                formerNamesHtml +=
+                    "<li>" +
+                    escapeHtml(item.name) +
+                    "</li>";
+
+            }
+        );
+
+        formerNamesHtml +=
+            "</ul>";
+
+    }
+
+
+    /* =========================================
+       RECENT FILINGS
+    ========================================= */
+
+    const recent =
+        data.filings &&
+        data.filings.recent
+            ? data.filings.recent
+            : null;
+
+
+    let filingsHtml =
+        "<p class=\"muted\">No recent filings available.</p>";
+
+
+    if (
+        recent &&
+        Array.isArray(recent.form) &&
+        recent.form.length > 0
+    ) {
+
+        const count =
+            Math.min(
+                recent.form.length,
+                10
+            );
+
+
+        filingsHtml =
+            `<div class="filings">`;
+
+
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
+
+            const form =
+                recent.form[i] ||
+                "N/A";
+
+
+            const filingDate =
+                recent.filingDate &&
+                recent.filingDate[i]
+                    ? recent.filingDate[i]
+                    : "N/A";
+
+
+            const accession =
+                recent.accessionNumber &&
+                recent.accessionNumber[i]
+                    ? recent.accessionNumber[i]
+                    : "";
+
+
+            const primaryDocument =
+                recent.primaryDocument &&
+                recent.primaryDocument[i]
+                    ? recent.primaryDocument[i]
+                    : "";
+
+
+            let filingLink =
+                "#";
+
+
+            if (
+                accession &&
+                primaryDocument
+            ) {
+
+                const accessionClean =
+                    accession.replace(
+                        /-/g,
+                        ""
+                    );
+
+
+                filingLink =
+                    "https://www.sec.gov/Archives/edgar/data/" +
+                    Number(cik) +
+                    "/" +
+                    accessionClean +
+                    "/" +
+                    primaryDocument;
+
+            }
+
+
+            filingsHtml += `
+
+                <div class="filing">
+
+                    <div>
+
+                        <strong>
+                            ${escapeHtml(form)}
+                        </strong>
+
+                        <br>
+
+                        <span>
+                            ${escapeHtml(filingDate)}
+                        </span>
+
+                    </div>
+
+                    ${
+                        filingLink !== "#"
+                            ? `
+                                <a
+                                    href="${escapeHtml(
+                                        filingLink
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+
+                                    View Filing →
+
+                                </a>
+                              `
+                            : ""
+                    }
+
+                </div>
+
+            `;
+
+        }
+
+
+        filingsHtml +=
+            "</div>";
+
+    }
+
+
+    /* =========================================
+       SEC EDGAR URL
+    ========================================= */
+
+    const secUrl =
+        "https://www.sec.gov/edgar/browse/?CIK=" +
+        encodeURIComponent(
+            cik
+        );
+
+
+    /* =========================================
+       TITLE
+    ========================================= */
 
     const title =
-        name +
-        " - SEC Company Information";
+        `${data.name || "SEC Company"} - SEC CIK ${cik} | MyTecBooks`;
 
 
     const description =
-        "SEC EDGAR company information for " +
-        name +
-        ", including CIK, ticker, exchange, " +
-        "business address, state of incorporation, " +
-        "SIC and filing information.";
+        `SEC EDGAR company information for ${data.name || "company"}, CIK ${cik}. View ticker, exchange, address, state of incorporation, SIC and recent SEC filings.`;
 
 
-    const secLink =
-        "https://www.sec.gov/edgar/browse/?CIK=" +
-        encodeURIComponent(cik);
-
+    /* =========================================
+       HTML
+    ========================================= */
 
     return `<!DOCTYPE html>
 
@@ -295,7 +612,9 @@ function createPage(
       content="index, follow">
 
 <meta name="description"
-      content="${escapeHtml(description)}">
+      content="${escapeHtml(
+          description
+      )}">
 
 <link rel="icon"
       type="image/png"
@@ -309,8 +628,7 @@ ${escapeHtml(title)}
 <!-- Google Analytics -->
 
 <script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
-</script>
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
 
 <script>
 
@@ -325,7 +643,10 @@ function gtag() {
 
 gtag('js', new Date());
 
-gtag('config', 'G-BP9YJW8LB9');
+gtag(
+    'config',
+    'G-BP9YJW8LB9'
+);
 
 </script>
 
@@ -334,16 +655,33 @@ gtag('config', 'G-BP9YJW8LB9');
 
 :root {
 
-    --primary: #1976d2;
-    --primary-dark: #0d47a1;
-    --dark: #172033;
-    --border: #d8e3f0;
+    --primary:
+        #1976d2;
+
+    --primary-dark:
+        #0d47a1;
+
+    --secondary:
+        #00a6ff;
+
+    --dark:
+        #172033;
+
+    --light:
+        #f3f8ff;
+
+    --border:
+        #d8e3f0;
+
+    --white:
+        #ffffff;
 
 }
 
 * {
 
-    box-sizing: border-box;
+    box-sizing:
+        border-box;
 
 }
 
@@ -368,49 +706,63 @@ body {
             #f8fbff
         );
 
-    color: var(--dark);
+    color:
+        var(--dark);
 
 }
 
 .container {
 
-    max-width: 900px;
+    max-width:
+        900px;
 
-    margin: 0 auto;
+    margin:
+        0 auto;
 
 }
 
 h1 {
 
-    text-align: center;
+    text-align:
+        center;
 
-    font-size: 30px;
+    font-size:
+        30px;
 
-    margin: 10px 0;
+    margin:
+        10px 0 8px;
 
 }
 
 .intro {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #667085;
+    color:
+        #667085;
 
-    line-height: 1.6;
+    line-height:
+        1.6;
 
-    margin-bottom: 25px;
+    margin-bottom:
+        25px;
 
 }
 
 .card {
 
-    background: white;
+    background:
+        var(--white);
 
-    padding: 28px;
+    padding:
+        28px;
 
-    border-radius: 14px;
+    border-radius:
+        14px;
 
-    border-top: 5px solid var(--primary);
+    border-top:
+        5px solid var(--primary);
 
     box-shadow:
         0 5px 22px
@@ -420,114 +772,244 @@ h1 {
 
 .card h2 {
 
-    color: var(--primary-dark);
+    color:
+        var(--primary-dark);
 
-    margin-top: 0;
+    margin-top:
+        0;
 
 }
 
 .row {
 
-    padding: 14px 0;
+    padding:
+        14px 0;
 
     border-bottom:
         1px solid var(--border);
 
-    line-height: 1.6;
+    line-height:
+        1.6;
 
-    word-break: break-word;
+    word-break:
+        break-word;
 
 }
 
 .row:last-child {
 
-    border-bottom: none;
+    border-bottom:
+        none;
 
 }
 
 .label {
 
-    font-weight: 700;
+    font-weight:
+        700;
 
-}
-
-.badge {
-
-    display: inline-block;
-
-    padding: 5px 10px;
-
-    background: var(--primary-dark);
-
-    color: white;
-
-    border-radius: 5px;
-
-    font-weight: 700;
+    color:
+        #24324a;
 
 }
 
 .cik {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    padding: 5px 10px;
+    padding:
+        6px 10px;
 
-    background: var(--primary);
+    border-radius:
+        6px;
 
-    color: white;
+    background:
+        var(--primary);
 
-    border-radius: 6px;
+    color:
+        white;
 
-    font-weight: 700;
+    font-weight:
+        700;
+
+}
+
+.ticker {
+
+    display:
+        inline-block;
+
+    margin:
+        4px 5px 4px 0;
+
+    padding:
+        6px 10px;
+
+    border-radius:
+        6px;
+
+    background:
+        #e8f3ff;
+
+    color:
+        var(--primary-dark);
+
+    font-weight:
+        700;
+
+}
+
+.muted {
+
+    color:
+        #7b8794;
+
+}
+
+ul {
+
+    margin:
+        8px 0;
+
+    padding-left:
+        20px;
+
+}
+
+.filings {
+
+    margin-top:
+        10px;
+
+}
+
+.filing {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    gap:
+        15px;
+
+    align-items:
+        center;
+
+    padding:
+        13px 0;
+
+    border-bottom:
+        1px solid var(--border);
+
+}
+
+.filing span {
+
+    color:
+        #667085;
+
+    font-size:
+        14px;
+
+}
+
+.filing a {
+
+    color:
+        var(--primary);
+
+    font-weight:
+        700;
+
+    text-decoration:
+        none;
+
+    white-space:
+        nowrap;
+
+}
+
+.filing a:hover {
+
+    text-decoration:
+        underline;
+
+}
+
+.buttons {
+
+    margin-top:
+        24px;
+
+    display:
+        flex;
+
+    gap:
+        10px;
+
+    flex-wrap:
+        wrap;
 
 }
 
 .button {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    margin-top: 20px;
+    padding:
+        12px 18px;
 
-    margin-right: 8px;
+    border-radius:
+        8px;
 
-    padding: 12px 18px;
+    text-decoration:
+        none;
 
-    background: var(--primary);
+    font-weight:
+        700;
 
-    color: white;
+    background:
+        var(--primary);
 
-    text-decoration: none;
+    color:
+        white;
 
-    border-radius: 8px;
+}
 
-    font-weight: 700;
+.button.secondary {
+
+    background:
+        var(--dark);
 
 }
 
 .button:hover {
 
-    background: var(--primary-dark);
-
-}
-
-.back {
-
-    background: #172033;
+    opacity:
+        .9;
 
 }
 
 footer {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #6b7280;
+    color:
+        #6b7280;
 
-    font-size: 13px;
+    font-size:
+        13px;
 
-    margin: 30px 0 10px;
+    margin:
+        30px 0 10px;
 
-    line-height: 1.6;
+    line-height:
+        1.6;
 
 }
 
@@ -535,29 +1017,39 @@ footer {
 
     body {
 
-        padding: 12px;
+        padding:
+            12px;
 
     }
 
     h1 {
 
-        font-size: 24px;
+        font-size:
+            24px;
 
     }
 
     .card {
 
-        padding: 18px;
+        padding:
+            18px;
 
     }
 
-    .button {
+    .filing {
 
-        display: block;
+        display:
+            block;
 
-        text-align: center;
+    }
 
-        margin-right: 0;
+    .filing a {
+
+        display:
+            inline-block;
+
+        margin-top:
+            7px;
 
     }
 
@@ -574,13 +1066,21 @@ footer {
 
 
 <h1>
-🇺🇸 ${escapeHtml(name)}
+
+🏢 ${companyName}
+
 </h1>
 
 
 <p class="intro">
 
-SEC EDGAR company information
+SEC EDGAR company/entity information
+
+for CIK
+
+<strong>
+${escapeHtml(cik)}
+</strong>
 
 </p>
 
@@ -596,12 +1096,12 @@ SEC EDGAR company information
 <div class="row">
 
 <span class="label">
-Company Name:
+Company / Entity Name:
 </span>
 
 <br>
 
-${escapeHtml(name)}
+${companyName}
 
 </div>
 
@@ -624,14 +1124,12 @@ ${escapeHtml(cik)}
 <div class="row">
 
 <span class="label">
-Ticker:
+Ticker / Exchange:
 </span>
 
 <br>
 
-<span class="badge">
-${escapeHtml(ticker)}
-</span>
+${tickerHtml}
 
 </div>
 
@@ -639,12 +1137,12 @@ ${escapeHtml(ticker)}
 <div class="row">
 
 <span class="label">
-Exchange:
+Entity Type:
 </span>
 
 <br>
 
-${escapeHtml(exchange)}
+${entityType}
 
 </div>
 
@@ -657,7 +1155,7 @@ SIC:
 
 <br>
 
-${escapeHtml(sic)}
+${sic}
 
 </div>
 
@@ -665,51 +1163,12 @@ ${escapeHtml(sic)}
 <div class="row">
 
 <span class="label">
-Industry / SIC Description:
+SIC Description:
 </span>
 
 <br>
 
-${escapeHtml(sicDescription)}
-
-</div>
-
-
-<div class="row">
-
-<span class="label">
-Company Category:
-</span>
-
-<br>
-
-${escapeHtml(category)}
-
-</div>
-
-
-<div class="row">
-
-<span class="label">
-State of Incorporation:
-</span>
-
-<br>
-
-${escapeHtml(stateOfIncorporation)}
-
-</div>
-
-
-<div class="row">
-
-<span class="label">
-Fiscal Year End:
-</span>
-
-<br>
-
-${escapeHtml(fiscalYearEnd)}
+${sicDescription}
 
 </div>
 
@@ -722,9 +1181,53 @@ EIN:
 
 <br>
 
-${escapeHtml(ein)}
+${ein}
 
 </div>
+
+
+<div class="row">
+
+<span class="label">
+State of Incorporation:
+</span>
+
+<br>
+
+${stateOfIncorporation}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Fiscal Year End:
+</span>
+
+<br>
+
+${fiscalYearEnd}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+SEC Category:
+</span>
+
+<br>
+
+${category}
+
+</div>
+
+
+<h2>
+📍 Address Information
+</h2>
 
 
 <div class="row">
@@ -753,50 +1256,45 @@ ${mailingAddress}
 </div>
 
 
+<h2>
+🔄 Former Names
+</h2>
+
 <div class="row">
 
-<span class="label">
-Phone:
-</span>
-
-<br>
-
-${escapeHtml(phone)}
+${formerNamesHtml}
 
 </div>
 
 
-<div class="row">
+<h2>
+📄 Recent SEC Filings
+</h2>
 
-<span class="label">
-Former Company Names:
-</span>
+${filingsHtml}
 
-<br>
 
-${formerNameText}
-
-</div>
-
+<div class="buttons">
 
 <a
     class="button"
-    href="${secLink}"
+    href="${escapeHtml(secUrl)}"
     target="_blank"
-    rel="noopener">
+    rel="noopener noreferrer">
 
-View Company on SEC EDGAR →
+    View Company on SEC EDGAR →
 
 </a>
-
 
 <a
-    class="button back"
-    href="/usa-company-finder.html">
+    class="button secondary"
+    href="/">
 
-← USA Company Finder
+    ← MyTecBooks
 
 </a>
+
+</div>
 
 
 </div>
@@ -804,10 +1302,13 @@ View Company on SEC EDGAR →
 
 <footer>
 
-USA Company Finder<br>
+SEC EDGAR information is retrieved
+from the U.S. Securities and Exchange Commission.
 
-Company information retrieved from
-SEC EDGAR public data.
+<br>
+
+This page is an independent presentation
+of publicly available SEC data.
 
 </footer>
 
@@ -817,24 +1318,22 @@ SEC EDGAR public data.
 </body>
 
 </html>`;
-
 }
 
 
 /* =========================================
-   ADDRESS
+   ADDRESS FORMAT
 ========================================= */
 
-function formatAddress(
-    address
-) {
+function formatAddress(address) {
 
-    if (
-        !address ||
-        typeof address !== "object"
-    ) {
+    if (!address) {
 
-        return "N/A";
+        return `
+            <span class="muted">
+                Not available
+            </span>
+        `;
 
     }
 
@@ -845,9 +1344,7 @@ function formatAddress(
     if (address.street1) {
 
         parts.push(
-            escapeHtml(
-                address.street1
-            )
+            address.street1
         );
 
     }
@@ -856,9 +1353,7 @@ function formatAddress(
     if (address.street2) {
 
         parts.push(
-            escapeHtml(
-                address.street2
-            )
+            address.street2
         );
 
     }
@@ -894,36 +1389,38 @@ function formatAddress(
     }
 
 
-    if (cityStateZip.length) {
+    if (cityStateZip.length > 0) {
 
         parts.push(
-            escapeHtml(
-                cityStateZip.join(", ")
-            )
+            cityStateZip.join(", ")
         );
 
     }
 
 
-    if (address.stateOrCountryDescription) {
+    if (address.country) {
 
         parts.push(
-            escapeHtml(
-                address.stateOrCountryDescription
-            )
+            address.country
         );
 
     }
 
 
-    if (!parts.length) {
+    if (parts.length === 0) {
 
-        return "N/A";
+        return `
+            <span class="muted">
+                Not available
+            </span>
+        `;
 
     }
 
 
-    return parts.join("<br>");
+    return escapeHtml(
+        parts.join(", ")
+    );
 
 }
 
@@ -932,9 +1429,7 @@ function formatAddress(
    NOT FOUND
 ========================================= */
 
-function notFound(
-    message
-) {
+function notFound(message) {
 
     return new Response(
 
@@ -947,65 +1442,85 @@ function notFound(
 <meta charset="UTF-8">
 
 <meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+      content="width=device-width, initial-scale=1.0">
 
-<title>
-USA Company Not Found
-</title>
+<title>SEC Company Not Found</title>
 
 <style>
 
 body {
 
-    font-family: Arial, sans-serif;
+    margin: 0;
 
-    background: #f5f9ff;
+    padding: 30px 15px;
 
-    padding: 40px 20px;
+    font-family:
+        Arial,
+        sans-serif;
 
-    text-align: center;
+    background:
+        #f4f8ff;
+
+    text-align:
+        center;
 
 }
 
 .box {
 
-    max-width: 600px;
+    max-width:
+        650px;
 
-    margin: auto;
+    margin:
+        50px auto;
 
-    background: white;
+    background:
+        white;
 
-    padding: 30px;
+    padding:
+        30px;
 
-    border-radius: 12px;
+    border-radius:
+        14px;
 
     box-shadow:
-        0 4px 18px
+        0 5px 20px
         rgba(0,0,0,.08);
 
 }
 
 h1 {
 
-    color: #0d47a1;
+    color:
+        #0d47a1;
 
 }
 
 a {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    margin-top: 20px;
+    margin-top:
+        20px;
 
-    padding: 12px 18px;
+    padding:
+        12px 18px;
 
-    background: #1976d2;
+    background:
+        #1976d2;
 
-    color: white;
+    color:
+        white;
 
-    text-decoration: none;
+    text-decoration:
+        none;
 
-    border-radius: 7px;
+    border-radius:
+        8px;
+
+    font-weight:
+        700;
 
 }
 
@@ -1013,21 +1528,20 @@ a {
 
 </head>
 
-
 <body>
 
 <div class="box">
 
 <h1>
-🏢 Company Not Found
+🏢 SEC Company Not Found
 </h1>
 
 <p>
 ${escapeHtml(message)}
 </p>
 
-<a href="/usa-company-finder.html">
-← USA Company Finder
+<a href="/">
+← Back to MyTecBooks
 </a>
 
 </div>
@@ -1038,7 +1552,8 @@ ${escapeHtml(message)}
 
         {
 
-            status: 404,
+            status:
+                404,
 
             headers: {
 
@@ -1058,9 +1573,7 @@ ${escapeHtml(message)}
    HTML ESCAPE
 ========================================= */
 
-function escapeHtml(
-    value
-) {
+function escapeHtml(value) {
 
     return String(
         value ?? ""
