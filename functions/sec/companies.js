@@ -1,54 +1,167 @@
 export async function onRequest(context) {
 
+    const SEC_URL =
+        "https://www.sec.gov/files/company_tickers_exchange.json";
+
     try {
 
         const response = await fetch(
-            "https://www.sec.gov/files/company_tickers_exchange.json",
+            SEC_URL,
             {
                 headers: {
                     "User-Agent":
-                        "MyTecBooks mytecbooks.pages.dev contact@mytecbooks.pages.dev",
-                    "Accept":
-                        "application/json"
+                        "MyTecBooks SEC Company Finder admin@mytecbooks.pages.dev"
                 }
             }
         );
 
         if (!response.ok) {
 
-            return new Response(
-                JSON.stringify({
-                    error: "SEC API request failed",
-                    status: response.status
-                }),
-                {
-                    status: response.status,
-                    headers: {
-                        "Content-Type":
-                            "application/json; charset=UTF-8",
-                        "Cache-Control":
-                            "public, max-age=3600"
-                    }
-                }
+            throw new Error(
+                "SEC returned HTTP " +
+                response.status
             );
+
         }
 
-        const data = await response.json();
+        const data =
+            await response.json();
+
+
+        /*
+            SEC format:
+
+            {
+                fields: [
+                    "cik",
+                    "name",
+                    "ticker",
+                    "exchange"
+                ],
+
+                data: [
+                    [1045810, "Company Name", "TICKER", "Exchange"]
+                ]
+            }
+        */
+
+
+        if (
+            !data ||
+            !Array.isArray(data.fields) ||
+            !Array.isArray(data.data)
+        ) {
+
+            throw new Error(
+                "Unexpected SEC data format"
+            );
+
+        }
+
+
+        const fields =
+            data.fields;
+
+
+        const companies =
+            data.data.map(
+                function(row) {
+
+                    const company = {};
+
+
+                    fields.forEach(
+                        function(field, index) {
+
+                            company[field] =
+                                row[index];
+
+                        }
+                    );
+
+
+                    return {
+
+                        cik:
+                            String(
+                                company.cik ??
+                                ""
+                            ),
+
+                        name:
+                            String(
+                                company.name ??
+                                ""
+                            ),
+
+                        ticker:
+                            String(
+                                company.ticker ??
+                                ""
+                            ),
+
+                        exchange:
+                            String(
+                                company.exchange ??
+                                ""
+                            )
+
+                    };
+
+                }
+            );
+
+
+        /*
+            Remove records without
+            a company name.
+        */
+
+        const validCompanies =
+            companies.filter(
+                function(company) {
+
+                    return (
+                        company.name &&
+                        company.name.trim()
+                    );
+
+                }
+            );
+
+
+        /*
+            Sort alphabetically
+        */
+
+        validCompanies.sort(
+            function(a, b) {
+
+                return a.name.localeCompare(
+                    b.name
+                );
+
+            }
+        );
+
 
         return new Response(
-            JSON.stringify(data),
+            JSON.stringify(
+                validCompanies
+            ),
             {
                 status: 200,
+
                 headers: {
+
                     "Content-Type":
                         "application/json; charset=UTF-8",
 
-                    "Access-Control-Allow-Origin":
-                        "*",
-
                     "Cache-Control":
                         "public, max-age=3600, s-maxage=86400"
+
                 }
+
             }
         );
 
@@ -56,21 +169,34 @@ export async function onRequest(context) {
     catch (error) {
 
         console.error(
-            "SEC company API error:",
+            "SEC company error:",
             error
         );
 
+
         return new Response(
             JSON.stringify({
-                error: "Unable to load SEC company data."
+
+                error:
+                    "Unable to load SEC company data."
+
             }),
             {
                 status: 500,
+
                 headers: {
+
                     "Content-Type":
-                        "application/json; charset=UTF-8"
+                        "application/json; charset=UTF-8",
+
+                    "Cache-Control":
+                        "no-cache"
+
                 }
+
             }
         );
+
     }
+
 }
