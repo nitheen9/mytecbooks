@@ -27,7 +27,7 @@
 <!-- Google Analytics -->
 
 <script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
+        src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
 
 <script>
 
@@ -356,55 +356,6 @@ select:disabled {
 }
 
 
-/* =========================================
-   POST OFFICE PAGE BUTTON
-========================================= */
-
-.office-page-link {
-
-    display: inline-block;
-
-    margin-top: 20px;
-
-    padding: 13px 20px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #1976d2,
-            #0d47a1
-        );
-
-    color: white;
-
-    text-decoration: none;
-
-    border-radius: 8px;
-
-    font-weight: 700;
-
-    box-shadow:
-        0 4px 12px
-        rgba(25,118,210,.25);
-
-    transition:
-        transform .15s ease,
-        box-shadow .15s ease;
-
-}
-
-
-.office-page-link:hover {
-
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 6px 16px
-        rgba(25,118,210,.30);
-
-}
-
-
 footer {
 
     text-align: center;
@@ -446,15 +397,6 @@ footer {
     select {
 
         font-size: 16px;
-
-    }
-
-
-    .office-page-link {
-
-        display: block;
-
-        text-align: center;
 
     }
 
@@ -734,6 +676,7 @@ async function loadStates() {
 
         hideLoading();
 
+
     }
     catch(error) {
 
@@ -985,6 +928,21 @@ districtSelect.addEventListener(
                 data.offices;
 
 
+            /*
+                Build City / Town list.
+
+                The dataset does not have a
+                separate city field.
+
+                Therefore we group offices by
+                their office-name prefix.
+
+                If there is no meaningful
+                separate city name, all offices
+                are placed under "All Locations".
+            */
+
+
             buildCityList(
                 currentOffices
             );
@@ -1021,28 +979,41 @@ function buildCityList(offices) {
 
 
     /*
-        All offices option
+        The government postal dataset
+        contains district and office name,
+        but not always a separate city/town
+        field.
+
+        Therefore we provide a useful
+        "All Locations" option for the
+        selected district.
     */
 
-    const allOption =
+
+    const option =
         document.createElement(
             "option"
         );
 
-    allOption.value =
+    option.value =
         "__ALL__";
 
-    allOption.textContent =
+    option.textContent =
         "All Locations in Selected District";
 
     citySelect.appendChild(
-        allOption
+        option
     );
 
 
     /*
-        Build location list
+        Also create unique location names
+        from office names.
+
+        This keeps the dropdown useful
+        without inventing city data.
     */
+
 
     const locations =
         new Set();
@@ -1060,6 +1031,10 @@ function buildCityList(offices) {
             return;
         }
 
+
+        /*
+            Remove common postal suffixes.
+        */
 
         const location =
             name
@@ -1165,7 +1140,8 @@ citySelect.addEventListener(
                             String(
                                 office.officeName ||
                                 ""
-                            ).trim();
+                            )
+                            .trim();
 
 
                         const location =
@@ -1209,7 +1185,8 @@ citySelect.addEventListener(
 
 
                 /*
-                    Store current array index
+                    Store the array index
+                    as option value.
                 */
 
                 option.value =
@@ -1294,11 +1271,9 @@ function showOfficeDetails(
         office.officeName ||
         "N/A";
 
-
     const pincode =
         office.pincode ||
         "N/A";
-
 
     const officeType =
         getOfficeType(
@@ -1310,16 +1285,13 @@ function showOfficeDetails(
         office.deliveryStatus ||
         "N/A";
 
-
     const circle =
         office.circleName ||
         "N/A";
 
-
     const region =
         office.regionName ||
         "N/A";
-
 
     const division =
         office.divisionName ||
@@ -1347,26 +1319,6 @@ function showOfficeDetails(
             );
 
     }
-
-
-    /*
-        Create SEO-friendly
-        post office URL
-    */
-
-    const officeSlug =
-        createOfficeSlug(name);
-
-
-    const officeUrl =
-        "/post-office/" +
-        encodeURIComponent(
-            pincode
-        ) +
-        "/" +
-        encodeURIComponent(
-            officeSlug
-        );
 
 
     resultBox.innerHTML = `
@@ -1473,15 +1425,6 @@ function showOfficeDetails(
 
         </div>
 
-
-        <a
-            class="office-page-link"
-            href="${officeUrl}">
-
-            📄 View Full Post Office Page
-
-        </a>
-
     `;
 
 
@@ -1489,25 +1432,14 @@ function showOfficeDetails(
         "block";
 
 
+    /*
+        Scroll result into view
+    */
+
     resultBox.scrollIntoView({
         behavior: "smooth",
         block: "nearest"
     });
-
-}
-
-
-/* =========================================
-   CREATE OFFICE SLUG
-========================================= */
-
-function createOfficeSlug(
-    name
-) {
-
-    return String(name || "")
-        .trim()
-        .replace(/\s+/g, " ");
 
 }
 
@@ -1691,3 +1623,4 @@ function escapeHtml(value) {
 </body>
 
 </html>
+```
