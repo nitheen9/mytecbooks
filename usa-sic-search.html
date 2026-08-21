@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Search USA SIC codes by code or business keyword. Find Standard Industrial Classification code titles and industry descriptions.">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>USA SIC Code Search - Find SIC Codes by Code or Keyword</title>
+
+    <style>
+        :root {
+            --primary: #f48120;
+            --dark: #1e1e24;
+            --light: #f9f9fb;
+            --border: #e0e0e6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, Arial, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--dark);
+            margin: 10px 0 30px;
+            font-size: 30px;
+        }
+
+        .intro {
+            text-align: center;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            font-weight: bold;
+            border: none;
+            background: #e0e0e6;
+            color: #333;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #d3d3d9;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .search-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .search-card h2,
+        .search-card h3 {
+            margin-top: 0;
+        }
+
+        .search-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            min-width: 0;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button.search-submit {
+            padding: 14px 28px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button.search-submit:hover {
+            background: #333;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f1f1f6;
+            display: none;
+            border-left: 5px solid var(--primary);
+        }
+
+        .results h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .error {
+            color: #d9383a;
+            font-weight: bold;
+            background: #fde8e8;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .data-row {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .data-row:last-child {
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .badge {
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .loading {
+            color: #555;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin: 30px 0 10px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            button.search-submit {
+                width: 100%;
+            }
+
+            .search-card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🏢 USA SIC Code Search</h1>
+
+    <p class="intro">
+        Search U.S. Standard Industrial Classification codes by SIC code or business keyword.
+    </p>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('sic-code', this)">
+            🔢 SIC Code Lookup
+        </button>
+
+        <button class="tab-btn" onclick="switchTab('sic-keyword', this)">
+            🔎 Keyword Search
+        </button>
+    </div>
+
+    <div id="sic-code-panel" class="panel active search-card">
+        <h3>Search by SIC Code</h3>
+
+        <p>
+            Enter a 2 to 4 digit SIC code to find the matching industry title and description.
+        </p>
+
+        <div class="search-box">
+            <input
+                type="text"
+                id="sicCodeInput"
+                placeholder="Enter SIC code e.g. 5812"
+                maxlength="4"
+                inputmode="numeric"
+                autocomplete="off">
+
+            <button class="search-submit" onclick="searchByCode()">
+                Search
+            </button>
+        </div>
+
+        <div id="sic-code-error" class="error"></div>
+        <div id="sic-code-results" class="results"></div>
+    </div>
+
+    <div id="sic-keyword-panel" class="panel search-card">
+        <h3>Search by Business Keyword</h3>
+
+        <p>
+            Enter a business type or industry keyword to find related SIC codes.
+        </p>
+
+        <div class="search-box">
+            <input
+                type="text"
+                id="sicKeywordInput"
+                placeholder="Enter keyword e.g. restaurant, software, construction"
+                autocomplete="off">
+
+            <button class="search-submit" onclick="searchByKeyword()">
+                Search
+            </button>
+        </div>
+
+        <div id="sic-keyword-error" class="error"></div>
+        <div id="sic-keyword-results" class="results"></div>
+    </div>
+
+    <footer>
+        USA SIC Code Search<br>
+        SIC information is provided for general reference. Please verify official classification before business filing or compliance use.
+    </footer>
+
+</div>
+
+<script>
+
+const SIC_CODES = [
+    {
+        code: "0111",
+        title: "Wheat",
+        description: "Establishments primarily engaged in growing wheat."
+    },
+    {
+        code: "1521",
+        title: "General Contractors-Single-Family Houses",
+        description: "General contractors primarily responsible for single-family house construction."
+    },
+    {
+        code: "1542",
+        title: "General Contractors-Nonresidential Buildings",
+        description: "General contractors primarily responsible for nonresidential building construction."
+    },
+    {
+        code: "1731",
+        title: "Electrical Work",
+        description: "Special trade contractors primarily engaged in electrical work."
+    },
+    {
+        code: "2752",
+        title: "Commercial Printing, Lithographic",
+        description: "Establishments primarily engaged in commercial lithographic printing."
+    },
+    {
+        code: "3571",
+        title: "Electronic Computers",
+        description: "Establishments primarily engaged in manufacturing electronic computers."
+    },
+    {
+        code: "4213",
+        title: "Trucking, Except Local",
+        description: "Establishments primarily engaged in long-distance trucking."
+    },
+    {
+        code: "4813",
+        title: "Telephone Communications, Except Radiotelephone",
+        description: "Establishments primarily engaged in telephone communications."
+    },
+    {
+        code: "5411",
+        title: "Grocery Stores",
+        description: "Retail stores primarily engaged in selling grocery products."
+    },
+    {
+        code: "5812",
+        title: "Eating Places",
+        description: "Establishments primarily engaged in the retail sale of prepared food and drinks for on-premise or immediate consumption."
+    },
+    {
+        code: "5999",
+        title: "Miscellaneous Retail Stores, Not Elsewhere Classified",
+        description: "Retail stores not classified in a specific retail category."
+    },
+    {
+        code: "6021",
+        title: "National Commercial Banks",
+        description: "Commercial banks chartered by the federal government."
+    },
+    {
+        code: "6022",
+        title: "State Commercial Banks",
+        description: "Commercial banks chartered by state governments."
+    },
+    {
+        code: "7371",
+        title: "Computer Programming Services",
+        description: "Establishments primarily engaged in providing computer programming services."
+    },
+    {
+        code: "7372",
+        title: "Prepackaged Software",
+        description: "Establishments primarily engaged in designing, developing, and producing prepackaged computer software."
+    },
+    {
+        code: "7379",
+        title: "Computer Related Services, Not Elsewhere Classified",
+        description: "Establishments primarily engaged in computer related services not elsewhere classified."
+    },
+    {
+        code: "8011",
+        title: "Offices and Clinics of Doctors of Medicine",
+        description: "Medical offices and clinics operated by doctors of medicine."
+    },
+    {
+        code: "8111",
+        title: "Legal Services",
+        description: "Establishments primarily engaged in providing legal services."
+    },
+    {
+        code: "8742",
+        title: "Management Consulting Services",
+        description: "Establishments primarily engaged in furnishing operating counsel and management assistance."
+    }
+];
+
+function switchTab(tabName, button) {
+    document.querySelectorAll(".panel").forEach(
+        function (panel) {
+            panel.classList.remove("active");
+        }
+    );
+
+    document.querySelectorAll(".tab-btn").forEach(
+        function (tabButton) {
+            tabButton.classList.remove("active");
+        }
+    );
+
+    document
+        .getElementById(tabName + "-panel")
+        .classList.add("active");
+
+    button.classList.add("active");
+}
+
+function searchByCode() {
+    const input = document.getElementById("sicCodeInput");
+    const code = input.value.trim();
+    const errorBox = document.getElementById("sic-code-error");
+    const resultsBox = document.getElementById("sic-code-results");
+
+    hidePanel(errorBox);
+    hidePanel(resultsBox);
+
+    if (!/^\d{2,4}$/.test(code)) {
+        showError(
+            errorBox,
+            "Please enter a valid 2 to 4 digit SIC code."
+        );
+        return;
+    }
+
+    const matches = SIC_CODES.filter(
+        function (item) {
+            return item.code.startsWith(code);
+        }
+    );
+
+    if (matches.length === 0) {
+        showError(
+            errorBox,
+            "No SIC codes were found for this search."
+        );
+        return;
+    }
+
+    renderResults(
+        resultsBox,
+        matches,
+        "Found " + matches.length + " SIC result(s) for " + code
+    );
+}
+
+function searchByKeyword() {
+    const input = document.getElementById("sicKeywordInput");
+    const keyword = input.value.trim().toLowerCase();
+    const errorBox = document.getElementById("sic-keyword-error");
+    const resultsBox = document.getElementById("sic-keyword-results");
+
+    hidePanel(errorBox);
+    hidePanel(resultsBox);
+
+    if (keyword.length < 2) {
+        showError(
+            errorBox,
+            "Please enter at least 2 characters to search."
+        );
+        return;
+    }
+
+    const matches = SIC_CODES.filter(
+        function (item) {
+            const text = (
+                item.code + " " +
+                item.title + " " +
+                item.description
+            ).toLowerCase();
+
+            return text.includes(keyword);
+        }
+    );
+
+    if (matches.length === 0) {
+        showError(
+            errorBox,
+            "No SIC codes were found for this keyword."
+        );
+        return;
+    }
+
+    renderResults(
+        resultsBox,
+        matches,
+        "Found " + matches.length + " SIC result(s) for \"" + keyword + "\""
+    );
+}
+
+function renderResults(resultsBox, matches, title) {
+    let html = "";
+
+    html +=
+        "<h4>" +
+        escapeHtml(title) +
+        "</h4>";
+
+    for (const item of matches) {
+        html +=
+            '<div class="data-row">' +
+                "<strong>SIC Code:</strong> " +
+                escapeHtml(item.code) +
+                '<span class="badge">SIC</span><br>' +
+                "<strong>Industry Title:</strong> " +
+                escapeHtml(item.title) +
+                "<br>" +
+                "<strong>Description:</strong> " +
+                escapeHtml(item.description) +
+            "</div>";
+    }
+
+    resultsBox.innerHTML = html;
+    resultsBox.style.display = "block";
+}
+
+function showError(errorBox, message) {
+    errorBox.innerText = message;
+    errorBox.style.display = "block";
+}
+
+function hidePanel(element) {
+    element.style.display = "none";
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+</script>
+
+</body>
+</html>

@@ -70,7 +70,9 @@ h1 {
 
     text-align: center;
 
-    margin: 10px 0 15px;
+    color: var(--dark);
+
+    margin: 10px 0 30px;
 
     font-size: 30px;
 
@@ -84,7 +86,9 @@ h1 {
 
     line-height: 1.6;
 
-    margin-bottom: 28px;
+    margin-top: -15px;
+
+    margin-bottom: 25px;
 
 }
 
@@ -99,9 +103,12 @@ h1 {
     box-shadow:
         0 4px 15px rgba(0,0,0,0.05);
 
+    margin-bottom: 25px;
+
 }
 
-.search-card h2 {
+.search-card h2,
+.search-card h3 {
 
     margin-top: 0;
 
@@ -115,9 +122,19 @@ h1 {
 
 }
 
+.search-form {
+
+    display: grid;
+
+    gap: 18px;
+
+    margin-top: 15px;
+
+}
+
 .field {
 
-    margin-top: 18px;
+    margin-top: 0;
 
 }
 
@@ -171,6 +188,7 @@ select:disabled {
 
 }
 
+button.search-submit,
 .search-button {
 
     width: 100%;
@@ -195,6 +213,7 @@ select:disabled {
 
 }
 
+button.search-submit:hover,
 .search-button:hover {
 
     background: #333;
@@ -318,6 +337,12 @@ footer {
 
     }
 
+    .search-form {
+
+        gap: 14px;
+
+    }
+
     select {
 
         font-size: 16px;
@@ -365,6 +390,8 @@ to view complete branch details.
 
 </p>
 
+
+<div class="search-form">
 
 <!-- BANK -->
 
@@ -457,6 +484,8 @@ Select Branch
 🔍 Find Branch Details
 
 </button>
+
+</div>
 
 
 <div
@@ -1349,8 +1378,25 @@ async function loadBranches(
         branches.sort(
             function (a, b) {
 
-                return a.name.localeCompare(
-                    b.name
+                const nameCompare =
+                    a.name.localeCompare(
+                        b.name
+                    );
+
+
+                if (nameCompare !== 0) {
+
+                    return nameCompare;
+
+                }
+
+
+                return formatBranchLocation(
+                    a
+                ).localeCompare(
+                    formatBranchLocation(
+                        b
+                    )
                 );
 
             }
@@ -1372,16 +1418,35 @@ async function loadBranches(
 
 
             /*
-             * ONLY branch name displayed.
+             * Show location details too because some banks
+             * return the same branch name for multiple offices.
              */
 
             option.textContent =
-                branch.name;
+                formatBranchOptionText(
+                    branch
+                );
 
 
             /*
              * Save details internally.
              */
+
+            option.dataset.branchName =
+                branch.name ||
+                "";
+
+            option.dataset.bankName =
+                branch.bankName ||
+                "";
+
+            option.dataset.officeNumber =
+                branch.officeNumber ||
+                "";
+
+            option.dataset.officeName =
+                branch.officeName ||
+                "";
 
             option.dataset.address =
                 branch.address ||
@@ -1393,6 +1458,10 @@ async function loadBranches(
 
             option.dataset.state =
                 branch.state ||
+                "";
+
+            option.dataset.stateName =
+                branch.stateName ||
                 "";
 
             option.dataset.zip =
@@ -1409,6 +1478,26 @@ async function loadBranches(
 
             option.dataset.serviceType =
                 branch.serviceType ||
+                "";
+
+            option.dataset.serviceTypeDescription =
+                branch.serviceTypeDescription ||
+                "";
+
+            option.dataset.mainOffice =
+                branch.mainOffice ||
+                "";
+
+            option.dataset.lastUpdated =
+                branch.lastUpdated ||
+                "";
+
+            option.dataset.latitude =
+                branch.latitude ||
+                "";
+
+            option.dataset.longitude =
+                branch.longitude ||
                 "";
 
 
@@ -1484,7 +1573,23 @@ branchSelect.addEventListener(
                 branchSelect.value,
 
             name:
+                option.dataset.branchName ||
                 option.textContent,
+
+            label:
+                option.textContent,
+
+            bankName:
+                option.dataset.bankName ||
+                "",
+
+            officeNumber:
+                option.dataset.officeNumber ||
+                "",
+
+            officeName:
+                option.dataset.officeName ||
+                "",
 
             address:
                 option.dataset.address ||
@@ -1503,6 +1608,14 @@ branchSelect.addEventListener(
                         : ""
                 ),
 
+            stateName:
+                option.dataset.stateName ||
+                (
+                    selectedState
+                        ? selectedState.name
+                        : ""
+                ),
+
             zip:
                 option.dataset.zip ||
                 "",
@@ -1517,6 +1630,26 @@ branchSelect.addEventListener(
 
             serviceType:
                 option.dataset.serviceType ||
+                "",
+
+            serviceTypeDescription:
+                option.dataset.serviceTypeDescription ||
+                "",
+
+            mainOffice:
+                option.dataset.mainOffice ||
+                "",
+
+            lastUpdated:
+                option.dataset.lastUpdated ||
+                "",
+
+            latitude:
+                option.dataset.latitude ||
+                "",
+
+            longitude:
+                option.dataset.longitude ||
                 ""
 
         };
@@ -1687,6 +1820,110 @@ findButton.addEventListener(
 
             </div>
 
+
+            <div class="result-row">
+
+                <strong>
+                    FDIC Certificate Number:
+                </strong><br>
+
+                ${escapeHtml(
+                    selectedBranch.cert ||
+                    "N/A"
+                )}
+
+            </div>
+
+
+            <div class="result-row">
+
+                <strong>
+                    FDIC Location ID:
+                </strong><br>
+
+                ${escapeHtml(
+                    selectedBranch.id ||
+                    "N/A"
+                )}
+
+            </div>
+
+
+            <div class="result-row">
+
+                <strong>
+                    Office Number:
+                </strong><br>
+
+                ${escapeHtml(
+                    selectedBranch.officeNumber ||
+                    "N/A"
+                )}
+
+            </div>
+
+
+            <div class="result-row">
+
+                <strong>
+                    Main Office:
+                </strong><br>
+
+                ${escapeHtml(
+                    selectedBranch.mainOffice ||
+                    "N/A"
+                )}
+
+            </div>
+
+
+            <div class="result-row">
+
+                <strong>
+                    Service Type:
+                </strong><br>
+
+                ${escapeHtml(
+                    formatServiceType(
+                        selectedBranch.serviceType,
+                        selectedBranch.serviceTypeDescription
+                    ) ||
+                    "N/A"
+                )}
+
+            </div>
+
+
+            <div class="result-row">
+
+                <strong>
+                    Coordinates:
+                </strong><br>
+
+                ${escapeHtml(
+                    formatCoordinates(
+                        selectedBranch.latitude,
+                        selectedBranch.longitude
+                    ) ||
+                    "N/A"
+                )}
+
+            </div>
+
+
+            <div class="result-row">
+
+                <strong>
+                    FDIC Data Last Updated:
+                </strong><br>
+
+                ${escapeHtml(
+                    selectedBranch.lastUpdated ||
+                    "N/A"
+                )}
+
+            </div>
+
         `;
 
 
@@ -1695,6 +1932,201 @@ findButton.addEventListener(
 
     }
 );
+
+
+/* =========================================
+   FORMAT EXTRA BRANCH DETAILS
+========================================= */
+
+function formatServiceType(
+    code,
+    description
+) {
+
+    const serviceCode =
+        String(
+            code ||
+            ""
+        ).trim();
+
+
+    const serviceDescription =
+        String(
+            description ||
+            ""
+        ).trim();
+
+
+    if (
+        serviceCode &&
+        serviceDescription
+    ) {
+
+        return (
+            serviceDescription +
+            " (" +
+            serviceCode +
+            ")"
+        );
+
+    }
+
+
+    return (
+        serviceDescription ||
+        serviceCode
+    );
+
+}
+
+
+function formatCoordinates(
+    latitude,
+    longitude
+) {
+
+    const lat =
+        String(
+            latitude ||
+            ""
+        ).trim();
+
+
+    const lon =
+        String(
+            longitude ||
+            ""
+        ).trim();
+
+
+    if (
+        !lat ||
+        !lon
+    ) {
+
+        return "";
+
+    }
+
+
+    return (
+        lat +
+        ", " +
+        lon
+    );
+
+}
+
+
+/* =========================================
+   FORMAT BRANCH OPTION TEXT
+========================================= */
+
+function formatBranchOptionText(
+    branch
+) {
+
+    const name =
+        String(
+            branch.name ||
+            "Bank Branch"
+        ).trim();
+
+
+    const location =
+        formatBranchLocation(
+            branch
+        );
+
+
+    if (!location) {
+
+        return name;
+
+    }
+
+
+    return (
+        name +
+        " — " +
+        location
+    );
+
+}
+
+
+function formatBranchLocation(
+    branch
+) {
+
+    const parts = [];
+
+    const address =
+        String(
+            branch.address ||
+            ""
+        ).trim();
+
+
+    const city =
+        String(
+            branch.city ||
+            selectedCity ||
+            ""
+        ).trim();
+
+
+    const state =
+        String(
+            branch.state ||
+            (
+                selectedState
+                    ? selectedState.code
+                    : ""
+            )
+        ).trim();
+
+
+    const zip =
+        String(
+            branch.zip ||
+            ""
+        ).trim();
+
+
+    if (address) {
+
+        parts.push(
+            address
+        );
+
+    }
+
+
+    const cityStateZip =
+        [
+            city,
+            state,
+            zip
+        ]
+        .filter(Boolean)
+        .join(", ");
+
+
+    if (cityStateZip) {
+
+        parts.push(
+            cityStateZip
+        );
+
+    }
+
+
+    return parts.join(
+        " | "
+    );
+
+}
 
 
 /* =========================================

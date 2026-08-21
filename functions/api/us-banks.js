@@ -639,16 +639,24 @@ async function getBranches(
         await getAllLocations(
             search,
             [
-                "ID",
+                "UNINUM",
                 "NAME",
+                "OFFNUM",
                 "OFFNAME",
                 "ADDRESS",
                 "CITY",
                 "STALP",
+                "STNAME",
                 "ZIP",
                 "COUNTY",
+                "STCNTY",
                 "CERT",
-                "SERVTYPE"
+                "SERVTYPE",
+                "SERVTYPE_DESC",
+                "MAINOFF",
+                "RUNDATE",
+                "LATITUDE",
+                "LONGITUDE"
             ].join(",")
         );
 
@@ -676,7 +684,7 @@ async function getBranches(
 
         const id =
             String(
-                item.ID ?? ""
+                item.UNINUM ?? ""
             ).trim();
 
 
@@ -705,6 +713,24 @@ async function getBranches(
                     "Bank Branch"
                 ).trim(),
 
+            bankName:
+                String(
+                    item.NAME ||
+                    ""
+                ).trim(),
+
+            officeNumber:
+                String(
+                    item.OFFNUM ||
+                    ""
+                ).trim(),
+
+            officeName:
+                String(
+                    item.OFFNAME ||
+                    ""
+                ).trim(),
+
             address:
                 String(
                     item.ADDRESS ||
@@ -723,6 +749,12 @@ async function getBranches(
                     ""
                 ).trim(),
 
+            stateName:
+                String(
+                    item.STNAME ||
+                    ""
+                ).trim(),
+
             zip:
                 String(
                     item.ZIP ||
@@ -732,6 +764,7 @@ async function getBranches(
             county:
                 String(
                     item.COUNTY ||
+                    item.STCNTY ||
                     ""
                 ).trim(),
 
@@ -744,6 +777,35 @@ async function getBranches(
             serviceType:
                 String(
                     item.SERVTYPE ||
+                    ""
+                ).trim(),
+
+            serviceTypeDescription:
+                String(
+                    item.SERVTYPE_DESC ||
+                    ""
+                ).trim(),
+
+            mainOffice:
+                formatMainOffice(
+                    item.MAINOFF
+                ),
+
+            lastUpdated:
+                String(
+                    item.RUNDATE ||
+                    ""
+                ).trim(),
+
+            latitude:
+                String(
+                    item.LATITUDE ||
+                    ""
+                ).trim(),
+
+            longitude:
+                String(
+                    item.LONGITUDE ||
                     ""
                 ).trim()
 
@@ -801,7 +863,7 @@ async function getAllInstitutions() {
             await fdicRequest(
                 "/institutions",
                 {
-                    search:
+                    filters:
                         "ACTIVE:1",
 
                     fields:
@@ -885,7 +947,7 @@ async function getAllLocations(
             await fdicRequest(
                 "/locations",
                 {
-                    search:
+                    filters:
                         search,
 
                     fields:
@@ -1007,6 +1069,55 @@ function parseCerts(
 
             }
         );
+
+}
+
+
+/* =========================================================
+   FORMAT MAIN OFFICE
+========================================================= */
+
+function formatMainOffice(
+    value
+) {
+
+    const normalized =
+        String(
+            value ||
+            ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+    if (
+        normalized === "1" ||
+        normalized === "Y" ||
+        normalized === "YES" ||
+        normalized === "TRUE"
+    ) {
+
+        return "Yes";
+
+    }
+
+
+    if (
+        normalized === "0" ||
+        normalized === "N" ||
+        normalized === "NO" ||
+        normalized === "FALSE"
+    ) {
+
+        return "No";
+
+    }
+
+
+    return String(
+        value ||
+        ""
+    ).trim();
 
 }
 
