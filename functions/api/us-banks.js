@@ -59,87 +59,48 @@ const STATES = [
     ["MP", "Northern Mariana Islands"]
 ];
 
-
-/* =========================================================
-   MAIN
-========================================================= */
-
 export async function onRequest(context) {
-
-    const url =
-        new URL(context.request.url);
-
-    const type =
-        url.searchParams.get("type");
-
+    const url = new URL(context.request.url);
+    const type = url.searchParams.get("type");
 
     try {
-
-        if (
-            context.request.method === "OPTIONS"
-        ) {
-
-            return json(
-                {},
-                204
-            );
-
-        }
-
-
         if (type === "banks") {
-
             return await getBanks();
-
         }
-
 
         if (type === "states") {
-
             return await getStates(
                 getCertParameter(url)
             );
-
         }
 
-
         if (type === "cities") {
-
             return await getCities(
                 getCertParameter(url),
                 url.searchParams.get("state")
             );
-
         }
 
-
         if (type === "branches") {
-
             return await getBranches(
                 getCertParameter(url),
                 url.searchParams.get("state"),
                 url.searchParams.get("city")
             );
-
         }
-
 
         return json(
             {
-                error:
-                    "Invalid API type."
+                error: "Invalid API type."
             },
             400
         );
-
     }
     catch (error) {
-
         console.error(
             "US BANK API ERROR:",
             error
         );
-
 
         return json(
             {
@@ -149,344 +110,146 @@ export async function onRequest(context) {
             },
             500
         );
-
     }
-
 }
 
-
-/* =========================================================
-   GET CERT PARAMETER
-
-   Supports both:
-   ?cert=3510
-   ?certs=3510,1234,5678
-========================================================= */
-
 function getCertParameter(url) {
-
-    const certs =
-        url.searchParams.get("certs");
+    const certs = url.searchParams.get("certs");
 
     if (certs) {
         return certs;
     }
 
-
     return url.searchParams.get("cert") || "";
-
 }
 
-
-/* =========================================================
-   BANKS
-
-   Merge same bank names.
-
-   Example:
-
-   1st Choice Bank / CERT 123
-   1st Choice Bank / CERT 456
-
-   becomes one dropdown item:
-
-   1st Choice Bank
-
-   with:
-
-   certs = ["123","456"]
-========================================================= */
-
 async function getBanks() {
+    const rows = await getAllInstitutions();
+    const bankMap = new Map();
 
-    const rows =
-        await getAllInstitutions();
+    for (const item of rows) {
+        const active = String(item.ACTIVE ?? "").trim();
 
-
-    const bankMap =
-        new Map();
-
-
-    for (
-        const item of rows
-    ) {
-
-        const active =
-            String(
-                item.ACTIVE ?? ""
-            ).trim();
-
-
-        if (
-            active &&
-            active !== "1"
-        ) {
+        if (active && active !== "1") {
             continue;
         }
 
+        const name = String(item.NAME ?? "").trim();
+        const cert = String(item.CERT ?? "").trim();
 
-        const name =
-            String(
-                item.NAME ?? ""
-            ).trim();
-
-
-        const cert =
-            String(
-                item.CERT ?? ""
-            ).trim();
-
-
-        if (
-            !name ||
-            !cert
-        ) {
+        if (!name || !cert) {
             continue;
         }
 
+        const key = normalizeBankName(name);
 
-        const key =
-            normalizeBankName(name);
-
-
-        if (
-            !bankMap.has(key)
-        ) {
-
+        if (!bankMap.has(key)) {
             bankMap.set(
                 key,
                 {
-                    name:
-                        name,
-
-                    certs:
-                        []
+                    name: name,
+                    certs: []
                 }
             );
-
         }
 
+        const bank = bankMap.get(key);
 
-        const bank =
-            bankMap.get(key);
-
-
-        if (
-            !bank.certs.includes(cert)
-        ) {
-
+        if (!bank.certs.includes(cert)) {
             bank.certs.push(cert);
-
         }
-
     }
 
-
-    const banks =
-        Array.from(
-            bankMap.values()
-        );
-
+    const banks = Array.from(bankMap.values());
 
     banks.sort(
         function (a, b) {
-
-            return a.name.localeCompare(
-                b.name
-            );
-
+            return a.name.localeCompare(b.name);
         }
     );
 
-
     return json({
-
-        count:
-            banks.length,
-
-        banks:
-            banks
-
+        count: banks.length,
+        banks: banks
     });
-
 }
 
+async function getStates(certParameter) {
+    const certs = parseCerts(certParameter);
 
-/* =========================================================
-   STATES
-========================================================= */
-
-async function getStates(
-    certParameter
-) {
-
-    const certs =
-        parseCerts(
-            certParameter
-        );
-
-
-    if (
-        certs.length === 0
-    ) {
-
+    if (certs.length === 0) {
         return json(
             {
-                error:
-                    "Bank certificate list is required."
+                error: "Bank certificate list is required."
             },
             400
         );
-
     }
 
+    const search = buildCertSearch(certs);
+    const rows = await getAllLocations(search, "STALP");
+    const stateSet = new Set();
 
-    const search =
-        buildCertSearch(
-            certs
-        );
-
-
-    const rows =
-        await getAllLocations(
-            search,
-            "STALP"
-        );
-
-
-    const stateSet =
-        new Set();
-
-
-    for (
-        const item of rows
-    ) {
-
-        const code =
-            String(
-                item.STALP ?? ""
-            )
+    for (const item of rows) {
+        const code = String(item.STALP ?? "")
             .trim()
             .toUpperCase();
 
-
         if (code) {
-
-            stateSet.add(
-                code
-            );
-
+            stateSet.add(code);
         }
-
     }
 
-
-    const states =
-        Array.from(
-            stateSet
-        )
+    const states = Array.from(stateSet)
         .sort()
         .map(
             function (code) {
-
-                const found =
-                    STATES.find(
-                        function (item) {
-
-                            return (
-                                item[0] === code
-                            );
-
-                        }
-                    );
-
+                const found = STATES.find(
+                    function (item) {
+                        return item[0] === code;
+                    }
+                );
 
                 return {
-
-                    code:
-                        code,
-
-                    name:
-                        found
-                            ? found[1]
-                            : code
-
+                    code: code,
+                    name: found ? found[1] : code
                 };
-
             }
         );
 
-
     return json({
-
-        certs:
-            certs,
-
-        count:
-            states.length,
-
-        states:
-            states
-
+        certs: certs,
+        count: states.length,
+        states: states
     });
-
 }
 
+async function getCities(certParameter, state) {
+    const certs = parseCerts(certParameter);
 
-/* =========================================================
-   CITIES
-========================================================= */
-
-async function getCities(
-    certParameter,
-    state
-) {
-
-    const certs =
-        parseCerts(
-            certParameter
-        );
-
-
-    if (
-        certs.length === 0
-    ) {
-
+    if (certs.length === 0) {
         return json(
             {
-                error:
-                    "Bank certificate list is required."
+                error: "Bank certificate list is required."
             },
             400
         );
-
     }
-
 
     if (!state) {
-
         return json(
             {
-                error:
-                    "State is required."
+                error: "State is required."
             },
             400
         );
-
     }
 
+    const stateCode = String(state)
+        .trim()
+        .toUpperCase();
 
-    const stateCode =
-        String(state)
-            .trim()
-            .toUpperCase();
-
-
-    const certSearch =
-        buildCertSearch(
-            certs
-        );
-
+    const certSearch = buildCertSearch(certs);
 
     const search =
         "(" +
@@ -496,149 +259,66 @@ async function getCities(
         "STALP:" +
         escapeQuery(stateCode);
 
+    const rows = await getAllLocations(search, "CITY");
+    const cityMap = new Map();
 
-    const rows =
-        await getAllLocations(
-            search,
-            "CITY"
-        );
-
-
-    const cityMap =
-        new Map();
-
-
-    for (
-        const item of rows
-    ) {
-
-        const city =
-            String(
-                item.CITY ?? ""
-            ).trim();
-
+    for (const item of rows) {
+        const city = String(item.CITY ?? "").trim();
 
         if (!city) {
             continue;
         }
 
+        const key = city.toUpperCase();
 
-        const key =
-            city.toUpperCase();
-
-
-        if (
-            !cityMap.has(key)
-        ) {
-
-            cityMap.set(
-                key,
-                city
-            );
-
+        if (!cityMap.has(key)) {
+            cityMap.set(key, city);
         }
-
     }
 
-
-    const cities =
-        Array.from(
-            cityMap.values()
-        );
-
+    const cities = Array.from(cityMap.values());
 
     cities.sort(
         function (a, b) {
-
-            return a.localeCompare(
-                b
-            );
-
+            return a.localeCompare(b);
         }
     );
 
-
     return json({
-
-        certs:
-            certs,
-
-        state:
-            stateCode,
-
-        count:
-            cities.length,
-
-        cities:
-            cities
-
+        certs: certs,
+        state: stateCode,
+        count: cities.length,
+        cities: cities
     });
-
 }
 
+async function getBranches(certParameter, state, city) {
+    const certs = parseCerts(certParameter);
 
-/* =========================================================
-   BRANCHES
-========================================================= */
-
-async function getBranches(
-    certParameter,
-    state,
-    city
-) {
-
-    const certs =
-        parseCerts(
-            certParameter
-        );
-
-
-    if (
-        certs.length === 0
-    ) {
-
+    if (certs.length === 0) {
         return json(
             {
-                error:
-                    "Bank certificate list is required."
+                error: "Bank certificate list is required."
             },
             400
         );
-
     }
 
-
-    if (
-        !state ||
-        !city
-    ) {
-
+    if (!state || !city) {
         return json(
             {
-                error:
-                    "State and city are required."
+                error: "State and city are required."
             },
             400
         );
-
     }
 
+    const stateCode = String(state)
+        .trim()
+        .toUpperCase();
 
-    const stateCode =
-        String(state)
-            .trim()
-            .toUpperCase();
-
-
-    const requestedCity =
-        normalizeCity(city);
-
-
-    const certSearch =
-        buildCertSearch(
-            certs
-        );
-
+    const requestedCity = normalizeCity(city);
+    const certSearch = buildCertSearch(certs);
 
     const search =
         "(" +
@@ -648,643 +328,392 @@ async function getBranches(
         "STALP:" +
         escapeQuery(stateCode);
 
-
-    const rows =
-        await getAllLocations(
-            search,
-            [
-                "UNINUM",
-                "NAME",
-                "ADDRESS",
-                "CITY",
-                "STALP",
-                "ZIP",
-                "COUNTY",
-                "CERT",
-                "SERVTYPE"
-            ].join(",")
-        );
-
+    const rows = await getAllLocations(
+        search,
+        [
+            "UNINUM",
+            "NAME",
+            "OFFNUM",
+            "OFFNAME",
+            "ADDRESS",
+            "CITY",
+            "STALP",
+            "STNAME",
+            "ZIP",
+            "COUNTY",
+            "STCNTY",
+            "CERT",
+            "SERVTYPE",
+            "SERVTYPE_DESC",
+            "MAINOFF",
+            "RUNDATE",
+            "LATITUDE",
+            "LONGITUDE"
+        ].join(",")
+    );
 
     const branches = [];
+    const seen = new Set();
 
-    const seen =
-        new Set();
-
-
-    for (
-        const item of rows
-    ) {
-
-        if (
-            normalizeCity(
-                item.CITY
-            ) !== requestedCity
-        ) {
-
+    for (const item of rows) {
+        if (normalizeCity(item.CITY) !== requestedCity) {
             continue;
-
         }
 
+        const id = String(item.UNINUM ?? "").trim();
 
-        const id =
-            String(
-                item.UNINUM ?? ""
-            ).trim();
-
-
-        if (
-            !id ||
-            seen.has(id)
-        ) {
-
+        if (!id || seen.has(id)) {
             continue;
-
         }
-
 
         seen.add(id);
 
-
         branches.push({
+            id: id,
 
-            id:
-                id,
+            name: String(
+                item.OFFNAME ||
+                item.NAME ||
+                "Bank Branch"
+            ).trim(),
 
-            name:
-                String(
-                    item.NAME ||
-                    "Bank Branch"
-                ).trim(),
+            bankName: String(
+                item.NAME ||
+                ""
+            ).trim(),
 
-            address:
-                String(
-                    item.ADDRESS ||
-                    ""
-                ).trim(),
+            officeNumber: String(
+                item.OFFNUM ||
+                ""
+            ).trim(),
 
-            city:
-                String(
-                    item.CITY ||
-                    ""
-                ).trim(),
+            officeName: String(
+                item.OFFNAME ||
+                ""
+            ).trim(),
 
-            state:
-                String(
-                    item.STALP ||
-                    ""
-                ).trim(),
+            address: String(
+                item.ADDRESS ||
+                ""
+            ).trim(),
 
-            zip:
-                String(
-                    item.ZIP ||
-                    ""
-                ).trim(),
+            city: String(
+                item.CITY ||
+                ""
+            ).trim(),
 
-            county:
-                String(
-                    item.COUNTY ||
-                    ""
-                ).trim(),
+            state: String(
+                item.STALP ||
+                ""
+            ).trim(),
 
-            cert:
-                String(
-                    item.CERT ||
-                    ""
-                ).trim(),
+            stateName: String(
+                item.STNAME ||
+                ""
+            ).trim(),
 
-            serviceType:
-                String(
-                    item.SERVTYPE ||
-                    ""
-                ).trim()
+            zip: String(
+                item.ZIP ||
+                ""
+            ).trim(),
 
+            county: String(
+                item.COUNTY ||
+                item.STCNTY ||
+                ""
+            ).trim(),
+
+            cert: String(
+                item.CERT ||
+                ""
+            ).trim(),
+
+            serviceType: String(
+                item.SERVTYPE ||
+                ""
+            ).trim(),
+
+            serviceTypeDescription: String(
+                item.SERVTYPE_DESC ||
+                ""
+            ).trim(),
+
+            mainOffice: formatMainOffice(
+                item.MAINOFF
+            ),
+
+            lastUpdated: String(
+                item.RUNDATE ||
+                ""
+            ).trim(),
+
+            latitude: String(
+                item.LATITUDE ||
+                ""
+            ).trim(),
+
+            longitude: String(
+                item.LONGITUDE ||
+                ""
+            ).trim()
         });
-
     }
-
 
     branches.sort(
         function (a, b) {
-
-            return a.name.localeCompare(
-                b.name
-            );
-
+            return a.name.localeCompare(b.name);
         }
     );
 
-
     return json({
-
-        state:
-            stateCode,
-
-        city:
-            String(city),
-
-        count:
-            branches.length,
-
-        branches:
-            branches
-
+        state: stateCode,
+        city: String(city),
+        count: branches.length,
+        branches: branches
     });
-
 }
-
-
-/* =========================================================
-   GET ALL INSTITUTIONS
-========================================================= */
 
 async function getAllInstitutions() {
-
     const allRows = [];
-
     const limit = 5000;
-
     let offset = 0;
 
-
     while (true) {
-
-        const data =
-            await fdicRequest(
-                "/institutions",
-                {
-                    filters:
-                        "ACTIVE:1",
-
-                    fields:
-                        "NAME,CERT,CITY,STNAME,ACTIVE",
-
-                    limit:
-                        limit,
-
-                    offset:
-                        offset
-                }
-            );
-
-
-        const rows =
-            extractRows(data);
-
-
-        if (
-            rows.length === 0
-        ) {
-
-            break;
-
-        }
-
-
-        allRows.push(
-            ...rows
+        const data = await fdicRequest(
+            "/institutions",
+            {
+                filters: "ACTIVE:1",
+                fields: "NAME,CERT,CITY,STNAME,ACTIVE",
+                limit: limit,
+                offset: offset
+            }
         );
 
+        const rows = extractRows(data);
 
-        if (
-            rows.length <
-            limit
-        ) {
-
+        if (rows.length === 0) {
             break;
-
         }
 
+        allRows.push(...rows);
+
+        if (rows.length < limit) {
+            break;
+        }
 
         offset += limit;
 
-
-        if (
-            offset >= 100000
-        ) {
-
+        if (offset >= 100000) {
             break;
-
         }
-
     }
 
-
     return allRows;
-
 }
 
-
-/* =========================================================
-   GET ALL LOCATIONS WITH PAGINATION
-========================================================= */
-
-async function getAllLocations(
-    search,
-    fields
-) {
-
+async function getAllLocations(search, fields) {
     const allRows = [];
-
     const limit = 5000;
-
     let offset = 0;
 
-
     while (true) {
-
-        const data =
-            await fdicRequest(
-                "/locations",
-                {
-                    filters:
-                        search,
-
-                    fields:
-                        fields,
-
-                    limit:
-                        limit,
-
-                    offset:
-                        offset
-                }
-            );
-
-
-        const rows =
-            extractRows(data);
-
-
-        if (
-            rows.length === 0
-        ) {
-
-            break;
-
-        }
-
-
-        allRows.push(
-            ...rows
+        const data = await fdicRequest(
+            "/locations",
+            {
+                filters: search,
+                fields: fields,
+                limit: limit,
+                offset: offset
+            }
         );
 
+        const rows = extractRows(data);
 
-        if (
-            rows.length <
-            limit
-        ) {
-
+        if (rows.length === 0) {
             break;
-
         }
 
+        allRows.push(...rows);
+
+        if (rows.length < limit) {
+            break;
+        }
 
         offset += limit;
 
-
-        if (
-            offset >= 100000
-        ) {
-
+        if (offset >= 100000) {
             break;
-
         }
-
     }
 
-
     return allRows;
-
 }
 
-
-/* =========================================================
-   BUILD CERT SEARCH
-========================================================= */
-
-function buildCertSearch(
-    certs
-) {
-
+function buildCertSearch(certs) {
     return certs
         .map(
             function (cert) {
-
                 return (
                     "CERT:" +
                     escapeQuery(cert)
                 );
-
             }
         )
         .join(" OR ");
-
 }
 
-
-/* =========================================================
-   PARSE CERTS
-
-   Accepts:
-
-   3510
-   3510,1234,5678
-========================================================= */
-
-function parseCerts(
-    value
-) {
-
+function parseCerts(value) {
     if (!value) {
         return [];
     }
-
 
     return String(value)
         .split(",")
         .map(
             function (item) {
-
                 return item.trim();
-
             }
         )
         .filter(
             function (item) {
-
-                return /^\d+$/.test(
-                    item
-                );
-
+                return /^\d+$/.test(item);
             }
         );
-
 }
 
-
-/* =========================================================
-   NORMALIZE BANK NAME
-========================================================= */
-
-function normalizeBankName(
-    name
-) {
-
-    return String(name)
-        .toUpperCase()
-        .replace(
-            /&/g,
-            "AND"
-        )
-        .replace(
-            /[^A-Z0-9]+/g,
-            " "
-        )
-        .trim();
-
-}
-
-
-/* =========================================================
-   NORMALIZE CITY
-========================================================= */
-
-function normalizeCity(
-    value
-) {
-
-    return String(
-        value || ""
-    )
-    .toUpperCase()
-    .replace(
-        /[^A-Z0-9]+/g,
-        " "
-    )
-    .trim();
-
-}
-
-
-/* =========================================================
-   ESCAPE SEARCH VALUE
-========================================================= */
-
-function escapeQuery(
-    value
-) {
-
-    return String(
-        value || ""
-    )
-    .trim()
-    .replace(
-        /\\/g,
-        "\\\\"
-    )
-    .replace(
-        /"/g,
-        '\\"'
-    );
-
-}
-
-
-/* =========================================================
-   FDIC REQUEST
-========================================================= */
-
-async function fdicRequest(
-    endpoint,
-    params
-) {
-
-    const apiUrl =
-        new URL(
-            FDIC_API +
-            endpoint
-        );
-
-
-    apiUrl.searchParams.set(
-        "format",
-        "json"
-    );
-
-
-    for (
-        const key in params
-    ) {
-
-        apiUrl.searchParams.set(
-            key,
-            String(
-                params[key]
-            )
-        );
-
-    }
-
-
-    const response =
-        await fetch(
-            apiUrl.toString(),
-            {
-                method:
-                    "GET",
-
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        );
-
-
-    const text =
-        await response.text();
-
+function formatMainOffice(value) {
+    const normalized = String(value || "")
+        .trim()
+        .toUpperCase();
 
     if (
-        !response.ok
+        normalized === "1" ||
+        normalized === "Y" ||
+        normalized === "YES" ||
+        normalized === "TRUE"
     ) {
+        return "Yes";
+    }
 
+    if (
+        normalized === "0" ||
+        normalized === "N" ||
+        normalized === "NO" ||
+        normalized === "FALSE"
+    ) {
+        return "No";
+    }
+
+    return String(value || "").trim();
+}
+
+function normalizeBankName(name) {
+    return String(name)
+        .toUpperCase()
+        .replace(/&/g, "AND")
+        .replace(/[^A-Z0-9]+/g, " ")
+        .trim();
+}
+
+function normalizeCity(value) {
+    return String(value || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, " ")
+        .trim();
+}
+
+function escapeQuery(value) {
+    return String(value || "")
+        .trim()
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"');
+}
+
+async function fdicRequest(endpoint, params) {
+    const apiUrl = new URL(FDIC_API + endpoint);
+
+    apiUrl.searchParams.set("format", "json");
+
+    for (const key in params) {
+        apiUrl.searchParams.set(
+            key,
+            String(params[key])
+        );
+    }
+
+    const response = await fetch(
+        apiUrl.toString(),
+        {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        }
+    );
+
+    const text = await response.text();
+
+    if (!response.ok) {
         console.error(
             "FDIC HTTP:",
             response.status,
-            text.substring(
-                0,
-                1000
-            )
+            text.substring(0, 1000)
         );
-
 
         throw new Error(
             "FDIC API HTTP " +
             response.status
         );
-
     }
-
 
     try {
-
-        return JSON.parse(
-            text
-        );
-
+        return JSON.parse(text);
     }
     catch {
-
         console.error(
             "FDIC RESPONSE:",
-            text.substring(
-                0,
-                1000
-            )
+            text.substring(0, 1000)
         );
-
 
         throw new Error(
             "FDIC returned invalid JSON."
         );
-
     }
-
 }
 
-
-/* =========================================================
-   UNWRAP FDIC RESPONSE
-
-   Actual response:
-
-   data: [
-       {
-           data: {
-               CERT: 10,
-               NAME: "..."
-           }
-       }
-   ]
-========================================================= */
-
-function extractRows(
-    result
-) {
-
+function extractRows(result) {
     if (
         !result ||
-        !Array.isArray(
-            result.data
-        )
+        !Array.isArray(result.data)
     ) {
-
         return [];
-
     }
-
 
     return result.data.map(
         function (item) {
-
             if (
                 item &&
                 item.data &&
-                typeof item.data ===
-                    "object"
+                typeof item.data === "object"
             ) {
-
                 return item.data;
-
             }
-
 
             return item;
-
         }
     );
-
 }
 
-
-/* =========================================================
-   JSON RESPONSE
-========================================================= */
-
-function json(
-    data,
-    status = 200
-) {
-
+function json(data, status = 200) {
     return new Response(
-        JSON.stringify(
-            data
-        ),
+        JSON.stringify(data),
         {
-            status:
-                status,
-
+            status: status,
             headers: {
-
-                "Content-Type":
-                    "application/json; charset=UTF-8",
-
-                "Cache-Control":
-                    "public, max-age=3600",
-
-                "Access-Control-Allow-Origin":
-                    "*",
-
-                "Access-Control-Allow-Methods":
-                    "GET, OPTIONS",
-
-                "Access-Control-Allow-Headers":
-                    "Content-Type"
-
+                "Content-Type": "application/json; charset=UTF-8",
+                "Cache-Control": "public, max-age=3600",
+                "Access-Control-Allow-Origin": "*"
             }
         }
     );
-
 }
