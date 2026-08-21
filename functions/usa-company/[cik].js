@@ -19,33 +19,22 @@ export async function onRequest(context) {
     }
 
 
-    const cikNumber =
+    const cleanCik =
         String(cik)
-            .replace(/\D/g, "");
+            .replace(/\D/g, "")
+            .padStart(10, "0");
 
 
-    if (!cikNumber) {
+    if (!/^\d{10}$/.test(cleanCik)) {
 
         return jsonResponse(
             {
-                error: "Invalid CIK"
+                error: "Invalid SEC CIK"
             },
             400
         );
 
     }
-
-
-    /*
-        SEC requires a 10-digit CIK
-        including leading zeros.
-    */
-
-    const paddedCik =
-        cikNumber.padStart(
-            10,
-            "0"
-        );
 
 
     /* =========================================
@@ -54,11 +43,21 @@ export async function onRequest(context) {
 
     const apiUrl =
         "https://data.sec.gov/submissions/CIK" +
-        paddedCik +
+        cleanCik +
         ".json";
 
 
     try {
+
+        /*
+         IMPORTANT:
+
+         SEC requires automated requests
+         to identify the application.
+
+         Replace this with your own
+         site/contact information if desired.
+        */
 
         const response =
             await fetch(
@@ -66,14 +65,8 @@ export async function onRequest(context) {
                 {
                     headers: {
 
-                        /*
-                            Identify your website.
-                            Replace this with your
-                            actual site information.
-                        */
-
                         "User-Agent":
-                            "MyTecBooks Company Finder admin@mytecbooks.pages.dev",
+                            "MyTecBooks mytecbooks.pages.dev contact@example.com",
 
                         "Accept":
                             "application/json"
@@ -85,11 +78,15 @@ export async function onRequest(context) {
 
         if (!response.ok) {
 
+            console.error(
+                "SEC response:",
+                response.status
+            );
+
             return jsonResponse(
                 {
                     error:
-                        "SEC API returned HTTP " +
-                        response.status
+                        "SEC company data unavailable"
                 },
                 response.status
             );
@@ -101,106 +98,35 @@ export async function onRequest(context) {
             await response.json();
 
 
-        /* =========================================
-           COMPANY
-        ========================================= */
+        if (!data) {
 
-        const company = {
+            return jsonResponse(
+                {
+                    error:
+                        "No company data found"
+                },
+                404
+            );
 
-            name:
-                data.name ||
-                null,
-
-            cik:
-                data.cik ||
-                paddedCik,
-
-            sic:
-                data.sic ||
-                null,
-
-            sicDescription:
-                data.sicDescription ||
-                null,
-
-            stateOfIncorporation:
-                data.stateOfIncorporation ||
-                null,
-
-            fiscalYearEnd:
-                data.fiscalYearEnd ||
-                null,
-
-            phone:
-                data.phone ||
-                null,
-
-            formerNames:
-                Array.isArray(
-                    data.formerNames
-                )
-                    ? data.formerNames
-                    : []
-
-        };
+        }
 
 
         /* =========================================
-           BUSINESS ADDRESS
+           BASIC COMPANY INFORMATION
         ========================================= */
 
-        const address =
-            data.addresses &&
-            data.addresses.business
-                ? data.addresses.business
-                : {};
+        const name =
+            data.name ||
+            "N/A";
 
-
-        /* =========================================
-           MAILING ADDRESS
-        ========================================= */
-
-        const mailingAddress =
-            data.addresses &&
-            data.addresses.mailing
-                ? data.addresses.mailing
-                : {};
-
-
-        /* =========================================
-           TICKERS
-        ========================================= */
 
         const tickers =
             Array.isArray(
                 data.tickers
             )
-                ? data.tickers.map(
-                    function(ticker, index) {
-
-                        return {
-
-                            ticker:
-                                ticker,
-
-                            exchange:
-                                Array.isArray(
-                                    data.exchanges
-                                ) &&
-                                data.exchanges[index]
-                                    ? data.exchanges[index]
-                                    : null
-
-                        };
-
-                    }
-                )
+                ? data.tickers
                 : [];
 
-
-        /* =========================================
-           EXCHANGES
-        ========================================= */
 
         const exchanges =
             Array.isArray(
@@ -210,37 +136,379 @@ export async function onRequest(context) {
                 : [];
 
 
+        const ticker =
+            tickers.length
+                ? tickers[0]
+                : "N/A";
+
+
+        const exchange =
+            exchanges.length
+                ? exchanges[0]
+                : "N/A";
+
+
+        /* =========================================
+           BUSINESS ADDRESS
+        ========================================= */
+
+        const businessAddress =
+            data.addresses &&
+            data.addresses.business
+                ? data.addresses.business
+                : {};
+
+
+        const mailingAddress =
+            data.addresses &&
+            data.addresses.mailing
+                ? data.addresses.mailing
+                : {};
+
+
+        /*
+           SEC commonly provides:
+
+           street1
+           street2
+           city
+           stateOrCountry
+           zipCode
+           stateOrCountryDescription
+        */
+
+
+        const street1 =
+            businessAddress.street1 ||
+            mailingAddress.street1 ||
+            "";
+
+
+        const street2 =
+            businessAddress.street2 ||
+            mailingAddress.street2 ||
+            "";
+
+
+        const city =
+            businessAddress.city ||
+            mailingAddress.city ||
+            "N/A";
+
+
+        const state =
+            businessAddress.stateOrCountry ||
+            mailingAddress.stateOrCountry ||
+            "N/A";
+
+
+        const stateDescription =
+            businessAddress.stateOrCountryDescription ||
+            mailingAddress.stateOrCountryDescription ||
+            state;
+
+
+        const zip =
+            businessAddress.zipCode ||
+            mailingAddress.zipCode ||
+            "N/A";
+
+
+        /* =========================================
+           PHONE
+        ========================================= */
+
+        const phone =
+            businessAddress.phone ||
+            mailingAddress.phone ||
+            "N/A";
+
+
+        /* =========================================
+           SIC
+        ========================================= */
+
+        const sic =
+            data.sic ||
+            "N/A";
+
+
+        const sicDescription =
+            data.sicDescription ||
+            "N/A";
+
+
+        /* =========================================
+           EIN
+        ========================================= */
+
+        const ein =
+            data.ein ||
+            "N/A";
+
+
+        /* =========================================
+           FISCAL YEAR END
+        ========================================= */
+
+        const fiscalYearEnd =
+            data.fiscalYearEnd ||
+            "N/A";
+
+
+        /* =========================================
+           FORMER NAMES
+        ========================================= */
+
+        const formerNames = [];
+
+
+        if (
+            Array.isArray(
+                data.formerNames
+            )
+        ) {
+
+            data.formerNames
+                .forEach(
+                    function(item) {
+
+                        formerNames.push({
+
+                            name:
+                                item.name ||
+                                "N/A",
+
+                            from:
+                                item.from ||
+                                "",
+
+                            to:
+                                item.to ||
+                                ""
+
+                        });
+
+                    }
+                );
+
+        }
+
+
+        /* =========================================
+           RECENT FILINGS
+        ========================================= */
+
+        const recentFilings = [];
+
+
+        const recent =
+            data.filings &&
+            data.filings.recent
+                ? data.filings.recent
+                : null;
+
+
+        if (recent) {
+
+            const forms =
+                recent.form || [];
+
+
+            const filingDates =
+                recent.filingDate || [];
+
+
+            const accessionNumbers =
+                recent.accessionNumber || [];
+
+
+            const primaryDocuments =
+                recent.primaryDocument || [];
+
+
+            const reportDates =
+                recent.reportDate || [];
+
+
+            /*
+                Show latest 10 filings.
+            */
+
+            const count =
+                Math.min(
+                    forms.length,
+                    10
+                );
+
+
+            for (
+                let i = 0;
+                i < count;
+                i++
+            ) {
+
+                const accession =
+                    accessionNumbers[i] ||
+                    "";
+
+
+                const accessionNoDash =
+                    accession
+                        .replace(
+                            /-/g,
+                            ""
+                        );
+
+
+                const filingUrl =
+                    accession &&
+                    primaryDocuments[i]
+                        ? (
+                            "https://www.sec.gov/Archives/edgar/data/" +
+                            String(
+                                parseInt(
+                                    cleanCik,
+                                    10
+                                )
+                            ) +
+                            "/" +
+                            accessionNoDash +
+                            "/" +
+                            primaryDocuments[i]
+                        )
+                        : (
+                            "https://www.sec.gov/edgar/browse/?CIK=" +
+                            cleanCik
+                        );
+
+
+                recentFilings.push({
+
+                    form:
+                        forms[i] ||
+                        "N/A",
+
+                    filingDate:
+                        filingDates[i] ||
+                        "N/A",
+
+                    reportDate:
+                        reportDates[i] ||
+                        "N/A",
+
+                    accessionNumber:
+                        accession ||
+                        "N/A",
+
+                    url:
+                        filingUrl
+
+                });
+
+            }
+
+        }
+
+
         /* =========================================
            RESPONSE
         ========================================= */
 
-        return jsonResponse(
+        const result = {
+
+            name:
+                name,
+
+            cik:
+                cleanCik,
+
+            ticker:
+                ticker,
+
+            exchange:
+                exchange,
+
+            tickers:
+                tickers,
+
+            exchanges:
+                exchanges,
+
+            sic:
+                sic,
+
+            sicDescription:
+                sicDescription,
+
+            ein:
+                ein,
+
+            street1:
+                street1,
+
+            street2:
+                street2,
+
+            city:
+                city,
+
+            state:
+                state,
+
+            stateDescription:
+                stateDescription,
+
+            zip:
+                zip,
+
+            phone:
+                phone,
+
+            fiscalYearEnd:
+                fiscalYearEnd,
+
+            formerNames:
+                formerNames,
+
+            recentFilings:
+                recentFilings
+
+        };
+
+
+        return new Response(
+            JSON.stringify(
+                result
+            ),
             {
+                status: 200,
 
-                company:
-                    company,
+                headers: {
 
-                address:
-                    address,
+                    "Content-Type":
+                        "application/json; charset=UTF-8",
 
-                mailingAddress:
-                    mailingAddress,
+                    /*
+                       Cache company data so
+                       repeated visits do not
+                       hit SEC every time.
+                    */
 
-                tickers:
-                    tickers,
+                    "Cache-Control":
+                        "public, max-age=3600, s-maxage=86400"
 
-                exchanges:
-                    exchanges
+                }
 
-            },
-            200
+            }
         );
+
 
     }
     catch (error) {
 
         console.error(
-            "SEC API error:",
+            "SEC company error:",
             error
         );
 
@@ -248,7 +516,7 @@ export async function onRequest(context) {
         return jsonResponse(
             {
                 error:
-                    "Unable to retrieve SEC company information."
+                    "Unable to load SEC company information"
             },
             500
         );
@@ -272,9 +540,7 @@ function jsonResponse(
             data
         ),
         {
-
-            status:
-                status,
+            status: status,
 
             headers: {
 
@@ -282,7 +548,7 @@ function jsonResponse(
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400"
+                    "public, max-age=300"
 
             }
 
