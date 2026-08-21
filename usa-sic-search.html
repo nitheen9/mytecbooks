@@ -15,7 +15,7 @@
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. SIC Codes by SIC code or industry description. Find official U.S. Standard Industrial Classification industry information.">
+      content="Search U.S. SIC codes by SIC code number or industry description. Find Standard Industrial Classification codes and industry details.">
 
 <link rel="icon"
       type="image/png"
@@ -31,8 +31,7 @@ src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
 
 <script>
 
-window.dataLayer =
-window.dataLayer || [];
+window.dataLayer = window.dataLayer || [];
 
 function gtag() {
     dataLayer.push(arguments);
@@ -57,9 +56,11 @@ gtag('config', 'G-BP9YJW8LB9');
 
 }
 
+
 * {
     box-sizing: border-box;
 }
+
 
 body {
 
@@ -81,6 +82,7 @@ body {
 
 }
 
+
 .container {
 
     max-width: 850px;
@@ -88,6 +90,7 @@ body {
     margin: 0 auto;
 
 }
+
 
 h1 {
 
@@ -101,6 +104,7 @@ h1 {
 
 }
 
+
 .intro {
 
     text-align: center;
@@ -108,6 +112,8 @@ h1 {
     color: #666;
 
     line-height: 1.6;
+
+    margin-top: 0;
 
     margin-bottom: 28px;
 
@@ -120,7 +126,7 @@ h1 {
 
 .search-card {
 
-    background: white;
+    background: var(--white);
 
     padding: 25px;
 
@@ -134,17 +140,25 @@ h1 {
 
 }
 
+
 .search-card h2 {
 
     margin-top: 0;
 
+    margin-bottom: 10px;
+
+    color: var(--dark);
+
 }
+
 
 .search-card p {
 
     color: #666;
 
     line-height: 1.6;
+
+    margin-bottom: 18px;
 
 }
 
@@ -163,13 +177,15 @@ h1 {
 
 }
 
+
 input {
 
     flex: 1;
 
     padding: 14px;
 
-    border: 2px solid var(--border);
+    border:
+        2px solid var(--border);
 
     border-radius: 8px;
 
@@ -181,11 +197,14 @@ input {
 
 }
 
+
 input:focus {
 
-    border-color: var(--primary);
+    border-color:
+        var(--primary);
 
 }
+
 
 button.search-submit {
 
@@ -206,6 +225,7 @@ button.search-submit {
     font-size: 16px;
 
 }
+
 
 button.search-submit:hover {
 
@@ -235,22 +255,15 @@ button.search-submit:hover {
 
 }
 
+
 .results h3 {
 
     margin-top: 0;
-
-    margin-bottom: 20px;
-
-    font-size: 20px;
 
     color: var(--dark);
 
 }
 
-
-/* =========================================
-   DATA ROW
-========================================= */
 
 .data-row {
 
@@ -267,6 +280,7 @@ button.search-submit:hover {
 
 }
 
+
 .data-row:last-child {
 
     border: none;
@@ -277,10 +291,6 @@ button.search-submit:hover {
 
 }
 
-
-/* =========================================
-   SIC CODE
-========================================= */
 
 .sic-code {
 
@@ -299,42 +309,30 @@ button.search-submit:hover {
 }
 
 
-/* =========================================
-   RESULT ITEM
-========================================= */
+.sic-link {
 
-.result-item {
+    display: inline-block;
 
-    background: white;
+    margin-top: 8px;
 
-    padding: 16px;
+    padding: 10px 14px;
 
-    border-radius: 8px;
+    background: var(--dark);
 
-    margin-bottom: 12px;
-
-    border:
-        1px solid var(--border);
-
-}
-
-.result-item:last-child {
-
-    margin-bottom: 0;
-
-}
-
-.result-item a {
-
-    color: var(--dark);
+    color: white;
 
     text-decoration: none;
 
+    border-radius: 7px;
+
+    font-weight: bold;
+
 }
 
-.result-item a:hover {
 
-    color: var(--primary);
+.sic-link:hover {
+
+    background: #333;
 
 }
 
@@ -344,6 +342,16 @@ button.search-submit:hover {
 ========================================= */
 
 .loading {
+
+    display: none;
+
+    margin-top: 18px;
+
+    padding: 14px;
+
+    border-radius: 7px;
+
+    background: #f1f1f6;
 
     color: #555;
 
@@ -358,19 +366,86 @@ button.search-submit:hover {
 
 .error {
 
+    display: none;
+
+    margin-top: 18px;
+
+    padding: 14px;
+
+    border-radius: 7px;
+
+    background: #fde8e8;
+
     color: #d9383a;
 
     font-weight: bold;
 
-    background: #fde8e8;
+}
+
+
+/* =========================================
+   MATCHING RESULTS
+========================================= */
+
+.match-item {
+
+    background: white;
 
     padding: 15px;
 
-    border-radius: 6px;
+    margin-bottom: 10px;
 
-    display: none;
+    border-radius: 7px;
 
-    margin-top: 20px;
+    border:
+        1px solid var(--border);
+
+}
+
+
+.match-item:last-child {
+
+    margin-bottom: 0;
+
+}
+
+
+.match-code {
+
+    font-weight: bold;
+
+    color: var(--primary);
+
+}
+
+
+.match-name {
+
+    margin-top: 5px;
+
+    line-height: 1.5;
+
+}
+
+
+.match-item a {
+
+    display: inline-block;
+
+    margin-top: 8px;
+
+    color: var(--dark);
+
+    font-weight: bold;
+
+    text-decoration: none;
+
+}
+
+
+.match-item a:hover {
+
+    text-decoration: underline;
 
 }
 
@@ -406,11 +481,13 @@ footer {
 
     }
 
+
     h1 {
 
         font-size: 24px;
 
     }
+
 
     .search-card {
 
@@ -418,11 +495,13 @@ footer {
 
     }
 
+
     .search-box {
 
         flex-direction: column;
 
     }
+
 
     button.search-submit {
 
@@ -450,23 +529,21 @@ footer {
 
 <p class="intro">
 
-Search U.S. Standard Industrial Classification
-(SIC) codes by code or industry description.
+Search United States Standard Industrial Classification
+(SIC) codes by code number or industry description.
 
 </p>
 
 
-<!-- =====================================
-     SIC CODE SEARCH
-===================================== -->
+<!-- =========================================
+     SEARCH BY SIC CODE
+========================================= -->
 
 <div class="search-card">
 
-
 <h2>
-🔢 Search by SIC Code
+🔢 Search by U.S. SIC Code
 </h2>
-
 
 <p>
 
@@ -480,8 +557,8 @@ industry classification details.
 
 <input
     type="text"
-    id="sicCodeInput"
-    placeholder="Enter SIC code e.g. 5812"
+    id="codeInput"
+    placeholder="Enter SIC code e.g. 7372"
     maxlength="4"
     inputmode="numeric"
     autocomplete="off">
@@ -489,7 +566,7 @@ industry classification details.
 
 <button
     class="search-submit"
-    onclick="searchSicCode()">
+    onclick="searchSICCode()">
 
 Search
 
@@ -499,32 +576,37 @@ Search
 
 
 <div
-    id="sic-code-error"
+    id="code-loading"
+    class="loading">
+
+🔄 Searching U.S. SIC code...
+
+</div>
+
+
+<div
+    id="code-error"
     class="error">
 </div>
 
 
 <div
-    id="sic-code-results"
+    id="code-results"
     class="results">
 </div>
 
-
 </div>
 
 
-
-<!-- =====================================
-     DESCRIPTION SEARCH
-===================================== -->
+<!-- =========================================
+     SEARCH BY DESCRIPTION
+========================================= -->
 
 <div class="search-card">
-
 
 <h2>
 🔎 Search by Industry Description
 </h2>
-
 
 <p>
 
@@ -539,7 +621,7 @@ matching U.S. SIC codes.
 <input
     type="text"
     id="descriptionInput"
-    placeholder="Example: Restaurant, Construction, Software"
+    placeholder="Enter industry description e.g. software"
     autocomplete="off">
 
 
@@ -555,6 +637,15 @@ Search
 
 
 <div
+    id="description-loading"
+    class="loading">
+
+🔄 Searching U.S. SIC industries...
+
+</div>
+
+
+<div
     id="description-error"
     class="error">
 </div>
@@ -565,16 +656,15 @@ Search
     class="results">
 </div>
 
-
 </div>
-
 
 
 <footer>
 
-🇺🇸 U.S. SIC Code Search<br>
+U.S. SIC Code Search<br>
 
-Standard Industrial Classification industry information.
+Standard Industrial Classification information
+for United States industries.
 
 </footer>
 
@@ -582,137 +672,50 @@ Standard Industrial Classification industry information.
 </div>
 
 
-
 <script>
-
-
-/* =========================================
-   SIC DATA FILE
-========================================= */
-
-/*
-    Put your SIC JSON file here.
-
-    Example:
-
-    /data/usa-sic.json
-
-    Expected format:
-
-    [
-        {
-            "code": "0111",
-            "description": "Wheat"
-        },
-        {
-            "code": "5812",
-            "description": "Eating Places"
-        }
-    ]
-*/
-
-const SIC_DATA_URL =
-    "/data/usa-sic.json";
-
-
-/* =========================================
-   DATA CACHE
-========================================= */
-
-let sicData = null;
-
-
-/* =========================================
-   LOAD SIC DATA
-========================================= */
-
-async function loadSicData() {
-
-    if (sicData !== null) {
-
-        return sicData;
-
-    }
-
-
-    const response =
-        await fetch(
-            SIC_DATA_URL
-        );
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            "Unable to load U.S. SIC data."
-        );
-
-    }
-
-
-    const data =
-        await response.json();
-
-
-    if (!Array.isArray(data)) {
-
-        throw new Error(
-            "Invalid SIC data."
-        );
-
-    }
-
-
-    sicData = data;
-
-
-    return sicData;
-
-}
 
 
 /* =========================================
    SEARCH SIC CODE
 ========================================= */
 
-async function searchSicCode() {
+async function searchSICCode() {
 
     const input =
         document
-            .getElementById(
-                "sicCodeInput"
-            );
+        .getElementById("codeInput")
+        .value
+        .trim();
 
-    const results =
+
+    const loading =
         document
-            .getElementById(
-                "sic-code-results"
-            );
+        .getElementById("code-loading");
+
 
     const error =
         document
-            .getElementById(
-                "sic-code-error"
-            );
+        .getElementById("code-error");
 
 
-    const code =
-        input.value.trim();
+    const results =
+        document
+        .getElementById("code-results");
 
 
-    results.style.display =
-        "none";
+    loading.style.display = "none";
 
-    error.style.display =
-        "none";
+    error.style.display = "none";
+
+    results.style.display = "none";
 
 
     /* Validate */
 
-    if (!/^\d{4}$/.test(code)) {
+    if (!/^\d{1,4}$/.test(input)) {
 
         error.innerText =
-            "Please enter a valid 4-digit U.S. SIC code.";
+            "Please enter a valid U.S. SIC code.";
 
         error.style.display =
             "block";
@@ -722,115 +725,184 @@ async function searchSicCode() {
     }
 
 
-    results.innerHTML =
-        '<div class="loading">🔄 Searching U.S. SIC code...</div>';
-
-    results.style.display =
+    loading.style.display =
         "block";
 
 
     try {
 
-        const data =
-            await loadSicData();
-
-
-        const matches =
-            data.filter(
-                function(item) {
-
-                    return String(
-                        item.code || ""
-                    )
-                    .padStart(4, "0") ===
-                    code;
-
-                }
+        const response =
+            await fetch(
+                "/usa-sic/" +
+                encodeURIComponent(input) +
+                "/data.json"
             );
 
 
-        if (matches.length === 0) {
+        if (!response.ok) {
 
-            results.style.display =
-                "none";
-
-            error.innerText =
-                "No U.S. SIC code found for " +
-                code +
-                ".";
-
-            error.style.display =
-                "block";
-
-            return;
+            throw new Error(
+                "SIC code not found"
+            );
 
         }
 
 
-        let html =
-            "<h3>🇺🇸 U.S. SIC Code Details</h3>";
+        const data =
+            await response.json();
 
 
-        matches.forEach(
-            function(item) {
-
-                html += `
-
-                    <div class="data-row">
-
-                        <strong>SIC Code:</strong><br>
-
-                        <span class="sic-code">
-                            ${escapeHtml(
-                                item.code
-                            )}
-                        </span>
-
-                    </div>
+        loading.style.display =
+            "none";
 
 
-                    <div class="data-row">
+        if (!data) {
 
-                        <strong>
-                            Industry Description:
-                        </strong>
+            throw new Error(
+                "No SIC information found"
+            );
 
-                        <br>
+        }
 
-                        ${escapeHtml(
-                            item.description ||
-                            "N/A"
-                        )}
 
-                    </div>
-
-                `;
-
-            }
+        displaySICCode(
+            data,
+            results
         );
 
-
-        results.innerHTML =
-            html;
-
-        results.style.display =
-            "block";
-
     }
+
     catch (err) {
 
         console.error(err);
 
-        results.style.display =
+
+        loading.style.display =
             "none";
 
+
         error.innerText =
-            "Unable to load U.S. SIC data. Please try again.";
+            "Unable to find U.S. SIC code " +
+            input +
+            ".";
+
 
         error.style.display =
             "block";
 
     }
+
+}
+
+
+/* =========================================
+   DISPLAY SIC CODE
+========================================= */
+
+function displaySICCode(
+    data,
+    results
+) {
+
+    const code =
+        data.code ||
+        data.sic ||
+        data.SIC ||
+        "N/A";
+
+
+    const title =
+        data.title ||
+        data.description ||
+        data.industry ||
+        "N/A";
+
+
+    const majorGroup =
+        data.majorGroup ||
+        data.major_group ||
+        "N/A";
+
+
+    const division =
+        data.division ||
+        "N/A";
+
+
+    results.innerHTML = `
+
+        <h3>
+            🇺🇸 U.S. SIC ${escapeHtml(code)}
+        </h3>
+
+
+        <div class="data-row">
+
+            <strong>
+                SIC Code:
+            </strong>
+
+            <br>
+
+            <span class="sic-code">
+                ${escapeHtml(code)}
+            </span>
+
+        </div>
+
+
+        <div class="data-row">
+
+            <strong>
+                Industry Description:
+            </strong>
+
+            <br>
+
+            ${escapeHtml(title)}
+
+        </div>
+
+
+        <div class="data-row">
+
+            <strong>
+                Major Group:
+            </strong>
+
+            <br>
+
+            ${escapeHtml(majorGroup)}
+
+        </div>
+
+
+        <div class="data-row">
+
+            <strong>
+                Division:
+            </strong>
+
+            <br>
+
+            ${escapeHtml(division)}
+
+        </div>
+
+
+        <a
+            class="sic-link"
+            href="/usa-sic/${encodeURIComponent(code)}/">
+
+            View Full U.S. SIC ${escapeHtml(code)} Details →
+
+        </a>
+
+    `;
+
+
+    results.style.display =
+        "block";
 
 }
 
@@ -843,37 +915,37 @@ async function searchDescription() {
 
     const input =
         document
-            .getElementById(
-                "descriptionInput"
-            );
+        .getElementById("descriptionInput")
+        .value
+        .trim();
 
-    const results =
+
+    const loading =
         document
-            .getElementById(
-                "description-results"
-            );
+        .getElementById("description-loading");
+
 
     const error =
         document
-            .getElementById(
-                "description-error"
-            );
+        .getElementById("description-error");
 
 
-    const query =
-        input.value
-            .trim()
-            .toLowerCase();
+    const results =
+        document
+        .getElementById("description-results");
 
 
-    results.style.display =
+    loading.style.display =
         "none";
 
     error.style.display =
         "none";
 
+    results.style.display =
+        "none";
 
-    if (query.length < 2) {
+
+    if (input.length < 2) {
 
         error.innerText =
             "Please enter at least 2 characters.";
@@ -886,71 +958,49 @@ async function searchDescription() {
     }
 
 
-    results.innerHTML =
-        '<div class="loading">🔄 Searching U.S. industries...</div>';
-
-    results.style.display =
+    loading.style.display =
         "block";
 
 
     try {
 
-        const data =
-            await loadSicData();
+        /*
+            Search the SIC database through
+            the Cloudflare Pages function.
+        */
 
-
-        const words =
-            query
-                .split(/\s+/)
-                .filter(
-                    function(word) {
-
-                        return word.length > 0;
-
-                    }
-                );
-
-
-        const matches =
-            data.filter(
-                function(item) {
-
-                    const description =
-                        String(
-                            item.description ||
-                            ""
-                        )
-                        .toLowerCase();
-
-
-                    /*
-                        Every search word must
-                        occur in the description.
-                    */
-
-                    return words.every(
-                        function(word) {
-
-                            return description.includes(
-                                word
-                            );
-
-                        }
-                    );
-
-                }
+        const response =
+            await fetch(
+                "/usa-sic/search?q=" +
+                encodeURIComponent(input)
             );
 
 
-        if (matches.length === 0) {
+        if (!response.ok) {
 
-            results.style.display =
-                "none";
+            throw new Error(
+                "Search failed"
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        loading.style.display =
+            "none";
+
+
+        if (
+            !data ||
+            !Array.isArray(data.results) ||
+            data.results.length === 0
+        ) {
 
             error.innerText =
-                "No U.S. SIC industries found for \"" +
-                query +
-                "\".";
+                "No matching U.S. SIC industries found.";
 
             error.style.display =
                 "block";
@@ -960,102 +1010,25 @@ async function searchDescription() {
         }
 
 
-        /*
-            Limit displayed results
-            to prevent a huge page.
-        */
-
-        const displayed =
-            matches.slice(
-                0,
-                100
-            );
-
-
-        let html = "";
-
-        html +=
-            "<h3>🇺🇸 Matching U.S. SIC Industries</h3>";
-
-
-        html +=
-            "<div class='data-row'>" +
-            "<strong>" +
-            matches.length +
-            "</strong> matching SIC record(s) found." +
-            "</div>";
-
-
-        displayed.forEach(
-            function(item) {
-
-                html += `
-
-                    <div class="result-item">
-
-                        <a href="#"
-                           onclick="showSicFromDescription('${escapeJs(
-                               item.code
-                           )}'); return false;">
-
-                            <strong>
-
-                                SIC
-                                ${escapeHtml(
-                                    item.code
-                                )}
-
-                            </strong>
-
-                        </a>
-
-                        <br><br>
-
-                        ${escapeHtml(
-                            item.description ||
-                            "N/A"
-                        )}
-
-                    </div>
-
-                `;
-
-            }
+        displayDescriptionResults(
+            data.results,
+            results,
+            input
         );
 
-
-        if (matches.length > 100) {
-
-            html += `
-
-                <div class="data-row">
-
-                    Showing first 100 matching
-                    U.S. SIC records.
-
-                </div>
-
-            `;
-
-        }
-
-
-        results.innerHTML =
-            html;
-
-        results.style.display =
-            "block";
-
     }
+
     catch (err) {
 
         console.error(err);
 
-        results.style.display =
+
+        loading.style.display =
             "none";
 
+
         error.innerText =
-            "Unable to load U.S. SIC data. Please try again.";
+            "Unable to search the U.S. SIC database.";
 
         error.style.display =
             "block";
@@ -1066,35 +1039,87 @@ async function searchDescription() {
 
 
 /* =========================================
-   SHOW SIC FROM DESCRIPTION
+   DISPLAY DESCRIPTION RESULTS
 ========================================= */
 
-function showSicFromDescription(code) {
+function displayDescriptionResults(
+    items,
+    results,
+    searchText
+) {
 
-    document
-        .getElementById(
-            "sicCodeInput"
-        )
-        .value =
-        code;
-
-
-    searchSicCode();
+    let html = "";
 
 
-    window.scrollTo({
+    html += `
 
-        top: 0,
+        <h3>
+            🔎 U.S. SIC Results for
+            "${escapeHtml(searchText)}"
+        </h3>
 
-        behavior: "smooth"
+    `;
+
+
+    items.forEach(function(item) {
+
+        const code =
+            item.code ||
+            item.sic ||
+            "N/A";
+
+
+        const title =
+            item.title ||
+            item.description ||
+            item.industry ||
+            "N/A";
+
+
+        html += `
+
+            <div class="match-item">
+
+                <div class="match-code">
+
+                    U.S. SIC ${escapeHtml(code)}
+
+                </div>
+
+
+                <div class="match-name">
+
+                    ${escapeHtml(title)}
+
+                </div>
+
+
+                <a
+                    href="/usa-sic/${encodeURIComponent(code)}/">
+
+                    View SIC ${escapeHtml(code)} Details →
+
+                </a>
+
+            </div>
+
+        `;
 
     });
+
+
+    results.innerHTML =
+        html;
+
+
+    results.style.display =
+        "block";
 
 }
 
 
 /* =========================================
-   ESCAPE HTML
+   HTML ESCAPE
 ========================================= */
 
 function escapeHtml(value) {
@@ -1132,53 +1157,23 @@ function escapeHtml(value) {
 
 
 /* =========================================
-   ESCAPE JAVASCRIPT
-========================================= */
-
-function escapeJs(value) {
-
-    return String(
-        value ?? ""
-    )
-
-    .replace(
-        /\\/g,
-        "\\\\"
-    )
-
-    .replace(
-        /'/g,
-        "\\'"
-    )
-
-    .replace(
-        /"/g,
-        '\\"'
-    );
-
-}
-
-
-/* =========================================
    ENTER KEY - SIC CODE
 ========================================= */
 
 document
-    .getElementById(
-        "sicCodeInput"
-    )
-    .addEventListener(
-        "keydown",
-        function(event) {
+.getElementById("codeInput")
+.addEventListener(
+    "keydown",
+    function(event) {
 
-            if (event.key === "Enter") {
+        if (event.key === "Enter") {
 
-                searchSicCode();
-
-            }
+            searchSICCode();
 
         }
-    );
+
+    }
+);
 
 
 /* =========================================
@@ -1186,21 +1181,19 @@ document
 ========================================= */
 
 document
-    .getElementById(
-        "descriptionInput"
-    )
-    .addEventListener(
-        "keydown",
-        function(event) {
+.getElementById("descriptionInput")
+.addEventListener(
+    "keydown",
+    function(event) {
 
-            if (event.key === "Enter") {
+        if (event.key === "Enter") {
 
-                searchDescription();
-
-            }
+            searchDescription();
 
         }
-    );
+
+    }
+);
 
 </script>
 
