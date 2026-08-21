@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,6 +8,9 @@
 
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
+
+<meta name="google-site-verification"
+      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
 
 <meta name="robots"
       content="index, follow">
@@ -18,7 +22,10 @@
       type="image/png"
       href="/favicon.png">
 
-<title>USA SEC Company Finder - Company Name, Ticker & CIK</title>
+<title>
+USA SEC Company Finder - Company Name, Ticker & CIK
+</title>
+
 
 <!-- Google Analytics -->
 
@@ -27,17 +34,27 @@ src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
 
 <script>
 
-window.dataLayer = window.dataLayer || [];
+window.dataLayer =
+    window.dataLayer || [];
 
 function gtag() {
+
     dataLayer.push(arguments);
+
 }
 
-gtag('js', new Date());
+gtag(
+    'js',
+    new Date()
+);
 
-gtag('config', 'G-BP9YJW8LB9');
+gtag(
+    'config',
+    'G-BP9YJW8LB9'
+);
 
 </script>
+
 
 <style>
 
@@ -45,15 +62,21 @@ gtag('config', 'G-BP9YJW8LB9');
 
     --primary: #1976d2;
     --primary-dark: #0d47a1;
+    --secondary: #00a6ff;
     --dark: #172033;
+    --light: #f3f8ff;
     --border: #d8e3f0;
     --white: #ffffff;
 
 }
 
+
 * {
+
     box-sizing: border-box;
+
 }
+
 
 body {
 
@@ -80,6 +103,7 @@ body {
 
 }
 
+
 .container {
 
     max-width: 850px;
@@ -88,15 +112,20 @@ body {
 
 }
 
+
 h1 {
 
     text-align: center;
 
-    margin: 10px 0 12px;
+    margin:
+        10px 0 12px;
 
     font-size: 30px;
 
+    color: var(--dark);
+
 }
+
 
 .intro {
 
@@ -110,40 +139,64 @@ h1 {
 
 }
 
+
 .card {
 
-    background: var(--white);
+    background:
+        var(--white);
 
     padding: 28px;
 
     border-radius: 14px;
 
     box-shadow:
-        0 5px 22px rgba(25,118,210,.10);
+        0 5px 22px
+        rgba(25,118,210,.10);
 
-    border-top: 5px solid var(--primary);
+    border-top:
+        5px solid var(--primary);
 
 }
+
 
 .card h2 {
 
     margin-top: 0;
 
-    color: var(--primary-dark);
+    color:
+        var(--primary-dark);
 
 }
 
-label {
 
-    display: block;
+.card p {
+
+    color: #667085;
+
+    line-height: 1.6;
+
+}
+
+
+.field {
 
     margin-top: 20px;
 
-    margin-bottom: 8px;
+}
+
+
+.field label {
+
+    display: block;
+
+    margin-bottom: 7px;
 
     font-weight: 700;
 
+    color: #24324a;
+
 }
+
 
 select {
 
@@ -151,25 +204,37 @@ select {
 
     padding: 14px;
 
-    border: 2px solid var(--border);
+    border:
+        2px solid
+        var(--border);
 
     border-radius: 9px;
 
-    background: white;
+    background:
+        white;
 
     color: #222;
 
     font-size: 16px;
 
+    outline: none;
+
+    cursor: pointer;
+
 }
+
 
 select:focus {
 
-    outline: none;
+    border-color:
+        var(--primary);
 
-    border-color: var(--primary);
+    box-shadow:
+        0 0 0 3px
+        rgba(25,118,210,.10);
 
 }
+
 
 .loading {
 
@@ -177,17 +242,22 @@ select:focus {
 
     padding: 14px;
 
-    background: #e8f3ff;
-
-    border-left: 5px solid var(--primary);
-
     border-radius: 8px;
 
-    color: var(--primary-dark);
+    background:
+        #e8f3ff;
+
+    border-left:
+        5px solid
+        var(--primary);
+
+    color:
+        var(--primary-dark);
 
     font-weight: 700;
 
 }
+
 
 .error {
 
@@ -197,25 +267,32 @@ select:focus {
 
     padding: 14px;
 
-    background: #fff0f0;
-
-    border-left: 5px solid #e53935;
-
     border-radius: 8px;
 
-    color: #c62828;
+    background:
+        #fff0f0;
+
+    border-left:
+        5px solid
+        #e53935;
+
+    color:
+        #c62828;
 
     font-weight: 700;
 
 }
 
+
 .result {
 
     display: none;
 
-    margin-top: 25px;
+    margin-top: 22px;
 
     padding: 22px;
+
+    border-radius: 10px;
 
     background:
         linear-gradient(
@@ -224,108 +301,200 @@ select:focus {
             #f7fbff
         );
 
-    border: 1px solid #cfe3f8;
+    border:
+        1px solid
+        #cfe3f8;
 
-    border-left: 6px solid var(--primary);
-
-    border-radius: 10px;
+    border-left:
+        6px solid
+        var(--primary);
 
 }
+
 
 .result h3 {
 
     margin-top: 0;
 
-    color: var(--primary-dark);
+    color:
+        var(--primary-dark);
 
     font-size: 22px;
 
 }
 
-.row {
+
+.result-row {
 
     padding: 13px 0;
 
-    border-bottom: 1px solid #dce7f3;
+    border-bottom:
+        1px solid
+        #dce7f3;
 
     line-height: 1.6;
 
-}
-
-.row:last-child {
-
-    border-bottom: none;
+    word-break:
+        break-word;
 
 }
+
+
+.result-row:last-child {
+
+    border-bottom:
+        none;
+
+}
+
 
 .label {
 
     font-weight: 700;
 
+    color:
+        #24324a;
+
 }
+
 
 .badge {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    padding: 5px 10px;
+    padding:
+        5px 10px;
 
-    background: var(--primary);
+    border-radius:
+        6px;
 
-    color: white;
+    background:
+        var(--primary);
 
-    border-radius: 6px;
+    color:
+        white;
 
-    font-weight: 700;
+    font-weight:
+        700;
 
 }
+
+
+.cik {
+
+    display:
+        inline-block;
+
+    padding:
+        5px 10px;
+
+    border-radius:
+        6px;
+
+    background:
+        var(--primary-dark);
+
+    color:
+        white;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        .5px;
+
+}
+
 
 .sec-link {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    margin-top: 20px;
+    margin-top:
+        20px;
 
-    padding: 12px 18px;
+    padding:
+        12px 18px;
 
-    background: var(--primary-dark);
+    background:
+        var(--primary-dark);
 
-    color: white;
+    color:
+        white;
 
-    text-decoration: none;
+    text-decoration:
+        none;
 
-    border-radius: 7px;
+    border-radius:
+        8px;
 
-    font-weight: 700;
+    font-weight:
+        700;
 
 }
+
+
+.sec-link:hover {
+
+    background:
+        #1565c0;
+
+}
+
 
 footer {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #6b7280;
+    color:
+        #6b7280;
 
-    font-size: 13px;
+    font-size:
+        13px;
 
-    margin: 30px 0 10px;
+    margin:
+        30px 0 10px;
 
-    line-height: 1.6;
+    line-height:
+        1.6;
 
 }
+
 
 @media(max-width:600px) {
 
     body {
-        padding: 12px;
+
+        padding:
+            12px;
+
     }
+
 
     h1 {
-        font-size: 24px;
+
+        font-size:
+            24px;
+
     }
 
+
     .card {
-        padding: 18px;
+
+        padding:
+            18px;
+
+    }
+
+
+    select {
+
+        font-size:
+            16px;
+
     }
 
 }
@@ -337,48 +506,68 @@ footer {
 
 <body>
 
+
 <div class="container">
+
 
 <h1>
 🇺🇸 USA SEC Company Finder
 </h1>
 
+
 <p class="intro">
 
-Search public companies using
-U.S. SEC EDGAR company data.
+Search U.S. public companies using
+SEC EDGAR company data.
+
+Find company name, ticker,
+exchange and SEC CIK.
 
 </p>
 
 
 <div class="card">
 
+
 <h2>
 🏢 Select Company
 </h2>
 
+
 <p>
-Select a company to view its SEC company information.
+
+Select a company from the SEC EDGAR
+company database to view its details.
+
 </p>
 
 
+<div class="field">
+
 <label for="companySelect">
+
 Company
+
 </label>
+
 
 <select id="companySelect">
 
 <option value="">
+
 Loading companies...
+
 </option>
 
 </select>
+
+</div>
 
 
 <div id="loading"
      class="loading">
 
-Loading SEC company data...
+🔄 Loading SEC company data...
 
 </div>
 
@@ -410,36 +599,44 @@ U.S. SEC EDGAR public data.
 
 </footer>
 
+
 </div>
 
 
 <script>
 
+
 /* =========================================
    API
 ========================================= */
 
-const API = "/sec/companies";
+
+const API =
+    "/sec/companies";
 
 
 /* =========================================
    ELEMENTS
 ========================================= */
 
+
 const companySelect =
     document.getElementById(
         "companySelect"
     );
+
 
 const loading =
     document.getElementById(
         "loading"
     );
 
+
 const errorBox =
     document.getElementById(
         "error"
     );
+
 
 const resultBox =
     document.getElementById(
@@ -448,8 +645,9 @@ const resultBox =
 
 
 /* =========================================
-   LOAD COMPANIES
+   INITIAL LOAD
 ========================================= */
+
 
 loadCompanies();
 
@@ -462,51 +660,64 @@ async function loadCompanies() {
     errorBox.style.display =
         "none";
 
+    resultBox.style.display =
+        "none";
+
+
     try {
 
         const response =
-            await fetch(API);
+            await fetch(
+                API,
+                {
+                    cache: "no-store"
+                }
+            );
+
 
         if (!response.ok) {
 
             throw new Error(
-                "SEC API error"
+                "HTTP " +
+                response.status
             );
 
         }
 
+
         const data =
             await response.json();
 
+
         /*
-            SEC company_tickers_exchange.json
-            contains numeric keys.
+            The Cloudflare Function now
+            returns a direct array:
+
+            [
+                {
+                    cik,
+                    name,
+                    ticker,
+                    exchange
+                }
+            ]
         */
 
-        const companies =
-            Object.values(data);
 
+        if (!Array.isArray(data)) {
 
-        companies.sort(
-            function(a, b) {
+            throw new Error(
+                "Invalid company data"
+            );
 
-                return String(
-                    a.name || ""
-                ).localeCompare(
-                    String(
-                        b.name || ""
-                    )
-                );
-
-            }
-        );
+        }
 
 
         companySelect.innerHTML =
             '<option value="">Select Company</option>';
 
 
-        companies.forEach(
+        data.forEach(
             function(company) {
 
                 const option =
@@ -514,29 +725,72 @@ async function loadCompanies() {
                         "option"
                     );
 
+
+                const cik =
+                    String(
+                        company.cik ??
+                        ""
+                    );
+
+
+                const name =
+                    String(
+                        company.name ??
+                        ""
+                    );
+
+
+                const ticker =
+                    String(
+                        company.ticker ??
+                        ""
+                    );
+
+
+                const exchange =
+                    String(
+                        company.exchange ??
+                        ""
+                    );
+
+
+                if (!name) {
+
+                    return;
+
+                }
+
+
                 option.value =
-                    company.cik;
+                    cik;
+
 
                 option.textContent =
-                    company.name +
-                    " (" +
+                    name +
                     (
-                        company.ticker ||
-                        "N/A"
-                    ) +
-                    ")";
+                        ticker
+                            ? " (" +
+                              ticker +
+                              ")"
+                            : ""
+                    );
+
 
                 option.dataset.name =
-                    company.name || "";
+                    name;
+
 
                 option.dataset.ticker =
-                    company.ticker || "";
+                    ticker;
+
 
                 option.dataset.exchange =
-                    company.exchange || "";
+                    exchange;
+
 
                 option.dataset.cik =
-                    company.cik || "";
+                    cik;
+
 
                 companySelect.appendChild(
                     option
@@ -549,16 +803,43 @@ async function loadCompanies() {
         loading.style.display =
             "none";
 
+
+        /*
+            Check whether companies
+            actually loaded.
+        */
+
+        if (
+            companySelect.options.length <=
+            1
+        ) {
+
+            throw new Error(
+                "No companies returned"
+            );
+
+        }
+
     }
     catch(error) {
 
-        console.error(error);
+        console.error(
+            "Company loading error:",
+            error
+        );
+
 
         loading.style.display =
             "none";
 
+
+        errorBox.innerText =
+            "Unable to load SEC company data. Please try again.";
+
+
         errorBox.style.display =
             "block";
+
 
         companySelect.innerHTML =
             '<option value="">Unable to load companies</option>';
@@ -571,6 +852,7 @@ async function loadCompanies() {
 /* =========================================
    COMPANY SELECTED
 ========================================= */
+
 
 companySelect.addEventListener(
     "change",
@@ -600,32 +882,67 @@ companySelect.addEventListener(
             option.dataset.name ||
             "N/A";
 
+
         const ticker =
             option.dataset.ticker ||
             "N/A";
+
 
         const exchange =
             option.dataset.exchange ||
             "N/A";
 
+
         const cik =
             option.dataset.cik ||
-            "N/A";
+            "";
 
 
         /*
-            SEC CIK must be 10 digits
-            for submissions URLs.
+            SEC CIK should be displayed
+            as 10 digits.
         */
 
-        const cikNumber =
-            String(cik)
-                .padStart(10, "0");
+        let cikNumber =
+            String(cik);
 
 
-        const secUrl =
-            "https://www.sec.gov/edgar/browse/?CIK=" +
-            encodeURIComponent(cikNumber);
+        if (
+            /^\d+$/.test(
+                cikNumber
+            )
+        ) {
+
+            cikNumber =
+                cikNumber.padStart(
+                    10,
+                    "0"
+                );
+
+        }
+        else {
+
+            cikNumber =
+                "N/A";
+
+        }
+
+
+        let secUrl =
+            "#";
+
+
+        if (
+            cikNumber !== "N/A"
+        ) {
+
+            secUrl =
+                "https://www.sec.gov/edgar/browse/?CIK=" +
+                encodeURIComponent(
+                    cikNumber
+                );
+
+        }
 
 
         resultBox.innerHTML = `
@@ -635,7 +952,7 @@ companySelect.addEventListener(
             </h3>
 
 
-            <div class="row">
+            <div class="result-row">
 
                 <span class="label">
                     Company Name:
@@ -648,7 +965,7 @@ companySelect.addEventListener(
             </div>
 
 
-            <div class="row">
+            <div class="result-row">
 
                 <span class="label">
                     Ticker:
@@ -657,13 +974,15 @@ companySelect.addEventListener(
                 <br>
 
                 <span class="badge">
+
                     ${escapeHtml(ticker)}
+
                 </span>
 
             </div>
 
 
-            <div class="row">
+            <div class="result-row">
 
                 <span class="label">
                     Exchange:
@@ -676,7 +995,7 @@ companySelect.addEventListener(
             </div>
 
 
-            <div class="row">
+            <div class="result-row">
 
                 <span class="label">
                     SEC CIK:
@@ -684,20 +1003,32 @@ companySelect.addEventListener(
 
                 <br>
 
-                ${escapeHtml(cikNumber)}
+                <span class="cik">
+
+                    ${escapeHtml(cikNumber)}
+
+                </span>
 
             </div>
 
 
-            <a
-                class="sec-link"
-                href="${secUrl}"
-                target="_blank"
-                rel="noopener">
+            ${
+                cikNumber !== "N/A"
+                ? `
 
-                View Company on SEC EDGAR →
+                    <a
+                        class="sec-link"
+                        href="${secUrl}"
+                        target="_blank"
+                        rel="noopener noreferrer">
 
-            </a>
+                        View Company on SEC EDGAR →
+
+                    </a>
+
+                  `
+                : ""
+            }
 
         `;
 
@@ -707,8 +1038,13 @@ companySelect.addEventListener(
 
 
         resultBox.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest"
+
+            behavior:
+                "smooth",
+
+            block:
+                "nearest"
+
         });
 
     }
@@ -718,6 +1054,7 @@ companySelect.addEventListener(
 /* =========================================
    HTML ESCAPE
 ========================================= */
+
 
 function escapeHtml(value) {
 
@@ -754,6 +1091,8 @@ function escapeHtml(value) {
 
 </script>
 
+
 </body>
 
 </html>
+```
