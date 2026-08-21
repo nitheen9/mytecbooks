@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,49 +8,36 @@
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
-<meta name="google-site-verification"
-      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
-
 <meta name="robots"
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. public companies using SEC EDGAR company data. Find company name, ticker, CIK and stock exchange.">
+      content="Find U.S. companies and SEC EDGAR company information including CIK, address, city, state, country, ZIP code, SIC, ticker, exchange and filing information.">
 
 <link rel="icon"
       type="image/png"
       href="/favicon.png">
 
-<title>
-USA SEC Company Finder - Company Name, Ticker & CIK
-</title>
+<title>USA Company Finder - SEC EDGAR Company Information</title>
 
 
 <!-- Google Analytics -->
 
 <script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
+</script>
 
 <script>
 
-window.dataLayer =
-    window.dataLayer || [];
+window.dataLayer = window.dataLayer || [];
 
 function gtag() {
-
     dataLayer.push(arguments);
-
 }
 
-gtag(
-    'js',
-    new Date()
-);
+gtag('js', new Date());
 
-gtag(
-    'config',
-    'G-BP9YJW8LB9'
-);
+gtag('config', 'G-BP9YJW8LB9');
 
 </script>
 
@@ -70,13 +56,9 @@ gtag(
 
 }
 
-
 * {
-
     box-sizing: border-box;
-
 }
-
 
 body {
 
@@ -103,35 +85,29 @@ body {
 
 }
 
-
 .container {
 
-    max-width: 850px;
+    max-width: 900px;
 
     margin: 0 auto;
 
 }
 
-
 h1 {
 
     text-align: center;
 
-    margin:
-        10px 0 12px;
+    margin: 10px 0 10px;
 
     font-size: 30px;
 
-    color: var(--dark);
-
 }
-
 
 .intro {
 
     text-align: center;
 
-    color: #5f6b7a;
+    color: #667085;
 
     line-height: 1.6;
 
@@ -139,44 +115,29 @@ h1 {
 
 }
 
-
 .card {
 
-    background:
-        var(--white);
+    background: white;
 
     padding: 28px;
 
     border-radius: 14px;
 
+    border-top: 5px solid var(--primary);
+
     box-shadow:
         0 5px 22px
         rgba(25,118,210,.10);
 
-    border-top:
-        5px solid var(--primary);
-
 }
-
 
 .card h2 {
 
     margin-top: 0;
 
-    color:
-        var(--primary-dark);
+    color: var(--primary-dark);
 
 }
-
-
-.card p {
-
-    color: #667085;
-
-    line-height: 1.6;
-
-}
-
 
 .field {
 
@@ -184,8 +145,7 @@ h1 {
 
 }
 
-
-.field label {
+label {
 
     display: block;
 
@@ -193,10 +153,7 @@ h1 {
 
     font-weight: 700;
 
-    color: #24324a;
-
 }
-
 
 select {
 
@@ -204,60 +161,49 @@ select {
 
     padding: 14px;
 
-    border:
-        2px solid
-        var(--border);
+    border: 2px solid var(--border);
 
     border-radius: 9px;
 
-    background:
-        white;
-
-    color: #222;
+    background: white;
 
     font-size: 16px;
 
-    outline: none;
-
-    cursor: pointer;
-
 }
-
 
 select:focus {
 
-    border-color:
-        var(--primary);
+    outline: none;
 
-    box-shadow:
-        0 0 0 3px
-        rgba(25,118,210,.10);
+    border-color: var(--primary);
 
 }
 
+select:disabled {
+
+    background: #f1f5f9;
+
+}
 
 .loading {
+
+    display: none;
 
     margin-top: 18px;
 
     padding: 14px;
 
+    background: #e8f3ff;
+
+    border-left: 5px solid var(--primary);
+
     border-radius: 8px;
 
-    background:
-        #e8f3ff;
-
-    border-left:
-        5px solid
-        var(--primary);
-
-    color:
-        var(--primary-dark);
+    color: var(--primary-dark);
 
     font-weight: 700;
 
 }
-
 
 .error {
 
@@ -267,234 +213,143 @@ select:focus {
 
     padding: 14px;
 
+    background: #fff0f0;
+
+    border-left: 5px solid #e53935;
+
     border-radius: 8px;
 
-    background:
-        #fff0f0;
-
-    border-left:
-        5px solid
-        #e53935;
-
-    color:
-        #c62828;
+    color: #c62828;
 
     font-weight: 700;
 
 }
-
 
 .result {
 
     display: none;
 
-    margin-top: 22px;
+    margin-top: 25px;
 
-    padding: 22px;
-
-    border-radius: 10px;
+    padding: 25px;
 
     background:
         linear-gradient(
             135deg,
             #eef7ff,
-            #f7fbff
+            #f8fbff
         );
 
-    border:
-        1px solid
-        #cfe3f8;
+    border: 1px solid #cfe3f8;
 
-    border-left:
-        6px solid
-        var(--primary);
+    border-left: 6px solid var(--primary);
+
+    border-radius: 10px;
 
 }
 
+.result h2 {
 
-.result h3 {
+    color: var(--primary-dark);
 
     margin-top: 0;
 
-    color:
-        var(--primary-dark);
-
-    font-size: 22px;
-
 }
 
-
-.result-row {
+.row {
 
     padding: 13px 0;
 
-    border-bottom:
-        1px solid
-        #dce7f3;
+    border-bottom: 1px solid #dce7f3;
 
     line-height: 1.6;
 
-    word-break:
-        break-word;
+    word-break: break-word;
 
 }
 
+.row:last-child {
 
-.result-row:last-child {
-
-    border-bottom:
-        none;
+    border-bottom: none;
 
 }
-
 
 .label {
 
     font-weight: 700;
 
-    color:
-        #24324a;
+    color: #24324a;
 
 }
-
 
 .badge {
 
-    display:
-        inline-block;
+    display: inline-block;
 
-    padding:
-        5px 10px;
+    padding: 5px 10px;
 
-    border-radius:
-        6px;
+    background: var(--primary);
 
-    background:
-        var(--primary);
+    color: white;
 
-    color:
-        white;
+    border-radius: 6px;
 
-    font-weight:
-        700;
+    font-weight: 700;
 
 }
 
+.sec-button {
 
-.cik {
+    display: inline-block;
 
-    display:
-        inline-block;
+    margin-top: 22px;
 
-    padding:
-        5px 10px;
+    padding: 12px 18px;
 
-    border-radius:
-        6px;
+    background: var(--primary-dark);
 
-    background:
-        var(--primary-dark);
+    color: white;
 
-    color:
-        white;
+    text-decoration: none;
 
-    font-weight:
-        700;
+    border-radius: 8px;
 
-    letter-spacing:
-        .5px;
+    font-weight: 700;
 
 }
 
+.sec-button:hover {
 
-.sec-link {
-
-    display:
-        inline-block;
-
-    margin-top:
-        20px;
-
-    padding:
-        12px 18px;
-
-    background:
-        var(--primary-dark);
-
-    color:
-        white;
-
-    text-decoration:
-        none;
-
-    border-radius:
-        8px;
-
-    font-weight:
-        700;
+    background: #08306b;
 
 }
-
-
-.sec-link:hover {
-
-    background:
-        #1565c0;
-
-}
-
 
 footer {
 
-    text-align:
-        center;
+    text-align: center;
 
-    color:
-        #6b7280;
+    margin-top: 30px;
 
-    font-size:
-        13px;
+    color: #6b7280;
 
-    margin:
-        30px 0 10px;
+    font-size: 13px;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
 }
-
 
 @media(max-width:600px) {
 
     body {
-
-        padding:
-            12px;
-
+        padding: 12px;
     }
-
 
     h1 {
-
-        font-size:
-            24px;
-
+        font-size: 24px;
     }
-
 
     .card {
-
-        padding:
-            18px;
-
-    }
-
-
-    select {
-
-        font-size:
-            16px;
-
+        padding: 18px;
     }
 
 }
@@ -506,22 +361,19 @@ footer {
 
 <body>
 
-
 <div class="container">
 
 
 <h1>
-🇺🇸 USA SEC Company Finder
+🇺🇸 USA Company Finder
 </h1>
 
 
 <p class="intro">
 
-Search U.S. public companies using
-SEC EDGAR company data.
-
-Find company name, ticker,
-exchange and SEC CIK.
+Search companies registered with the U.S. Securities
+and Exchange Commission and view available EDGAR
+company information.
 
 </p>
 
@@ -535,28 +387,20 @@ exchange and SEC CIK.
 
 
 <p>
-
-Select a company from the SEC EDGAR
-company database to view its details.
-
+Select a company to view detailed SEC EDGAR information.
 </p>
 
 
 <div class="field">
 
 <label for="companySelect">
-
 Company
-
 </label>
-
 
 <select id="companySelect">
 
 <option value="">
-
 Loading companies...
-
 </option>
 
 </select>
@@ -566,24 +410,16 @@ Loading companies...
 
 <div id="loading"
      class="loading">
-
-🔄 Loading SEC company data...
-
 </div>
 
 
 <div id="error"
      class="error">
-
-Unable to load SEC company data.
-Please try again.
-
 </div>
 
 
 <div id="result"
      class="result">
-
 </div>
 
 
@@ -592,10 +428,10 @@ Please try again.
 
 <footer>
 
-USA SEC Company Finder<br>
+Company information is retrieved from
+public SEC EDGAR data.<br>
 
-Company information is obtained from
-U.S. SEC EDGAR public data.
+U.S. Securities and Exchange Commission.
 
 </footer>
 
@@ -604,20 +440,6 @@ U.S. SEC EDGAR public data.
 
 
 <script>
-
-
-/* =========================================
-   API
-========================================= */
-
-
-const API =
-    "/sec/companies";
-
-
-/* =========================================
-   ELEMENTS
-========================================= */
 
 
 const companySelect =
@@ -644,81 +466,62 @@ const resultBox =
     );
 
 
-/* =========================================
-   INITIAL LOAD
-========================================= */
+let companies = [];
 
+
+/* =========================================
+   LOAD COMPANY LIST
+========================================= */
 
 loadCompanies();
 
 
 async function loadCompanies() {
 
-    loading.style.display =
-        "block";
-
-    errorBox.style.display =
-        "none";
-
-    resultBox.style.display =
-        "none";
-
+    showLoading(
+        "🔄 Loading SEC companies..."
+    );
 
     try {
 
         const response =
             await fetch(
-                API,
-                {
-                    cache: "no-store"
-                }
+                "/company_tickers_exchange.json"
             );
-
 
         if (!response.ok) {
 
             throw new Error(
-                "HTTP " +
-                response.status
+                "Company list could not be loaded."
             );
 
         }
-
 
         const data =
             await response.json();
 
 
-        /*
-            The Cloudflare Function now
-            returns a direct array:
-
-            [
-                {
-                    cik,
-                    name,
-                    ticker,
-                    exchange
-                }
-            ]
-        */
-
-
-        if (!Array.isArray(data)) {
-
-            throw new Error(
-                "Invalid company data"
-            );
-
-        }
+        companies =
+            Object.values(data);
 
 
         companySelect.innerHTML =
             '<option value="">Select Company</option>';
 
 
-        data.forEach(
-            function(company) {
+        companies
+            .sort(function(a, b) {
+
+                return String(
+                    a.title || ""
+                ).localeCompare(
+                    String(
+                        b.title || ""
+                    )
+                );
+
+            })
+            .forEach(function(company) {
 
                 const option =
                     document.createElement(
@@ -726,39 +529,15 @@ async function loadCompanies() {
                     );
 
 
+                /*
+                    SEC ticker JSON normally
+                    contains cik_str.
+                */
+
                 const cik =
                     String(
-                        company.cik ??
-                        ""
+                        company.cik_str || ""
                     );
-
-
-                const name =
-                    String(
-                        company.name ??
-                        ""
-                    );
-
-
-                const ticker =
-                    String(
-                        company.ticker ??
-                        ""
-                    );
-
-
-                const exchange =
-                    String(
-                        company.exchange ??
-                        ""
-                    );
-
-
-                if (!name) {
-
-                    return;
-
-                }
 
 
                 option.value =
@@ -766,83 +545,38 @@ async function loadCompanies() {
 
 
                 option.textContent =
-                    name +
-                    (
-                        ticker
-                            ? " (" +
-                              ticker +
-                              ")"
-                            : ""
-                    );
-
-
-                option.dataset.name =
-                    name;
-
-
-                option.dataset.ticker =
-                    ticker;
-
-
-                option.dataset.exchange =
-                    exchange;
-
-
-                option.dataset.cik =
-                    cik;
+                    (company.title || "Unknown") +
+                    " (" +
+                    (company.ticker || "N/A") +
+                    ") - " +
+                    (company.exchange || "N/A");
 
 
                 companySelect.appendChild(
                     option
                 );
 
-            }
-        );
+            });
 
 
-        loading.style.display =
-            "none";
+        hideLoading();
 
-
-        /*
-            Check whether companies
-            actually loaded.
-        */
-
-        if (
-            companySelect.options.length <=
-            1
-        ) {
-
-            throw new Error(
-                "No companies returned"
-            );
-
-        }
 
     }
     catch(error) {
 
-        console.error(
-            "Company loading error:",
-            error
-        );
-
-
-        loading.style.display =
-            "none";
-
-
-        errorBox.innerText =
-            "Unable to load SEC company data. Please try again.";
-
-
-        errorBox.style.display =
-            "block";
-
+        console.error(error);
 
         companySelect.innerHTML =
             '<option value="">Unable to load companies</option>';
+
+
+        showError(
+            "Unable to load SEC company data. Please check that company_tickers_exchange.json is uploaded in the website root."
+        );
+
+
+        hideLoading();
 
     }
 
@@ -853,208 +587,508 @@ async function loadCompanies() {
    COMPANY SELECTED
 ========================================= */
 
-
 companySelect.addEventListener(
     "change",
-    function() {
+    async function() {
 
         resultBox.style.display =
             "none";
 
-
-        const option =
-            companySelect.options[
-                companySelect.selectedIndex
-            ];
+        hideError();
 
 
-        if (
-            !option ||
-            !option.value
-        ) {
+        const cik =
+            companySelect.value;
+
+
+        if (!cik) {
 
             return;
 
         }
 
 
-        const name =
-            option.dataset.name ||
-            "N/A";
+        showLoading(
+            "🔄 Loading company information from SEC..."
+        );
 
 
-        const ticker =
-            option.dataset.ticker ||
-            "N/A";
+        try {
 
-
-        const exchange =
-            option.dataset.exchange ||
-            "N/A";
-
-
-        const cik =
-            option.dataset.cik ||
-            "";
-
-
-        /*
-            SEC CIK should be displayed
-            as 10 digits.
-        */
-
-        let cikNumber =
-            String(cik);
-
-
-        if (
-            /^\d+$/.test(
-                cikNumber
-            )
-        ) {
-
-            cikNumber =
-                cikNumber.padStart(
-                    10,
-                    "0"
+            const response =
+                await fetch(
+                    "/company/" +
+                    encodeURIComponent(
+                        cik
+                    )
                 );
 
-        }
-        else {
 
-            cikNumber =
-                "N/A";
+            if (!response.ok) {
 
-        }
-
-
-        let secUrl =
-            "#";
-
-
-        if (
-            cikNumber !== "N/A"
-        ) {
-
-            secUrl =
-                "https://www.sec.gov/edgar/browse/?CIK=" +
-                encodeURIComponent(
-                    cikNumber
+                throw new Error(
+                    "SEC company information unavailable."
                 );
 
-        }
-
-
-        resultBox.innerHTML = `
-
-            <h3>
-                🏢 ${escapeHtml(name)}
-            </h3>
-
-
-            <div class="result-row">
-
-                <span class="label">
-                    Company Name:
-                </span>
-
-                <br>
-
-                ${escapeHtml(name)}
-
-            </div>
-
-
-            <div class="result-row">
-
-                <span class="label">
-                    Ticker:
-                </span>
-
-                <br>
-
-                <span class="badge">
-
-                    ${escapeHtml(ticker)}
-
-                </span>
-
-            </div>
-
-
-            <div class="result-row">
-
-                <span class="label">
-                    Exchange:
-                </span>
-
-                <br>
-
-                ${escapeHtml(exchange)}
-
-            </div>
-
-
-            <div class="result-row">
-
-                <span class="label">
-                    SEC CIK:
-                </span>
-
-                <br>
-
-                <span class="cik">
-
-                    ${escapeHtml(cikNumber)}
-
-                </span>
-
-            </div>
-
-
-            ${
-                cikNumber !== "N/A"
-                ? `
-
-                    <a
-                        class="sec-link"
-                        href="${secUrl}"
-                        target="_blank"
-                        rel="noopener noreferrer">
-
-                        View Company on SEC EDGAR →
-
-                    </a>
-
-                  `
-                : ""
             }
 
-        `;
+
+            const data =
+                await response.json();
 
 
-        resultBox.style.display =
-            "block";
+            if (!data || !data.company) {
+
+                throw new Error(
+                    "Invalid SEC company response."
+                );
+
+            }
 
 
-        resultBox.scrollIntoView({
+            showCompany(
+                data
+            );
 
-            behavior:
-                "smooth",
 
-            block:
-                "nearest"
+            hideLoading();
 
-        });
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showError(
+                "Unable to load company information. Please try again."
+            );
+
+            hideLoading();
+
+        }
 
     }
 );
 
 
 /* =========================================
-   HTML ESCAPE
+   DISPLAY COMPANY
 ========================================= */
 
+function showCompany(data) {
+
+    const company =
+        data.company || {};
+
+
+    const address =
+        data.address || {};
+
+
+    const mailing =
+        data.mailingAddress || {};
+
+
+    const tickers =
+        data.tickers || [];
+
+
+    const exchanges =
+        data.exchanges || [];
+
+
+    let tickerHtml =
+        "N/A";
+
+
+    if (tickers.length) {
+
+        tickerHtml =
+            tickers
+                .map(function(item) {
+
+                    return (
+                        escapeHtml(
+                            item.ticker
+                        ) +
+                        " (" +
+                        escapeHtml(
+                            item.exchange || "N/A"
+                        ) +
+                        ")"
+                    );
+
+                })
+                .join("<br>");
+
+    }
+
+
+    let formerNamesHtml =
+        "None listed";
+
+
+    if (
+        Array.isArray(
+            company.formerNames
+        ) &&
+        company.formerNames.length
+    ) {
+
+        formerNamesHtml =
+            company.formerNames
+                .map(function(item) {
+
+                    return (
+                        escapeHtml(
+                            item.name || ""
+                        ) +
+                        " (" +
+                        escapeHtml(
+                            item.from || ""
+                        ) +
+                        " - " +
+                        escapeHtml(
+                            item.to || ""
+                        ) +
+                        ")"
+                    );
+
+                })
+                .join("<br>");
+
+    }
+
+
+    const secUrl =
+        "https://www.sec.gov/edgar/browse/?CIK=" +
+        encodeURIComponent(
+            company.cik || ""
+        );
+
+
+    resultBox.innerHTML = `
+
+<h2>
+🏢 ${escapeHtml(
+    company.name || "N/A"
+)}
+</h2>
+
+
+<div class="row">
+
+<span class="label">
+Company Name:
+</span>
+
+<br>
+
+${escapeHtml(
+    company.name || "N/A"
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+CIK:
+</span>
+
+<br>
+
+<span class="badge">
+${escapeHtml(
+    company.cik || "N/A"
+)}
+</span>
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Ticker / Exchange:
+</span>
+
+<br>
+
+${tickerHtml}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+SIC:
+</span>
+
+<br>
+
+${escapeHtml(
+    company.sic || "N/A"
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+SIC Description:
+</span>
+
+<br>
+
+${escapeHtml(
+    company.sicDescription || "N/A"
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+State of Incorporation:
+</span>
+
+<br>
+
+${escapeHtml(
+    company.stateOfIncorporation || "N/A"
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Fiscal Year End:
+</span>
+
+<br>
+
+${escapeHtml(
+    company.fiscalYearEnd || "N/A"
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Business Address:
+</span>
+
+<br>
+
+${formatAddress(
+    address
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Mailing Address:
+</span>
+
+<br>
+
+${formatAddress(
+    mailing
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Phone:
+</span>
+
+<br>
+
+${escapeHtml(
+    company.phone || "N/A"
+)}
+
+</div>
+
+
+<div class="row">
+
+<span class="label">
+Former Company Names:
+</span>
+
+<br>
+
+${formerNamesHtml}
+
+</div>
+
+
+<a
+    class="sec-button"
+    href="${secUrl}"
+    target="_blank"
+    rel="noopener">
+
+View Company on SEC EDGAR →
+
+</a>
+
+`;
+
+
+    resultBox.style.display =
+        "block";
+
+
+    resultBox.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+
+}
+
+
+/* =========================================
+   ADDRESS
+========================================= */
+
+function formatAddress(address) {
+
+    if (!address) {
+
+        return "N/A";
+
+    }
+
+
+    const parts = [];
+
+
+    if (address.street1) {
+
+        parts.push(
+            address.street1
+        );
+
+    }
+
+
+    if (address.street2) {
+
+        parts.push(
+            address.street2
+        );
+
+    }
+
+
+    const cityState =
+        [
+            address.city,
+            address.stateOrCountry,
+            address.zip
+        ]
+        .filter(Boolean)
+        .join(", ");
+
+
+    if (cityState) {
+
+        parts.push(
+            cityState
+        );
+
+    }
+
+
+    if (address.stateOrCountryDescription) {
+
+        parts.push(
+            address.stateOrCountryDescription
+        );
+
+    }
+
+
+    if (!parts.length) {
+
+        return "N/A";
+
+    }
+
+
+    return parts
+        .map(escapeHtml)
+        .join("<br>");
+
+}
+
+
+/* =========================================
+   LOADING
+========================================= */
+
+function showLoading(message) {
+
+    loading.innerText =
+        message;
+
+    loading.style.display =
+        "block";
+
+}
+
+
+function hideLoading() {
+
+    loading.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+function showError(message) {
+
+    errorBox.innerText =
+        message;
+
+    errorBox.style.display =
+        "block";
+
+}
+
+
+function hideError() {
+
+    errorBox.style.display =
+        "none";
+
+}
+
+
+/* =========================================
+   HTML ESCAPE
+========================================= */
 
 function escapeHtml(value) {
 
@@ -1095,4 +1129,3 @@ function escapeHtml(value) {
 </body>
 
 </html>
-```
