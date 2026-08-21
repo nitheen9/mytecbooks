@@ -593,7 +593,7 @@ ${block}
 
 <a
     class="back"
-    href="/post-office/${pin}/">
+    href="/pincode/${pin}/">
 
     ← Search Post Offices for ${pin}
 
