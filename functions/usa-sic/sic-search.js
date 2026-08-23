@@ -2,64 +2,75 @@ export async function onRequest(context) {
 
     const requestUrl = new URL(context.request.url);
 
-    const query =
+    const originalQuery =
         (requestUrl.searchParams.get("q") || "")
-        .trim();
+        .trim()
+        .replace(/\s+/g, " ");
 
-    if (query.length < 2) {
+    if (originalQuery.length < 2) {
 
         return jsonResponse({
+            query: originalQuery,
             results: []
         });
 
     }
 
+    /*
+     * Normalize the search term.
+     *
+     * Example:
+     *
+     * software -> Software
+     * SOFTWARE -> Software
+     * SoFtWaRe -> Software
+     *
+     * This prevents capitalization differences
+     * from affecting the OSHA search.
+     */
+
+    const searchTerm =
+        originalQuery
+            .toLowerCase()
+            .replace(/\b\w/g, function(letter) {
+                return letter.toUpperCase();
+            });
+
+
     try {
 
         /*
-         * OSHA SIC keyword search
-         *
-         * Example:
-         * https://www.osha.gov/data/sic-search?title_and_body=rice
+         * First search using the normalized term.
          */
 
-        const searchUrl =
-            "https://www.osha.gov/data/sic-search?title_and_body=" +
-            encodeURIComponent(query);
+        let results =
+            await searchOSHA(searchTerm);
 
-        const response = await fetch(searchUrl, {
 
-            headers: {
-                "User-Agent":
-                    "Mozilla/5.0 (compatible; MyTecBooks SIC Search)"
-            }
+        /*
+         * If OSHA returns no results, try the
+         * original spelling as a fallback.
+         *
+         * This makes the search more tolerant.
+         */
 
-        });
+        if (
+            results.length === 0 &&
+            searchTerm !== originalQuery
+        ) {
 
-        if (!response.ok) {
-
-            console.error(
-                "OSHA HTTP status:",
-                response.status
-            );
-
-            return jsonResponse({
-                results: []
-            });
+            results =
+                await searchOSHA(originalQuery);
 
         }
 
-        const html =
-            await response.text();
-
-        const results =
-            parseOSHAResults(html);
 
         return jsonResponse({
 
-            query: query,
+            query: originalQuery,
 
-            results: results.slice(0, 50)
+            results:
+                results.slice(0, 50)
 
         });
 
@@ -72,10 +83,58 @@ export async function onRequest(context) {
         );
 
         return jsonResponse({
+
+            query: originalQuery,
+
             results: []
+
         });
 
     }
+
+}
+
+
+/* =========================================
+   SEARCH OSHA
+========================================= */
+
+async function searchOSHA(searchTerm) {
+
+    const searchUrl =
+        "https://www.osha.gov/data/sic-search?title_and_body=" +
+        encodeURIComponent(searchTerm);
+
+
+    const response =
+        await fetch(
+            searchUrl,
+            {
+                headers: {
+                    "User-Agent":
+                        "Mozilla/5.0 (compatible; MyTecBooks SIC Search)"
+                }
+            }
+        );
+
+
+    if (!response.ok) {
+
+        console.error(
+            "OSHA HTTP status:",
+            response.status
+        );
+
+        return [];
+
+    }
+
+
+    const html =
+        await response.text();
+
+
+    return parseOSHAResults(html);
 
 }
 
@@ -92,14 +151,10 @@ function parseOSHAResults(html) {
 
 
     /*
-     * OSHA search result links look like:
+     * OSHA SIC result links.
      *
-     * /data/sic-manual/0112
-     *
-     * or similar SIC manual links.
-     *
-     * We therefore look for any OSHA link
-     * containing a 2-4 digit SIC code.
+     * We look for links containing a
+     * 2-4 digit SIC code.
      */
 
     const patterns = [
@@ -132,6 +187,10 @@ function parseOSHAResults(html) {
                 match[3];
 
 
+            /*
+             * Clean HTML from link text.
+             */
+
             linkText =
                 stripHtml(linkText);
 
@@ -155,9 +214,9 @@ function parseOSHAResults(html) {
 
 
             /*
-             * OSHA search result text can be:
+             * OSHA may return text such as:
              *
-             * Description for 0112: Rice
+             * Description for 7372: Prepackaged Software
              */
 
             let title =
@@ -178,6 +237,18 @@ function parseOSHAResults(html) {
             }
 
 
+            /*
+             * Remove possible SIC number
+             * from the beginning of title.
+             */
+
+            title =
+                title.replace(
+                    /^\d{2,4}\s*[-:]\s*/,
+                    ""
+                );
+
+
             title =
                 cleanText(title);
 
@@ -193,12 +264,13 @@ function parseOSHAResults(html) {
 
 
             /*
-             * Ignore navigation links that happen
-             * to contain numbers.
+             * Ignore navigation links.
              */
 
             if (
-                /^(search|submit|clear|next|previous)$/i.test(title)
+                /^(search|submit|clear|next|previous|back)$/i.test(
+                    title
+                )
             ) {
 
                 continue;
@@ -224,9 +296,11 @@ function parseOSHAResults(html) {
 
             results.push({
 
-                code: code,
+                code:
+                    code,
 
-                title: title
+                title:
+                    title
 
             });
 
@@ -255,6 +329,11 @@ function stripHtml(value) {
 
         .replace(
             /<style[\s\S]*?<\/style>/gi,
+            " "
+        )
+
+        .replace(
+            /<noscript[\s\S]*?<\/noscript>/gi,
             " "
         )
 
