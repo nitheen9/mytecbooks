@@ -5,21 +5,23 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="google-site-verification"
-      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
 
 <meta name="robots"
-      content="index, follow">
+content="index, follow">
 
 <meta name="description"
-      content="Search U.S. SIC codes by SIC code number or industry description. Find Standard Industrial Classification codes and industry details.">
+content="Search U.S. Standard Industrial Classification SIC codes by SIC number or industry description. Find U.S. industry classification information.">
+
+<meta property="og:description"
+content="Free U.S. SIC Code Search. Search Standard Industrial Classification codes by SIC number or industry description.">
 
 <link rel="icon"
-      type="image/png"
-      href="/favicon.png">
+type="image/png"
+href="/favicon.png">
 
 <title>U.S. SIC Code Search - Industry Classification Finder</title>
 
@@ -27,7 +29,8 @@
 <!-- Google Analytics -->
 
 <script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9"></script>
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
+</script>
 
 <script>
 
@@ -56,11 +59,9 @@ gtag('config', 'G-BP9YJW8LB9');
 
 }
 
-
 * {
     box-sizing: border-box;
 }
-
 
 body {
 
@@ -82,7 +83,6 @@ body {
 
 }
 
-
 .container {
 
     max-width: 850px;
@@ -91,19 +91,17 @@ body {
 
 }
 
-
 h1 {
 
     text-align: center;
 
     color: var(--dark);
 
-    margin: 10px 0 12px;
+    margin: 10px 0 30px;
 
     font-size: 30px;
 
 }
-
 
 .intro {
 
@@ -111,22 +109,75 @@ h1 {
 
     color: #666;
 
+    margin-top: -15px;
+
+    margin-bottom: 25px;
+
     line-height: 1.6;
-
-    margin-top: 0;
-
-    margin-bottom: 28px;
 
 }
 
 
 /* =========================================
-   SEARCH CARD
+   TABS
+========================================= */
+
+.tabs {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+
+    justify-content: center;
+
+}
+
+.tab-btn {
+
+    padding: 12px 24px;
+
+    font-weight: bold;
+
+    border: none;
+
+    background: #e0e0e6;
+
+    color: #333;
+
+    cursor: pointer;
+
+    border-radius: 6px;
+
+    font-size: 15px;
+
+    transition: 0.2s;
+
+}
+
+.tab-btn:hover {
+
+    background: #d3d3d9;
+
+}
+
+.tab-btn.active {
+
+    background: var(--primary);
+
+    color: white;
+
+}
+
+
+/* =========================================
+   CARD
 ========================================= */
 
 .search-card {
 
-    background: var(--white);
+    background: white;
 
     padding: 25px;
 
@@ -140,25 +191,19 @@ h1 {
 
 }
 
-
-.search-card h2 {
+.search-card h3 {
 
     margin-top: 0;
-
-    margin-bottom: 10px;
 
     color: var(--dark);
 
 }
-
 
 .search-card p {
 
     color: #666;
 
     line-height: 1.6;
-
-    margin-bottom: 18px;
 
 }
 
@@ -176,7 +221,6 @@ h1 {
     margin-top: 15px;
 
 }
-
 
 input {
 
@@ -197,14 +241,12 @@ input {
 
 }
 
-
 input:focus {
 
     border-color:
         var(--primary);
 
 }
-
 
 button.search-submit {
 
@@ -226,10 +268,26 @@ button.search-submit {
 
 }
 
-
 button.search-submit:hover {
 
     background: #333;
+
+}
+
+
+/* =========================================
+   PANELS
+========================================= */
+
+.panel {
+
+    display: none;
+
+}
+
+.panel.active {
+
+    display: block;
 
 }
 
@@ -255,15 +313,43 @@ button.search-submit:hover {
 
 }
 
-
-.results h3 {
+.results h4 {
 
     margin-top: 0;
 
-    color: var(--dark);
+    margin-bottom: 20px;
+
+    font-size: 18px;
 
 }
 
+
+/* =========================================
+   ERROR
+========================================= */
+
+.error {
+
+    color: #d9383a;
+
+    font-weight: bold;
+
+    background: #fde8e8;
+
+    padding: 15px;
+
+    border-radius: 6px;
+
+    display: none;
+
+    margin-top: 20px;
+
+}
+
+
+/* =========================================
+   DATA
+========================================= */
 
 .data-row {
 
@@ -280,7 +366,6 @@ button.search-submit:hover {
 
 }
 
-
 .data-row:last-child {
 
     border: none;
@@ -291,6 +376,25 @@ button.search-submit:hover {
 
 }
 
+.badge {
+
+    background: #333;
+
+    color: white;
+
+    padding: 3px 8px;
+
+    border-radius: 4px;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+    display: inline-block;
+
+    margin-left: 5px;
+
+}
 
 .sic-code {
 
@@ -304,56 +408,7 @@ button.search-submit:hover {
 
     border-radius: 5px;
 
-    font-weight: bold;
-
-}
-
-
-.sic-link {
-
-    display: inline-block;
-
-    margin-top: 8px;
-
-    padding: 10px 14px;
-
-    background: var(--dark);
-
-    color: white;
-
-    text-decoration: none;
-
-    border-radius: 7px;
-
-    font-weight: bold;
-
-}
-
-
-.sic-link:hover {
-
-    background: #333;
-
-}
-
-
-/* =========================================
-   LOADING
-========================================= */
-
-.loading {
-
-    display: none;
-
-    margin-top: 18px;
-
-    padding: 14px;
-
-    border-radius: 7px;
-
-    background: #f1f1f6;
-
-    color: #555;
+    font-size: 14px;
 
     font-weight: bold;
 
@@ -361,33 +416,10 @@ button.search-submit:hover {
 
 
 /* =========================================
-   ERROR
+   RESULT LINKS
 ========================================= */
 
-.error {
-
-    display: none;
-
-    margin-top: 18px;
-
-    padding: 14px;
-
-    border-radius: 7px;
-
-    background: #fde8e8;
-
-    color: #d9383a;
-
-    font-weight: bold;
-
-}
-
-
-/* =========================================
-   MATCHING RESULTS
-========================================= */
-
-.match-item {
+.sic-result {
 
     background: white;
 
@@ -402,24 +434,23 @@ button.search-submit:hover {
 
 }
 
-
-.match-item:last-child {
+.sic-result:last-child {
 
     margin-bottom: 0;
 
 }
 
-
-.match-code {
-
-    font-weight: bold;
+.sic-result-code {
 
     color: var(--primary);
 
+    font-weight: bold;
+
+    font-size: 17px;
+
 }
 
-
-.match-name {
+.sic-result-title {
 
     margin-top: 5px;
 
@@ -427,25 +458,44 @@ button.search-submit:hover {
 
 }
 
-
-.match-item a {
+.sic-result-link {
 
     display: inline-block;
 
-    margin-top: 8px;
+    margin-top: 10px;
 
-    color: var(--dark);
+    padding: 9px 13px;
+
+    background: var(--dark);
+
+    color: white;
+
+    text-decoration: none;
+
+    border-radius: 6px;
 
     font-weight: bold;
 
-    text-decoration: none;
+    font-size: 14px;
+
+}
+
+.sic-result-link:hover {
+
+    background: #333;
 
 }
 
 
-.match-item a:hover {
+/* =========================================
+   LOADING
+========================================= */
 
-    text-decoration: underline;
+.loading {
+
+    color: #555;
+
+    font-weight: bold;
 
 }
 
@@ -481,20 +531,23 @@ footer {
 
     }
 
-
     h1 {
 
         font-size: 24px;
 
     }
 
+    .tabs {
 
-    .search-card {
-
-        padding: 18px;
+        flex-direction: column;
 
     }
 
+    .tab-btn {
+
+        width: 100%;
+
+    }
 
     .search-box {
 
@@ -502,10 +555,15 @@ footer {
 
     }
 
-
     button.search-submit {
 
         width: 100%;
+
+    }
+
+    .search-card {
+
+        padding: 18px;
 
     }
 
@@ -517,7 +575,6 @@ footer {
 
 
 <body>
-
 
 <div class="container">
 
@@ -536,135 +593,153 @@ Search United States Standard Industrial Classification
 
 
 <!-- =========================================
-     SEARCH BY SIC CODE
+     TABS
 ========================================= -->
 
-<div class="search-card">
+<div class="tabs">
 
-<h2>
-🔢 Search by U.S. SIC Code
-</h2>
+    <button
+        class="tab-btn active"
+        onclick="switchTab('code', this)">
 
-<p>
+        🔢 SIC Code Lookup
 
-Enter a U.S. SIC code to view its
-industry classification details.
-
-</p>
+    </button>
 
 
-<div class="search-box">
+    <button
+        class="tab-btn"
+        onclick="switchTab('industry', this)">
 
-<input
-    type="text"
-    id="codeInput"
-    placeholder="Enter SIC code e.g. 7372"
-    maxlength="4"
-    inputmode="numeric"
-    autocomplete="off">
+        🔎 Industry Search
 
-
-<button
-    class="search-submit"
-    onclick="searchSICCode()">
-
-Search
-
-</button>
-
-</div>
-
-
-<div
-    id="code-loading"
-    class="loading">
-
-🔄 Searching U.S. SIC code...
-
-</div>
-
-
-<div
-    id="code-error"
-    class="error">
-</div>
-
-
-<div
-    id="code-results"
-    class="results">
-</div>
+    </button>
 
 </div>
 
 
 <!-- =========================================
-     SEARCH BY DESCRIPTION
+     SIC CODE PANEL
 ========================================= -->
 
-<div class="search-card">
+<div
+    id="code-panel"
+    class="panel active search-card">
 
-<h2>
-🔎 Search by Industry Description
-</h2>
-
-<p>
-
-Enter an industry name or description to find
-matching U.S. SIC codes.
-
-</p>
+    <h3>
+        Search U.S. SIC Code
+    </h3>
 
 
-<div class="search-box">
+    <p>
 
-<input
-    type="text"
-    id="descriptionInput"
-    placeholder="Enter industry description e.g. software"
-    autocomplete="off">
+        Enter a 2, 3 or 4 digit U.S. SIC code
+        to view its industry classification.
+
+    </p>
 
 
-<button
-    class="search-submit"
-    onclick="searchDescription()">
+    <div class="search-box">
 
-Search
+        <input
+            type="text"
+            id="codeInput"
+            placeholder="Enter SIC code e.g. 7372"
+            maxlength="4"
+            inputmode="numeric"
+            autocomplete="off">
 
-</button>
+
+        <button
+            class="search-submit"
+            onclick="searchSICCode()">
+
+            Search
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="code-error"
+        class="error">
+    </div>
+
+
+    <div
+        id="code-results"
+        class="results">
+    </div>
 
 </div>
 
+
+<!-- =========================================
+     INDUSTRY SEARCH PANEL
+========================================= -->
 
 <div
-    id="description-loading"
-    class="loading">
+    id="industry-panel"
+    class="panel search-card">
 
-🔄 Searching U.S. SIC industries...
+    <h3>
+        Search U.S. Industry Description
+    </h3>
+
+
+    <p>
+
+        Enter an industry name or description
+        to find matching U.S. SIC codes.
+
+    </p>
+
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="descriptionInput"
+            placeholder="Enter industry e.g. software"
+            autocomplete="off">
+
+
+        <button
+            class="search-submit"
+            onclick="searchDescription()">
+
+            Search
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="description-error"
+        class="error">
+    </div>
+
+
+    <div
+        id="description-results"
+        class="results">
+    </div>
 
 </div>
 
 
-<div
-    id="description-error"
-    class="error">
-</div>
-
-
-<div
-    id="description-results"
-    class="results">
-</div>
-
-</div>
-
+<!-- =========================================
+     FOOTER
+========================================= -->
 
 <footer>
 
-U.S. SIC Code Search<br>
+    U.S. SIC Code Search<br>
 
-Standard Industrial Classification information
-for United States industries.
+    Standard Industrial Classification information
+    for United States industries.
 
 </footer>
 
@@ -676,10 +751,44 @@ for United States industries.
 
 
 /* =========================================
-   SEARCH SIC CODE
+   TAB SWITCH
 ========================================= */
 
-async function searchSICCode() {
+function switchTab(tabName, button) {
+
+    document
+        .querySelectorAll(".panel")
+        .forEach(function(panel) {
+
+            panel.classList.remove("active");
+
+        });
+
+
+    document
+        .querySelectorAll(".tab-btn")
+        .forEach(function(btn) {
+
+            btn.classList.remove("active");
+
+        });
+
+
+    document
+        .getElementById(tabName + "-panel")
+        .classList.add("active");
+
+
+    button.classList.add("active");
+
+}
+
+
+/* =========================================
+   SIC CODE SEARCH
+========================================= */
+
+function searchSICCode() {
 
     const input =
         document
@@ -688,227 +797,48 @@ async function searchSICCode() {
         .trim();
 
 
-    const loading =
-        document
-        .getElementById("code-loading");
-
-
-    const error =
+    const errorDiv =
         document
         .getElementById("code-error");
 
 
-    const results =
+    const resultsDiv =
         document
         .getElementById("code-results");
 
 
-    loading.style.display = "none";
+    errorDiv.style.display = "none";
 
-    error.style.display = "none";
-
-    results.style.display = "none";
+    resultsDiv.style.display = "none";
 
 
-    /* Validate */
+    if (!/^\d{2,4}$/.test(input)) {
 
-    if (!/^\d{1,4}$/.test(input)) {
+        errorDiv.innerText =
+            "Please enter a valid 2, 3 or 4 digit U.S. SIC code.";
 
-        error.innerText =
-            "Please enter a valid U.S. SIC code.";
-
-        error.style.display =
-            "block";
+        errorDiv.style.display = "block";
 
         return;
 
     }
 
 
-    loading.style.display =
-        "block";
+    /*
+        Your existing working Cloudflare
+        dynamic SIC page.
+    */
 
-
-    try {
-
-        const response =
-            await fetch(
-                "/usa-sic/" +
-                encodeURIComponent(input) +
-                "/data.json"
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "SIC code not found"
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        loading.style.display =
-            "none";
-
-
-        if (!data) {
-
-            throw new Error(
-                "No SIC information found"
-            );
-
-        }
-
-
-        displaySICCode(
-            data,
-            results
-        );
-
-    }
-
-    catch (err) {
-
-        console.error(err);
-
-
-        loading.style.display =
-            "none";
-
-
-        error.innerText =
-            "Unable to find U.S. SIC code " +
-            input +
-            ".";
-
-
-        error.style.display =
-            "block";
-
-    }
+    window.location.href =
+        "/usa-sic/" +
+        encodeURIComponent(input) +
+        "/";
 
 }
 
 
 /* =========================================
-   DISPLAY SIC CODE
-========================================= */
-
-function displaySICCode(
-    data,
-    results
-) {
-
-    const code =
-        data.code ||
-        data.sic ||
-        data.SIC ||
-        "N/A";
-
-
-    const title =
-        data.title ||
-        data.description ||
-        data.industry ||
-        "N/A";
-
-
-    const majorGroup =
-        data.majorGroup ||
-        data.major_group ||
-        "N/A";
-
-
-    const division =
-        data.division ||
-        "N/A";
-
-
-    results.innerHTML = `
-
-        <h3>
-            🇺🇸 U.S. SIC ${escapeHtml(code)}
-        </h3>
-
-
-        <div class="data-row">
-
-            <strong>
-                SIC Code:
-            </strong>
-
-            <br>
-
-            <span class="sic-code">
-                ${escapeHtml(code)}
-            </span>
-
-        </div>
-
-
-        <div class="data-row">
-
-            <strong>
-                Industry Description:
-            </strong>
-
-            <br>
-
-            ${escapeHtml(title)}
-
-        </div>
-
-
-        <div class="data-row">
-
-            <strong>
-                Major Group:
-            </strong>
-
-            <br>
-
-            ${escapeHtml(majorGroup)}
-
-        </div>
-
-
-        <div class="data-row">
-
-            <strong>
-                Division:
-            </strong>
-
-            <br>
-
-            ${escapeHtml(division)}
-
-        </div>
-
-
-        <a
-            class="sic-link"
-            href="/usa-sic/${encodeURIComponent(code)}/">
-
-            View Full U.S. SIC ${escapeHtml(code)} Details →
-
-        </a>
-
-    `;
-
-
-    results.style.display =
-        "block";
-
-}
-
-
-/* =========================================
-   SEARCH DESCRIPTION
+   INDUSTRY DESCRIPTION SEARCH
 ========================================= */
 
 async function searchDescription() {
@@ -920,58 +850,44 @@ async function searchDescription() {
         .trim();
 
 
-    const loading =
-        document
-        .getElementById("description-loading");
-
-
-    const error =
+    const errorDiv =
         document
         .getElementById("description-error");
 
 
-    const results =
+    const resultsDiv =
         document
         .getElementById("description-results");
 
 
-    loading.style.display =
-        "none";
+    errorDiv.style.display = "none";
 
-    error.style.display =
-        "none";
-
-    results.style.display =
-        "none";
+    resultsDiv.style.display = "none";
 
 
     if (input.length < 2) {
 
-        error.innerText =
+        errorDiv.innerText =
             "Please enter at least 2 characters.";
 
-        error.style.display =
-            "block";
+        errorDiv.style.display = "block";
 
         return;
 
     }
 
 
-    loading.style.display =
-        "block";
+    resultsDiv.innerHTML =
+        '<div class="loading">🔄 Searching U.S. SIC industries...</div>';
+
+    resultsDiv.style.display = "block";
 
 
     try {
 
-        /*
-            Search the SIC database through
-            the Cloudflare Pages function.
-        */
-
         const response =
             await fetch(
-                "/usa-sic/search?q=" +
+                "/usa-sic/sic-search?q=" +
                 encodeURIComponent(input)
             );
 
@@ -979,7 +895,7 @@ async function searchDescription() {
         if (!response.ok) {
 
             throw new Error(
-                "Search failed"
+                "Search request failed"
             );
 
         }
@@ -989,21 +905,18 @@ async function searchDescription() {
             await response.json();
 
 
-        loading.style.display =
-            "none";
-
-
         if (
             !data ||
             !Array.isArray(data.results) ||
             data.results.length === 0
         ) {
 
-            error.innerText =
+            resultsDiv.style.display = "none";
+
+            errorDiv.innerText =
                 "No matching U.S. SIC industries found.";
 
-            error.style.display =
-                "block";
+            errorDiv.style.display = "block";
 
             return;
 
@@ -1012,26 +925,26 @@ async function searchDescription() {
 
         displayDescriptionResults(
             data.results,
-            results,
+            resultsDiv,
             input
         );
 
     }
 
-    catch (err) {
+    catch (error) {
 
-        console.error(err);
+        console.error(
+            "SIC search error:",
+            error
+        );
 
 
-        loading.style.display =
-            "none";
+        resultsDiv.style.display = "none";
 
+        errorDiv.innerText =
+            "Unable to search the U.S. SIC database. Please try again.";
 
-        error.innerText =
-            "Unable to search the U.S. SIC database.";
-
-        error.style.display =
-            "block";
+        errorDiv.style.display = "block";
 
     }
 
@@ -1044,50 +957,44 @@ async function searchDescription() {
 
 function displayDescriptionResults(
     items,
-    results,
+    resultsDiv,
     searchText
 ) {
 
     let html = "";
 
 
-    html += `
-
-        <h3>
-            🔎 U.S. SIC Results for
-            "${escapeHtml(searchText)}"
-        </h3>
-
-    `;
+    html +=
+        "<h4>🔎 U.S. SIC Results for \"" +
+        escapeHtml(searchText) +
+        "\"</h4>";
 
 
     items.forEach(function(item) {
 
         const code =
             item.code ||
-            item.sic ||
             "N/A";
 
 
         const title =
             item.title ||
             item.description ||
-            item.industry ||
             "N/A";
 
 
         html += `
 
-            <div class="match-item">
+            <div class="sic-result">
 
-                <div class="match-code">
+                <div class="sic-result-code">
 
                     U.S. SIC ${escapeHtml(code)}
 
                 </div>
 
 
-                <div class="match-name">
+                <div class="sic-result-title">
 
                     ${escapeHtml(title)}
 
@@ -1095,6 +1002,7 @@ function displayDescriptionResults(
 
 
                 <a
+                    class="sic-result-link"
                     href="/usa-sic/${encodeURIComponent(code)}/">
 
                     View SIC ${escapeHtml(code)} Details →
@@ -1108,11 +1016,11 @@ function displayDescriptionResults(
     });
 
 
-    results.innerHTML =
+    resultsDiv.innerHTML =
         html;
 
 
-    results.style.display =
+    resultsDiv.style.display =
         "block";
 
 }
@@ -1124,34 +1032,32 @@ function displayDescriptionResults(
 
 function escapeHtml(value) {
 
-    return String(
-        value ?? ""
-    )
+    return String(value ?? "")
 
-    .replace(
-        /&/g,
-        "&amp;"
-    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
 
-    .replace(
-        /</g,
-        "&lt;"
-    )
+        .replace(
+            /</g,
+            "&lt;"
+        )
 
-    .replace(
-        />/g,
-        "&gt;"
-    )
+        .replace(
+            />/g,
+            "&gt;"
+        )
 
-    .replace(
-        /"/g,
-        "&quot;"
-    )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
 
-    .replace(
-        /'/g,
-        "&#039;"
-    );
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
@@ -1161,39 +1067,39 @@ function escapeHtml(value) {
 ========================================= */
 
 document
-.getElementById("codeInput")
-.addEventListener(
-    "keydown",
-    function(event) {
+    .getElementById("codeInput")
+    .addEventListener(
+        "keydown",
+        function(event) {
 
-        if (event.key === "Enter") {
+            if (event.key === "Enter") {
 
-            searchSICCode();
+                searchSICCode();
+
+            }
 
         }
-
-    }
-);
+    );
 
 
 /* =========================================
-   ENTER KEY - DESCRIPTION
+   ENTER KEY - INDUSTRY
 ========================================= */
 
 document
-.getElementById("descriptionInput")
-.addEventListener(
-    "keydown",
-    function(event) {
+    .getElementById("descriptionInput")
+    .addEventListener(
+        "keydown",
+        function(event) {
 
-        if (event.key === "Enter") {
+            if (event.key === "Enter") {
 
-            searchDescription();
+                searchDescription();
+
+            }
 
         }
-
-    }
-);
+    );
 
 </script>
 
