@@ -3,20 +3,15 @@ export async function onRequest(context) {
     const requestUrl =
         new URL(context.request.url);
 
-
     const query =
         (requestUrl.searchParams.get("q") || "")
         .trim();
 
-
     if (query.length < 2) {
 
         return jsonResponse({
-
             query: query,
-
             results: []
-
         });
 
     }
@@ -24,16 +19,16 @@ export async function onRequest(context) {
 
     try {
 
-
         /*
-         * Official U.S. Census NAICS search.
+         * Official Census NAICS search.
          *
-         * Example:
+         * IMPORTANT:
          *
-         * https://www.census.gov/naics/?input=software&year=2022
+         * input = search text
+         * year  = 2022
          */
 
-        const censusUrl =
+        const searchUrl =
             "https://www.census.gov/naics/?input=" +
             encodeURIComponent(query) +
             "&year=2022";
@@ -41,7 +36,7 @@ export async function onRequest(context) {
 
         const response =
             await fetch(
-                censusUrl,
+                searchUrl,
                 {
                     headers: {
 
@@ -52,19 +47,16 @@ export async function onRequest(context) {
                             "text/html,application/xhtml+xml"
 
                     }
-
                 }
             );
 
 
         if (!response.ok) {
 
-
             console.error(
-                "Census HTTP status:",
+                "Census NAICS HTTP:",
                 response.status
             );
-
 
             return jsonResponse({
 
@@ -82,7 +74,7 @@ export async function onRequest(context) {
 
 
         const results =
-            parseCensusResults(
+            parseCensusNAICS(
                 html
             );
 
@@ -92,17 +84,12 @@ export async function onRequest(context) {
             query: query,
 
             results:
-                results.slice(
-                    0,
-                    50
-                )
+                results.slice(0, 50)
 
         });
 
-
     }
     catch (error) {
-
 
         console.error(
             "NAICS search error:",
@@ -124,11 +111,10 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   PARSE CENSUS NAICS RESULTS
+   PARSE CENSUS NAICS
 ========================================= */
 
-function parseCensusResults(html) {
-
+function parseCensusNAICS(html) {
 
     const results = [];
 
@@ -137,64 +123,55 @@ function parseCensusResults(html) {
 
 
     /*
-     * Census result links normally contain:
+     * Census search result buttons contain
+     * the NAICS code and title.
      *
-     * details=541511
+     * Example:
      *
-     * input=54151
+     * 541511
+     * Custom Computer Programming Services
      *
-     * year=2022
-     *
-     * We extract the 2-6 digit NAICS code
-     * and the text associated with the link.
+     * The Census page can also contain
+     * index-entry results where the same
+     * code appears several times.
      */
 
 
-    const regex =
-        /<a[^>]+href=["']([^"']*naics[^"']*details=(\d{2,6})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    /*
+     * First try buttons.
+     */
+
+    const buttonRegex =
+        /<(?:button|a)[^>]*>\s*(?:<[^>]+>\s*)*(\d{2,6})(?:\s*<\/[^>]+>)*\s*([\s\S]*?)<\/(?:button|a)>/gi;
 
 
     let match;
 
 
     while (
-        (match = regex.exec(html)) !== null
+        (match = buttonRegex.exec(html)) !== null
     ) {
 
-
-        const url =
+        const code =
             match[1];
 
-
-        const code =
+        let text =
             match[2];
 
 
-        let linkText =
-            match[3];
+        text =
+            stripHtml(text);
 
+        text =
+            decodeHtml(text);
 
-        linkText =
-            stripHtml(
-                linkText
-            );
-
-
-        linkText =
-            decodeHtml(
-                linkText
-            );
-
-
-        linkText =
-            cleanText(
-                linkText
-            );
+        text =
+            cleanText(text);
 
 
         if (
-            !code ||
-            !linkText
+            !isValidCode(code) ||
+            !text
         ) {
 
             continue;
@@ -203,87 +180,27 @@ function parseCensusResults(html) {
 
 
         /*
-         * Sometimes Census text contains:
-         *
-         * 541511 Custom Computer Programming Services
-         *
-         * Remove the code from the title.
+         * Remove unnecessary search
+         * result text.
          */
 
-        let title =
-            linkText
-            .replace(
-                new RegExp(
-                    "^" +
-                    escapeRegex(code) +
-                    "\\s*[:\\-]?\\s*",
-                    "i"
-                ),
-                ""
-            )
-            .trim();
+        text =
+            cleanTitle(text);
 
 
-        /*
-         * Remove classification suffixes.
-         */
-
-        title =
-            title
-            .replace(
-                /\s*\^(?:T|US)\s*$/i,
-                ""
-            )
-            .trim();
-
-
-        /*
-         * Some Census links can contain
-         * hierarchy buttons such as 541,
-         * 5415, 54151.
-         *
-         * Those are valid NAICS levels, so
-         * we keep them.
-         */
-
-
-        if (
-            title.length < 2
-        ) {
+        if (!text) {
 
             continue;
 
         }
 
 
-        const key =
-            code +
-            "|" +
-            title
-            .toLowerCase();
-
-
-        if (
-            seen.has(key)
-        ) {
-
-            continue;
-
-        }
-
-
-        seen.add(key);
-
-
-        results.push({
-
-            code:
-                code,
-
-            title:
-                title
-
-        });
+        addResult(
+            results,
+            seen,
+            code,
+            text
+        );
 
     }
 
@@ -291,91 +208,70 @@ function parseCensusResults(html) {
     /*
      * Second parser.
      *
-     * Census pages can sometimes render the
-     * search result differently. Look for
-     * explicit "Button:" style HTML text.
+     * Census currently renders many
+     * search-result records as text
+     * surrounding a numeric code.
      */
 
 
-    if (
-        results.length === 0
+    const text =
+        cleanText(
+            decodeHtml(
+                stripHtml(html)
+            )
+        );
+
+
+    /*
+     * Look for:
+     *
+     * 541511 Custom Computer Programming Services
+     *
+     * but do not blindly treat years
+     * such as 2022 as NAICS codes.
+     */
+
+    const textRegex =
+        /(?:^|\s)(\d{2,6})\s+([A-Z][A-Za-z0-9,&'()\/.\- ]{2,120}?)(?=\s+(?:This industry|Search Results|Cross-References|Illustrative Examples|Number of records|NAICS Definition|$))/g;
+
+
+    while (
+        (match = textRegex.exec(text)) !== null
     ) {
 
+        const code =
+            match[1];
 
-        const fallbackRegex =
-            /(?:^|>)[\s\S]{0,100}?(\d{2,6})\s*[:\-]\s*([A-Za-z][^<]{2,150})(?:<|$)/gi;
+        let title =
+            match[2];
 
 
-        while (
-            (match =
-                fallbackRegex.exec(html)) !== null
+        if (
+            !isValidCode(code)
         ) {
 
-
-            const code =
-                match[1];
-
-
-            let title =
-                match[2];
-
-
-            title =
-                cleanText(
-                    decodeHtml(
-                        title
-                    )
-                );
-
-
-            if (
-                code.length < 2 ||
-                code.length > 6
-            ) {
-
-                continue;
-
-            }
-
-
-            if (
-                title.length < 2
-            ) {
-
-                continue;
-
-            }
-
-
-            const key =
-                code +
-                "|" +
-                title.toLowerCase();
-
-
-            if (
-                seen.has(key)
-            ) {
-
-                continue;
-
-            }
-
-
-            seen.add(key);
-
-
-            results.push({
-
-                code:
-                    code,
-
-                title:
-                    title
-
-            });
+            continue;
 
         }
+
+
+        title =
+            cleanTitle(title);
+
+
+        if (!title) {
+
+            continue;
+
+        }
+
+
+        addResult(
+            results,
+            seen,
+            code,
+            title
+        );
 
     }
 
@@ -386,11 +282,242 @@ function parseCensusResults(html) {
 
 
 /* =========================================
+   VALID NAICS CODE
+========================================= */
+
+function isValidCode(code) {
+
+    if (!/^\d{2,6}$/.test(code)) {
+
+        return false;
+
+    }
+
+
+    /*
+     * Never treat NAICS years as codes.
+     */
+
+    const blocked =
+        new Set([
+            "1997",
+            "2002",
+            "2007",
+            "2012",
+            "2017",
+            "2022"
+        ]);
+
+
+    if (
+        blocked.has(code)
+    ) {
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =========================================
+   ADD RESULT
+========================================= */
+
+function addResult(
+    results,
+    seen,
+    code,
+    title
+) {
+
+    title =
+        cleanTitle(title);
+
+
+    if (
+        !isValidCode(code) ||
+        !title
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Ignore generic page/navigation
+     * strings.
+     */
+
+    if (
+        /^(NAICS|Search|Go|Menu|Main|History|Concordances|Downloadable Files)$/i
+            .test(title)
+    ) {
+
+        return;
+
+    }
+
+
+    const key =
+        code + "|" + title.toLowerCase();
+
+
+    if (
+        seen.has(key)
+    ) {
+
+        return;
+
+    }
+
+
+    seen.add(key);
+
+
+    results.push({
+
+        code:
+            code,
+
+        title:
+            title
+
+    });
+
+}
+
+
+/* =========================================
+   CLEAN TITLE
+========================================= */
+
+function cleanTitle(value) {
+
+    let title =
+        String(value || "");
+
+
+    title =
+        title
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim();
+
+
+    /*
+     * Remove common Census labels.
+     */
+
+    title =
+        title.replace(
+            /^Search Results\s*/i,
+            ""
+        );
+
+
+    title =
+        title.replace(
+            /^top of search results.*?:/i,
+            ""
+        );
+
+
+    /*
+     * Remove trailing NAICS markers.
+     */
+
+    title =
+        title.replace(
+            /\s*\^T\s*$/i,
+            ""
+        );
+
+
+    /*
+     * If Census gives:
+     *
+     * 541511: Custom Computer Programming Services
+     *
+     * keep only the title.
+     */
+
+    const colon =
+        title.match(
+            /^\d{2,6}\s*:\s*(.+)$/
+        );
+
+
+    if (colon) {
+
+        title =
+            colon[1];
+
+    }
+
+
+    /*
+     * Remove long definition text.
+     */
+
+    const cutWords = [
+
+        "This industry comprises",
+
+        "This U.S. industry comprises",
+
+        "Illustrative Examples:",
+
+        "Cross-References.",
+
+        "Cross-References",
+
+        "See industry description"
+
+    ];
+
+
+    for (
+        const word of cutWords
+    ) {
+
+        const index =
+            title
+            .toLowerCase()
+            .indexOf(
+                word.toLowerCase()
+            );
+
+
+        if (index >= 0) {
+
+            title =
+                title.substring(
+                    0,
+                    index
+                );
+
+        }
+
+    }
+
+
+    return title.trim();
+
+}
+
+
+/* =========================================
    STRIP HTML
 ========================================= */
 
 function stripHtml(value) {
-
 
     return String(value || "")
 
@@ -401,6 +528,11 @@ function stripHtml(value) {
 
         .replace(
             /<style[\s\S]*?<\/style>/gi,
+            " "
+        )
+
+        .replace(
+            /<noscript[\s\S]*?<\/noscript>/gi,
             " "
         )
 
@@ -424,7 +556,6 @@ function stripHtml(value) {
 ========================================= */
 
 function decodeHtml(value) {
-
 
     return String(value || "")
 
@@ -472,7 +603,6 @@ function decodeHtml(value) {
 
 function cleanText(value) {
 
-
     return String(value || "")
 
         .replace(
@@ -491,28 +621,10 @@ function cleanText(value) {
 
 
 /* =========================================
-   ESCAPE REGEX
-========================================= */
-
-function escapeRegex(value) {
-
-
-    return String(value)
-
-        .replace(
-            /[.*+?^${}()|[\]\\]/g,
-            "\\$&"
-        );
-
-}
-
-
-/* =========================================
    JSON RESPONSE
 ========================================= */
 
 function jsonResponse(data) {
-
 
     return new Response(
 
