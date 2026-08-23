@@ -3,12 +3,12 @@ export async function onRequest(context) {
     const url = new URL(context.request.url);
 
     const query =
-        url.searchParams
-        .get("q")
-        ?.trim();
+        (url.searchParams.get("q") || "")
+        .trim()
+        .toLowerCase();
 
 
-    if (!query || query.length < 2) {
+    if (query.length < 2) {
 
         return jsonResponse({
             results: []
@@ -17,37 +17,41 @@ export async function onRequest(context) {
     }
 
 
+    /*
+        U.S. SIC search data.
+
+        This searches the OSHA SIC Manual
+        through the public OSHA SIC pages.
+
+        We first try to find matching SIC
+        codes from the OSHA SIC index.
+    */
+
     try {
 
-        /*
-         * OSHA SIC search page
-         */
-
         const searchUrl =
-            "https://www.osha.gov/sic-manual/search?query=" +
+            "https://www.osha.gov/sic-manual/search?search_api_fulltext=" +
             encodeURIComponent(query);
 
 
         const response =
-            await fetch(
-                searchUrl,
-                {
-                    headers: {
-                        "User-Agent":
-                            "MyTecBooks U.S. SIC Search"
-                    }
+            await fetch(searchUrl, {
+
+                headers: {
+
+                    "User-Agent":
+                        "Mozilla/5.0 MyTecBooks U.S. SIC Search"
+
                 }
-            );
+
+            });
 
 
         if (!response.ok) {
 
-            return jsonResponse(
-                {
-                    results: []
-                },
-                502
-            );
+            return jsonResponse({
+                results: []
+            });
 
         }
 
@@ -57,18 +61,15 @@ export async function onRequest(context) {
 
 
         const results =
-            parseSearchResults(
-                html,
-                query
-            );
+            parseSearchResults(html, query);
 
 
         return jsonResponse({
-            results: results
+            results: results.slice(0, 50)
         });
 
-    }
 
+    }
     catch (error) {
 
         console.error(
@@ -77,12 +78,9 @@ export async function onRequest(context) {
         );
 
 
-        return jsonResponse(
-            {
-                results: []
-            },
-            500
-        );
+        return jsonResponse({
+            results: []
+        });
 
     }
 
@@ -90,7 +88,7 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   PARSE SEARCH RESULTS
+   PARSE OSHA SEARCH PAGE
 ========================================= */
 
 function parseSearchResults(
@@ -104,12 +102,15 @@ function parseSearchResults(
 
 
     /*
-     * Look for links pointing to
-     * OSHA SIC pages.
-     */
+        Look for OSHA SIC links.
+
+        Example link:
+
+        /sic-manual/7372
+    */
 
     const linkRegex =
-        /<a[^>]+href=["']([^"']*\/sic-manual\/(\d{2,4})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        /href=["']\/sic-manual\/(\d{2,4})["'][^>]*>([\s\S]*?)<\/a>/gi;
 
 
     let match;
@@ -120,27 +121,16 @@ function parseSearchResults(
     ) {
 
         const code =
-            match[2];
-
-
-        if (seen.has(code)) {
-            continue;
-        }
+            match[1];
 
 
         let title =
-            stripHtml(
-                match[3]
-            );
+            stripHtml(match[2]);
 
 
         title =
             cleanText(title);
 
-
-        /*
-         * Ignore empty or navigation links.
-         */
 
         if (
             !title ||
@@ -152,13 +142,12 @@ function parseSearchResults(
         }
 
 
-        /*
-         * Ignore generic OSHA links.
-         */
+        const key =
+            code + "|" + title;
+
 
         if (
-            /^(home|back|next|previous|search)$/i
-            .test(title)
+            seen.has(key)
         ) {
 
             continue;
@@ -166,86 +155,35 @@ function parseSearchResults(
         }
 
 
-        seen.add(code);
-
-
-        results.push({
-
-            code: code,
-
-            title: title
-
-        });
-
-
         /*
-         * Maximum 20 results.
-         */
+            Keep results relevant to
+            the user's search text.
+        */
 
-        if (results.length >= 20) {
-            break;
-        }
-
-    }
-
-
-    /*
-     * Fallback parser.
-     *
-     * If OSHA changes the search page
-     * markup, look for SIC code + text.
-     */
-
-    if (results.length === 0) {
-
-        const fallbackRegex =
-            /\b(\d{2,4})\s+([A-Z][A-Za-z0-9 ,&'()\/.-]{2,120})/g;
+        const combined =
+            (
+                code +
+                " " +
+                title
+            ).toLowerCase();
 
 
-        while (
-            (match =
-                fallbackRegex.exec(html)) !== null
+        if (
+            combined.includes(query)
         ) {
 
-            const code =
-                match[1];
-
-
-            const title =
-                cleanText(
-                    stripHtml(
-                        match[2]
-                    )
-                );
-
-
-            if (seen.has(code)) {
-                continue;
-            }
-
-
-            if (
-                title.length < 3
-            ) {
-                continue;
-            }
-
-
-            seen.add(code);
+            seen.add(key);
 
 
             results.push({
 
-                code: code,
+                code:
+                    code,
 
-                title: title
+                title:
+                    title
 
             });
-
-
-            if (results.length >= 20) {
-                break;
-            }
 
         }
 
@@ -261,7 +199,9 @@ function parseSearchResults(
    STRIP HTML
 ========================================= */
 
-function stripHtml(value) {
+function stripHtml(
+    value
+) {
 
     return String(value || "")
 
@@ -298,6 +238,11 @@ function stripHtml(value) {
         .replace(
             /&#039;/gi,
             "'"
+        )
+
+        .replace(
+            /&#39;/gi,
+            "'"
         );
 
 }
@@ -307,7 +252,9 @@ function stripHtml(value) {
    CLEAN TEXT
 ========================================= */
 
-function cleanText(value) {
+function cleanText(
+    value
+) {
 
     return String(value || "")
 
@@ -331,14 +278,16 @@ function cleanText(value) {
 ========================================= */
 
 function jsonResponse(
-    data,
-    status = 200
+    data
 ) {
 
     return new Response(
+
         JSON.stringify(data),
+
         {
-            status: status,
+
+            status: 200,
 
             headers: {
 
@@ -346,11 +295,15 @@ function jsonResponse(
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400"
+                    "public, max-age=3600, s-maxage=86400",
+
+                "Access-Control-Allow-Origin":
+                    "*"
 
             }
 
         }
+
     );
 
 }
