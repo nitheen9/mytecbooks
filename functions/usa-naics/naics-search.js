@@ -1,319 +1,508 @@
 export async function onRequest(context) {
 
-    const requestUrl = new URL(context.request.url);
+    const requestUrl =
+        new URL(context.request.url);
+
 
     const query =
         (requestUrl.searchParams.get("q") || "")
         .trim();
 
+
     if (query.length < 2) {
 
         return jsonResponse({
+
             query: query,
+
             results: []
+
         });
 
     }
 
-    /*
-     * Normalize the search.
-     *
-     * This fixes:
-     * software
-     * Software
-     * SOFTWARE
-     *
-     * and removes extra spaces.
-     */
 
-    const normalizedQuery =
-        query
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim();
+    try {
 
 
-    /*
-     * Built-in 2022 U.S. NAICS search data.
-     */
+        /*
+         * Official U.S. Census NAICS search.
+         *
+         * Example:
+         *
+         * https://www.census.gov/naics/?input=software&year=2022
+         */
 
-    const data =
-        getNAICSData();
-
-
-    const results =
-        data
-            .filter(function(item) {
-
-                const code =
-                    String(item.code || "")
-                    .toLowerCase();
-
-                const title =
-                    String(item.title || "")
-                    .toLowerCase();
-
-                const description =
-                    String(item.description || "")
-                    .toLowerCase();
-
-                return (
-                    code.includes(normalizedQuery) ||
-                    title.includes(normalizedQuery) ||
-                    description.includes(normalizedQuery)
-                );
-
-            })
-            .slice(0, 50);
+        const censusUrl =
+            "https://www.census.gov/naics/?input=" +
+            encodeURIComponent(query) +
+            "&year=2022";
 
 
-    return jsonResponse({
+        const response =
+            await fetch(
+                censusUrl,
+                {
+                    headers: {
 
-        query: query,
+                        "User-Agent":
+                            "Mozilla/5.0 (compatible; MyTecBooks NAICS Search)",
 
-        results: results.map(function(item) {
+                        "Accept":
+                            "text/html,application/xhtml+xml"
 
-            return {
+                    }
 
-                code: item.code,
+                }
+            );
 
-                title: item.title
 
-            };
+        if (!response.ok) {
 
-        })
 
-    });
+            console.error(
+                "Census HTTP status:",
+                response.status
+            );
+
+
+            return jsonResponse({
+
+                query: query,
+
+                results: []
+
+            });
+
+        }
+
+
+        const html =
+            await response.text();
+
+
+        const results =
+            parseCensusResults(
+                html
+            );
+
+
+        return jsonResponse({
+
+            query: query,
+
+            results:
+                results.slice(
+                    0,
+                    50
+                )
+
+        });
+
+
+    }
+    catch (error) {
+
+
+        console.error(
+            "NAICS search error:",
+            error
+        );
+
+
+        return jsonResponse({
+
+            query: query,
+
+            results: []
+
+        });
+
+    }
 
 }
 
 
 /* =========================================
-   NAICS DATA
+   PARSE CENSUS NAICS RESULTS
 ========================================= */
 
-function getNAICSData() {
+function parseCensusResults(html) {
 
-    return [
 
-        {
-            code: "541511",
-            title: "Custom Computer Programming Services",
-            description:
-                "Custom computer programming services"
-        },
+    const results = [];
 
-        {
-            code: "541512",
-            title: "Computer Systems Design Services",
-            description:
-                "Computer systems design services"
-        },
+    const seen =
+        new Set();
 
-        {
-            code: "541513",
-            title: "Computer Facilities Management Services",
-            description:
-                "Computer facilities management services"
-        },
 
-        {
-            code: "541519",
-            title: "Other Computer Related Services",
-            description:
-                "Other computer related services"
-        },
+    /*
+     * Census result links normally contain:
+     *
+     * details=541511
+     *
+     * input=54151
+     *
+     * year=2022
+     *
+     * We extract the 2-6 digit NAICS code
+     * and the text associated with the link.
+     */
 
-        {
-            code: "511210",
-            title: "Software Publishers",
-            description:
-                "Software publishers"
-        },
 
-        {
-            code: "518210",
-            title: "Computing Infrastructure Providers, Data Processing, Web Hosting, and Related Services",
-            description:
-                "Computing infrastructure providers data processing web hosting and related services"
-        },
+    const regex =
+        /<a[^>]+href=["']([^"']*naics[^"']*details=(\d{2,6})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
-        {
-            code: "541330",
-            title: "Engineering Services",
-            description:
-                "Engineering services"
-        },
 
-        {
-            code: "541110",
-            title: "Offices of Lawyers",
-            description:
-                "Legal services"
-        },
+    let match;
 
-        {
-            code: "522110",
-            title: "Commercial Banking",
-            description:
-                "Commercial banking and banking services"
-        },
 
-        {
-            code: "522120",
-            title: "Savings Institutions",
-            description:
-                "Savings institutions and banking"
-        },
+    while (
+        (match = regex.exec(html)) !== null
+    ) {
 
-        {
-            code: "236115",
-            title: "New Single-Family Housing Construction",
-            description:
-                "Construction of new single family housing"
-        },
 
-        {
-            code: "236116",
-            title: "New Multifamily Housing Construction",
-            description:
-                "Construction of new multifamily housing"
-        },
+        const url =
+            match[1];
 
-        {
-            code: "236220",
-            title: "Commercial and Institutional Building Construction",
-            description:
-                "Commercial and institutional building construction"
-        },
 
-        {
-            code: "237110",
-            title: "Water and Sewer Line and Related Structures Construction",
-            description:
-                "Water and sewer line construction"
-        },
+        const code =
+            match[2];
 
-        {
-            code: "237310",
-            title: "Highway, Street, and Bridge Construction",
-            description:
-                "Highway street and bridge construction"
-        },
 
-        {
-            code: "111110",
-            title: "Soybean Farming",
-            description:
-                "Soybean farming"
-        },
+        let linkText =
+            match[3];
 
-        {
-            code: "111120",
-            title: "Oilseed (Except Soybean) Farming",
-            description:
-                "Oilseed farming"
-        },
 
-        {
-            code: "111130",
-            title: "Dry Pea and Bean Farming",
-            description:
-                "Dry pea and bean farming"
-        },
+        linkText =
+            stripHtml(
+                linkText
+            );
 
-        {
-            code: "111140",
-            title: "Wheat Farming",
-            description:
-                "Wheat farming"
-        },
 
-        {
-            code: "111150",
-            title: "Corn Farming",
-            description:
-                "Corn farming"
-        },
+        linkText =
+            decodeHtml(
+                linkText
+            );
 
-        {
-            code: "111199",
-            title: "All Other Grain Farming",
-            description:
-                "Other grain farming"
-        },
 
-        {
-            code: "445110",
-            title: "Supermarkets and Other Grocery Retailers",
-            description:
-                "Grocery stores supermarkets grocery retail"
-        },
+        linkText =
+            cleanText(
+                linkText
+            );
 
-        {
-            code: "445131",
-            title: "Convenience Retailers",
-            description:
-                "Convenience stores"
-        },
 
-        {
-            code: "621111",
-            title: "Offices of Physicians (except Mental Health Specialists)",
-            description:
-                "Physicians offices healthcare medical services"
-        },
+        if (
+            !code ||
+            !linkText
+        ) {
 
-        {
-            code: "621112",
-            title: "Offices of Physicians, Mental Health Specialists",
-            description:
-                "Mental health physician services"
-        },
+            continue;
 
-        {
-            code: "621210",
-            title: "Offices of Dentists",
-            description:
-                "Dental offices dentist services"
-        },
-
-        {
-            code: "721110",
-            title: "Hotels (except Casino Hotels) and Motels",
-            description:
-                "Hotels motels accommodation lodging"
-        },
-
-        {
-            code: "722511",
-            title: "Full-Service Restaurants",
-            description:
-                "Restaurants food service dining"
-        },
-
-        {
-            code: "722513",
-            title: "Limited-Service Restaurants",
-            description:
-                "Restaurants fast food food service"
-        },
-
-        {
-            code: "531120",
-            title: "Lessors of Nonresidential Buildings (except Miniwarehouses)",
-            description:
-                "Commercial real estate property rental"
-        },
-
-        {
-            code: "531210",
-            title: "Offices of Real Estate Agents and Brokers",
-            description:
-                "Real estate agents brokers property services"
         }
 
-    ];
+
+        /*
+         * Sometimes Census text contains:
+         *
+         * 541511 Custom Computer Programming Services
+         *
+         * Remove the code from the title.
+         */
+
+        let title =
+            linkText
+            .replace(
+                new RegExp(
+                    "^" +
+                    escapeRegex(code) +
+                    "\\s*[:\\-]?\\s*",
+                    "i"
+                ),
+                ""
+            )
+            .trim();
+
+
+        /*
+         * Remove classification suffixes.
+         */
+
+        title =
+            title
+            .replace(
+                /\s*\^(?:T|US)\s*$/i,
+                ""
+            )
+            .trim();
+
+
+        /*
+         * Some Census links can contain
+         * hierarchy buttons such as 541,
+         * 5415, 54151.
+         *
+         * Those are valid NAICS levels, so
+         * we keep them.
+         */
+
+
+        if (
+            title.length < 2
+        ) {
+
+            continue;
+
+        }
+
+
+        const key =
+            code +
+            "|" +
+            title
+            .toLowerCase();
+
+
+        if (
+            seen.has(key)
+        ) {
+
+            continue;
+
+        }
+
+
+        seen.add(key);
+
+
+        results.push({
+
+            code:
+                code,
+
+            title:
+                title
+
+        });
+
+    }
+
+
+    /*
+     * Second parser.
+     *
+     * Census pages can sometimes render the
+     * search result differently. Look for
+     * explicit "Button:" style HTML text.
+     */
+
+
+    if (
+        results.length === 0
+    ) {
+
+
+        const fallbackRegex =
+            /(?:^|>)[\s\S]{0,100}?(\d{2,6})\s*[:\-]\s*([A-Za-z][^<]{2,150})(?:<|$)/gi;
+
+
+        while (
+            (match =
+                fallbackRegex.exec(html)) !== null
+        ) {
+
+
+            const code =
+                match[1];
+
+
+            let title =
+                match[2];
+
+
+            title =
+                cleanText(
+                    decodeHtml(
+                        title
+                    )
+                );
+
+
+            if (
+                code.length < 2 ||
+                code.length > 6
+            ) {
+
+                continue;
+
+            }
+
+
+            if (
+                title.length < 2
+            ) {
+
+                continue;
+
+            }
+
+
+            const key =
+                code +
+                "|" +
+                title.toLowerCase();
+
+
+            if (
+                seen.has(key)
+            ) {
+
+                continue;
+
+            }
+
+
+            seen.add(key);
+
+
+            results.push({
+
+                code:
+                    code,
+
+                title:
+                    title
+
+            });
+
+        }
+
+    }
+
+
+    return results;
+
+}
+
+
+/* =========================================
+   STRIP HTML
+========================================= */
+
+function stripHtml(value) {
+
+
+    return String(value || "")
+
+        .replace(
+            /<script[\s\S]*?<\/script>/gi,
+            " "
+        )
+
+        .replace(
+            /<style[\s\S]*?<\/style>/gi,
+            " "
+        )
+
+        .replace(
+            /<[^>]+>/g,
+            " "
+        )
+
+        .replace(
+            /\s+/g,
+            " "
+        )
+
+        .trim();
+
+}
+
+
+/* =========================================
+   DECODE HTML
+========================================= */
+
+function decodeHtml(value) {
+
+
+    return String(value || "")
+
+        .replace(
+            /&nbsp;/gi,
+            " "
+        )
+
+        .replace(
+            /&amp;/gi,
+            "&"
+        )
+
+        .replace(
+            /&quot;/gi,
+            '"'
+        )
+
+        .replace(
+            /&#039;/gi,
+            "'"
+        )
+
+        .replace(
+            /&#39;/gi,
+            "'"
+        )
+
+        .replace(
+            /&lt;/gi,
+            "<"
+        )
+
+        .replace(
+            /&gt;/gi,
+            ">"
+        );
+
+}
+
+
+/* =========================================
+   CLEAN TEXT
+========================================= */
+
+function cleanText(value) {
+
+
+    return String(value || "")
+
+        .replace(
+            /\s+/g,
+            " "
+        )
+
+        .replace(
+            /\s+([,.])/g,
+            "$1"
+        )
+
+        .trim();
+
+}
+
+
+/* =========================================
+   ESCAPE REGEX
+========================================= */
+
+function escapeRegex(value) {
+
+
+    return String(value)
+
+        .replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+        );
 
 }
 
@@ -323,6 +512,7 @@ function getNAICSData() {
 ========================================= */
 
 function jsonResponse(data) {
+
 
     return new Response(
 
