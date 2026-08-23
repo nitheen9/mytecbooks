@@ -867,11 +867,11 @@ async function searchDescription() {
 
     try {
 
-        const response =
-            await fetch(
-                "/usa-sic/search?q=" +
-                encodeURIComponent(input)
-            );
+       const response =
+    await fetch(
+        "/usa-sic/sic-search?q=" +
+        encodeURIComponent(input)
+    );
 
 
         if (!response.ok) {
