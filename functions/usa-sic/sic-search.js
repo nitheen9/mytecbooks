@@ -1,12 +1,10 @@
 export async function onRequest(context) {
 
-    const url = new URL(context.request.url);
+    const requestUrl = new URL(context.request.url);
 
     const query =
-        (url.searchParams.get("q") || "")
-        .trim()
-        .toLowerCase();
-
+        (requestUrl.searchParams.get("q") || "")
+        .trim();
 
     if (query.length < 2) {
 
@@ -16,38 +14,34 @@ export async function onRequest(context) {
 
     }
 
-
-    /*
-        U.S. SIC search data.
-
-        This searches the OSHA SIC Manual
-        through the public OSHA SIC pages.
-
-        We first try to find matching SIC
-        codes from the OSHA SIC index.
-    */
-
     try {
 
+        /*
+         * OSHA SIC keyword search
+         *
+         * Example:
+         * https://www.osha.gov/data/sic-search?title_and_body=rice
+         */
+
         const searchUrl =
-            "https://www.osha.gov/sic-manual/search?search_api_fulltext=" +
+            "https://www.osha.gov/data/sic-search?title_and_body=" +
             encodeURIComponent(query);
 
+        const response = await fetch(searchUrl, {
 
-        const response =
-            await fetch(searchUrl, {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (compatible; MyTecBooks SIC Search)"
+            }
 
-                headers: {
-
-                    "User-Agent":
-                        "Mozilla/5.0 MyTecBooks U.S. SIC Search"
-
-                }
-
-            });
-
+        });
 
         if (!response.ok) {
+
+            console.error(
+                "OSHA HTTP status:",
+                response.status
+            );
 
             return jsonResponse({
                 results: []
@@ -55,19 +49,19 @@ export async function onRequest(context) {
 
         }
 
-
         const html =
             await response.text();
 
-
         const results =
-            parseSearchResults(html, query);
-
+            parseOSHAResults(html);
 
         return jsonResponse({
-            results: results.slice(0, 50)
-        });
 
+            query: query,
+
+            results: results.slice(0, 50)
+
+        });
 
     }
     catch (error) {
@@ -76,7 +70,6 @@ export async function onRequest(context) {
             "SIC search error:",
             error
         );
-
 
         return jsonResponse({
             results: []
@@ -88,13 +81,10 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   PARSE OSHA SEARCH PAGE
+   PARSE OSHA SEARCH RESULTS
 ========================================= */
 
-function parseSearchResults(
-    html,
-    query
-) {
+function parseOSHAResults(html) {
 
     const results = [];
 
@@ -102,86 +92,141 @@ function parseSearchResults(
 
 
     /*
-        Look for OSHA SIC links.
+     * OSHA search result links look like:
+     *
+     * /data/sic-manual/0112
+     *
+     * or similar SIC manual links.
+     *
+     * We therefore look for any OSHA link
+     * containing a 2-4 digit SIC code.
+     */
 
-        Example link:
+    const patterns = [
 
-        /sic-manual/7372
-    */
+        /href=["']([^"']*sic[^"']*\/(\d{2,4})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi,
 
-    const linkRegex =
-        /href=["']\/sic-manual\/(\d{2,4})["'][^>]*>([\s\S]*?)<\/a>/gi;
+        /href=["']([^"']*\/(\d{2,4})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
 
-
-    let match;
+    ];
 
 
-    while (
-        (match = linkRegex.exec(html)) !== null
+    for (
+        const regex of patterns
     ) {
 
-        const code =
-            match[1];
+        let match;
 
 
-        let title =
-            stripHtml(match[2]);
-
-
-        title =
-            cleanText(title);
-
-
-        if (
-            !title ||
-            title.length < 2
+        while (
+            (match = regex.exec(html)) !== null
         ) {
 
-            continue;
+            const url =
+                match[1];
 
-        }
+            const code =
+                match[2];
 
-
-        const key =
-            code + "|" + title;
-
-
-        if (
-            seen.has(key)
-        ) {
-
-            continue;
-
-        }
+            let linkText =
+                match[3];
 
 
-        /*
-            Keep results relevant to
-            the user's search text.
-        */
-
-        const combined =
-            (
-                code +
-                " " +
-                title
-            ).toLowerCase();
+            linkText =
+                stripHtml(linkText);
 
 
-        if (
-            combined.includes(query)
-        ) {
+            linkText =
+                decodeHtml(linkText);
+
+
+            linkText =
+                cleanText(linkText);
+
+
+            if (
+                !code ||
+                !linkText
+            ) {
+
+                continue;
+
+            }
+
+
+            /*
+             * OSHA search result text can be:
+             *
+             * Description for 0112: Rice
+             */
+
+            let title =
+                linkText;
+
+
+            const descriptionMatch =
+                linkText.match(
+                    /Description\s+for\s+\d{2,4}\s*:\s*(.+)/i
+                );
+
+
+            if (descriptionMatch) {
+
+                title =
+                    descriptionMatch[1];
+
+            }
+
+
+            title =
+                cleanText(title);
+
+
+            if (
+                !title ||
+                title.length < 2
+            ) {
+
+                continue;
+
+            }
+
+
+            /*
+             * Ignore navigation links that happen
+             * to contain numbers.
+             */
+
+            if (
+                /^(search|submit|clear|next|previous)$/i.test(title)
+            ) {
+
+                continue;
+
+            }
+
+
+            const key =
+                code + "|" + title;
+
+
+            if (
+                seen.has(key)
+            ) {
+
+                continue;
+
+            }
+
 
             seen.add(key);
 
 
             results.push({
 
-                code:
-                    code,
+                code: code,
 
-                title:
-                    title
+                title: title
 
             });
 
@@ -199,9 +244,7 @@ function parseSearchResults(
    STRIP HTML
 ========================================= */
 
-function stripHtml(
-    value
-) {
+function stripHtml(value) {
 
     return String(value || "")
 
@@ -219,6 +262,24 @@ function stripHtml(
             /<[^>]+>/g,
             " "
         )
+
+        .replace(
+            /\s+/g,
+            " "
+        )
+
+        .trim();
+
+}
+
+
+/* =========================================
+   DECODE HTML ENTITIES
+========================================= */
+
+function decodeHtml(value) {
+
+    return String(value || "")
 
         .replace(
             /&nbsp;/gi,
@@ -243,6 +304,16 @@ function stripHtml(
         .replace(
             /&#39;/gi,
             "'"
+        )
+
+        .replace(
+            /&lt;/gi,
+            "<"
+        )
+
+        .replace(
+            /&gt;/gi,
+            ">"
         );
 
 }
@@ -252,9 +323,7 @@ function stripHtml(
    CLEAN TEXT
 ========================================= */
 
-function cleanText(
-    value
-) {
+function cleanText(value) {
 
     return String(value || "")
 
@@ -277,9 +346,7 @@ function cleanText(
    JSON RESPONSE
 ========================================= */
 
-function jsonResponse(
-    data
-) {
+function jsonResponse(data) {
 
     return new Response(
 
