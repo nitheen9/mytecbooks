@@ -4,12 +4,14 @@ export async function onRequestGet(context) {
 
     const pages = [
 
-        "/",
+        "/",        
 
-        "/about/",
-        "/contact/",
-        "/privacy-policy/",
-        "/disclaimer/"
+        "/usa-naics-search.html",
+        "/usa-sic-search.html",
+        "/us-bank-finder.html",
+        "/school-finder.html",
+        "/post-office-finder.html",
+        "/ifsc-finder.html"
 
     ];
 
