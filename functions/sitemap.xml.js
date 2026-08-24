@@ -1,490 +1,63 @@
-import { pincodes } from "./data/pincodes.js";
-import railwayData from "./data/RailwayStationCode.json";
-import companyCINs from "./data/AP_AR_AS_AandM_Company_CIN.json";
-
 const BASE_URL = "https://mytecbooks.pages.dev";
-
-const PER_PAGE = 800;
-
 
 export async function onRequestGet(context) {
 
-    const requestUrl = new URL(context.request.url);
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
 
-    const type = requestUrl.searchParams.get("type");
-
-    const pageParam = requestUrl.searchParams.get("page");
-
+    xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
     /*
-     * ==========================================
      * NORMAL WEBSITE PAGES
-     * ==========================================
      */
-
-    const normalPages = [
-        "/"
-    ];
+    xml += sitemapEntry("/sitemap-pages.xml");
 
 
     /*
-     * ==========================================
-     * PINCODE DATA
-     * ==========================================
-     */
-
-    const validPincodes = [
-        ...new Set(
-            pincodes
-                .map(String)
-                .map(function (pin) {
-                    return pin.trim();
-                })
-                .filter(function (pin) {
-                    return /^\d{6}$/.test(pin);
-                })
-        )
-    ];
-
-
-    /*
-     * ==========================================
-     * RAILWAY STATION DATA
-     * ==========================================
-     */
-
-    const railwayPages = [
-        ...new Set(
-            railwayData
-                .map(function (item) {
-
-                    return String(
-                        item.station_code || ""
-                    )
-                        .trim()
-                        .toUpperCase();
-
-                })
-                .filter(function (code) {
-
-                    return /^[A-Z0-9]{2,6}$/.test(code);
-
-                })
-        )
-    ];
-
-
-    /*
-     * ==========================================
-     * COMPANY CIN DATA
-     * ==========================================
+     * PINCODE SITEMAPS
      *
-     * JSON format:
-     *
-     * [
-     *   "AAA-0396",
-     *   "AAA-1262",
-     *   "U70101AS1998PTC005556"
-     * ]
+     * Current pincode data:
+     * 25 sitemap pages
      */
+    for (let page = 1; page <= 25; page++) {
 
-    const companyPages = [
-        ...new Set(
-            companyCINs
-                .map(String)
-                .map(function (cin) {
-
-                    return cin
-                        .trim()
-                        .toUpperCase();
-
-                })
-                .filter(function (cin) {
-
-                    return cin.length > 0;
-
-                })
-        )
-    ];
-
-
-    /*
-     * ==========================================
-     * MAIN SITEMAP INDEX
-     * ==========================================
-     *
-     * /sitemap.xml
-     */
-
-    if (!type) {
-
-        let xml =
-            '<?xml version="1.0" encoding="UTF-8"?>\n';
-
-        xml +=
-            '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-
-
-        /*
-         * NORMAL PAGES
-         */
-
-        xml += "  <sitemap>\n";
-
-        xml +=
-            "    <loc>" +
-            BASE_URL +
-            "/sitemap.xml?type=pages&amp;page=1" +
-            "</loc>\n";
-
-        xml += "  </sitemap>\n";
-
-
-        /*
-         * PINCODE SITEMAPS
-         */
-
-        const pincodeTotalPages =
-            Math.ceil(
-                validPincodes.length / PER_PAGE
-            );
-
-
-        for (
-            let page = 1;
-            page <= pincodeTotalPages;
-            page++
-        ) {
-
-            xml += "  <sitemap>\n";
-
-            xml +=
-                "    <loc>" +
-                BASE_URL +
-                "/sitemap.xml?type=pincode&amp;page=" +
-                page +
-                "</loc>\n";
-
-            xml += "  </sitemap>\n";
-        }
-
-
-        /*
-         * RAILWAY SITEMAPS
-         */
-
-        const railwayTotalPages =
-            Math.ceil(
-                railwayPages.length / PER_PAGE
-            );
-
-
-        for (
-            let page = 1;
-            page <= railwayTotalPages;
-            page++
-        ) {
-
-            xml += "  <sitemap>\n";
-
-            xml +=
-                "    <loc>" +
-                BASE_URL +
-                "/sitemap.xml?type=railway&amp;page=" +
-                page +
-                "</loc>\n";
-
-            xml += "  </sitemap>\n";
-        }
-
-
-        /*
-         * COMPANY SITEMAPS
-         */
-
-        const companyTotalPages =
-            Math.ceil(
-                companyPages.length / PER_PAGE
-            );
-
-
-        for (
-            let page = 1;
-            page <= companyTotalPages;
-            page++
-        ) {
-
-            xml += "  <sitemap>\n";
-
-            xml +=
-                "    <loc>" +
-                BASE_URL +
-                "/sitemap.xml?type=company&amp;page=" +
-                page +
-                "</loc>\n";
-
-            xml += "  </sitemap>\n";
-        }
-
-
-        xml += "</sitemapindex>";
-
-
-        return new Response(xml, {
-
-            status: 200,
-
-            headers: {
-                "Content-Type":
-                    "application/xml; charset=UTF-8",
-
-                "Cache-Control":
-                    "public, max-age=3600"
-            }
-
-        });
-    }
-
-
-    /*
-     * ==========================================
-     * NORMAL PAGES
-     * ==========================================
-     */
-
-    if (type === "pages") {
-
-        if (pageParam !== "1") {
-
-            return new Response(
-                "Sitemap page not found",
-                {
-                    status: 404
-                }
-            );
-        }
-
-        return createUrlSitemap(
-            normalPages
+        xml += sitemapEntry(
+            "/sitemap-pincode-" + page + ".xml"
         );
+
     }
 
 
     /*
-     * ==========================================
-     * PINCODE SITEMAP
-     * ==========================================
+     * RAILWAY STATION SITEMAPS
+     *
+     * Current railway data:
+     * 11 sitemap pages
      */
+    for (let page = 1; page <= 11; page++) {
 
-    if (type === "pincode") {
+        xml += sitemapEntry(
+            "/sitemap-railway-" + page + ".xml"
+        );
 
-        const page =
-            parseInt(pageParam, 10);
-
-        const totalPages =
-            Math.ceil(
-                validPincodes.length / PER_PAGE
-            );
-
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
-        ) {
-
-            return new Response(
-                "Sitemap page not found",
-                {
-                    status: 404
-                }
-            );
-        }
-
-
-        const start =
-            (page - 1) * PER_PAGE;
-
-
-        const pagePincodes =
-            validPincodes.slice(
-                start,
-                start + PER_PAGE
-            );
-
-
-        const urls =
-            pagePincodes.map(
-                function (pin) {
-
-                    return "/pincode/" + pin + "/";
-
-                }
-            );
-
-
-        return createUrlSitemap(urls);
     }
 
 
     /*
-     * ==========================================
-     * RAILWAY STATION SITEMAP
-     * ==========================================
+     * COMPANY CIN SITEMAPS
+     *
+     * Current company data:
+     * 88 sitemap pages
      */
+    for (let page = 1; page <= 88; page++) {
 
-    if (type === "railway") {
+        xml += sitemapEntry(
+            "/sitemap-company-" + page + ".xml"
+        );
 
-        const page =
-            parseInt(pageParam, 10);
-
-        const totalPages =
-            Math.ceil(
-                railwayPages.length / PER_PAGE
-            );
-
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
-        ) {
-
-            return new Response(
-                "Sitemap page not found",
-                {
-                    status: 404
-                }
-            );
-        }
-
-
-        const start =
-            (page - 1) * PER_PAGE;
-
-
-        const pageRailway =
-            railwayPages.slice(
-                start,
-                start + PER_PAGE
-            );
-
-
-        const urls =
-            pageRailway.map(
-                function (code) {
-
-                    return "/railway/" + code + "/";
-
-                }
-            );
-
-
-        return createUrlSitemap(urls);
     }
 
 
-    /*
-     * ==========================================
-     * COMPANY CIN SITEMAP
-     * ==========================================
-     */
-
-    if (type === "company") {
-
-        const page =
-            parseInt(pageParam, 10);
-
-        const totalPages =
-            Math.ceil(
-                companyPages.length / PER_PAGE
-            );
-
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1 ||
-            page > totalPages
-        ) {
-
-            return new Response(
-                "Sitemap page not found",
-                {
-                    status: 404
-                }
-            );
-        }
-
-
-        const start =
-            (page - 1) * PER_PAGE;
-
-
-        const pageCompanies =
-            companyPages.slice(
-                start,
-                start + PER_PAGE
-            );
-
-
-        const urls =
-            pageCompanies.map(
-                function (cin) {
-
-                    return "/company/" + cin + "/";
-
-                }
-            );
-
-
-        return createUrlSitemap(urls);
-    }
-
-
-    /*
-     * ==========================================
-     * UNKNOWN TYPE
-     * ==========================================
-     */
-
-    return new Response(
-        "Sitemap not found",
-        {
-            status: 404
-        }
-    );
-}
-
-
-/*
- * ==========================================
- * CREATE URL SITEMAP
- * ==========================================
- */
-
-function createUrlSitemap(paths) {
-
-    let xml =
-        '<?xml version="1.0" encoding="UTF-8"?>\n';
-
-    xml +=
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-
-
-    for (const path of paths) {
-
-        xml += "  <url>\n";
-
-        xml +=
-            "    <loc>" +
-            escapeXml(BASE_URL + path) +
-            "</loc>\n";
-
-        xml += "  </url>\n";
-    }
-
-
-    xml += "</urlset>";
+    xml += "</sitemapindex>";
 
 
     return new Response(xml, {
@@ -492,11 +65,8 @@ function createUrlSitemap(paths) {
         status: 200,
 
         headers: {
-            "Content-Type":
-                "application/xml; charset=UTF-8",
-
-            "Cache-Control":
-                "public, max-age=3600"
+            "Content-Type": "application/xml; charset=UTF-8",
+            "Cache-Control": "public, max-age=3600"
         }
 
     });
@@ -504,17 +74,17 @@ function createUrlSitemap(paths) {
 
 
 /*
- * ==========================================
- * XML ESCAPE
- * ==========================================
+ * Create sitemap index entry
  */
+function sitemapEntry(path) {
 
-function escapeXml(value) {
+    return (
+        "  <sitemap>\n" +
+        "    <loc>" +
+        BASE_URL +
+        path +
+        "</loc>\n" +
+        "  </sitemap>\n"
+    );
 
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&apos;");
 }
