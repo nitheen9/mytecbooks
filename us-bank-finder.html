@@ -20,9 +20,6 @@
 
 <title>U.S. Bank Finder - Bank, State, City & Branch Search</title>
 
-
-<!-- Google Analytics -->
-
 <script async
 src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
 </script>
@@ -50,7 +47,6 @@ gtag(
 
 </script>
 
-
 <style>
 
 :root {
@@ -63,13 +59,9 @@ gtag(
 
 }
 
-
 * {
-
     box-sizing: border-box;
-
 }
-
 
 body {
 
@@ -87,148 +79,105 @@ body {
     color:
         var(--dark);
 
-    margin:
-        0;
+    margin: 0;
 
-    padding:
-        20px;
+    padding: 20px;
 
 }
-
 
 .container {
 
-    max-width:
-        850px;
+    max-width: 850px;
 
-    margin:
-        0 auto;
+    margin: 0 auto;
 
 }
-
 
 h1 {
 
-    text-align:
-        center;
+    text-align: center;
 
-    color:
-        var(--dark);
+    color: var(--dark);
 
-    margin:
-        10px 0 12px;
+    margin: 10px 0 12px;
 
-    font-size:
-        30px;
+    font-size: 30px;
 
 }
-
 
 .intro {
 
-    text-align:
-        center;
+    text-align: center;
 
-    color:
-        #666;
+    color: #666;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
-    margin:
-        0 0 28px;
+    margin: 0 0 28px;
 
 }
 
-
-/* =========================================
-   SEARCH CARD
-========================================= */
-
 .search-card {
 
-    background:
-        var(--white);
+    background: var(--white);
 
-    padding:
-        25px;
+    padding: 25px;
 
-    border-radius:
-        12px;
+    border-radius: 12px;
 
     box-shadow:
         0 4px 15px
         rgba(0,0,0,0.05);
 
-    margin-bottom:
-        25px;
+    margin-bottom: 25px;
 
 }
-
 
 .search-card h2 {
 
-    margin-top:
-        0;
+    margin-top: 0;
+
+    margin-bottom: 10px;
 
 }
-
 
 .search-card p {
 
-    color:
-        #666;
+    color: #666;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
 }
-
-
-/* =========================================
-   SEARCH BOX
-========================================= */
 
 .search-box {
 
-    display:
-        flex;
+    display: flex;
 
-    gap:
-        10px;
+    gap: 10px;
 
-    margin-top:
-        15px;
+    margin-top: 15px;
 
 }
 
-
 input {
 
-    flex:
-        1;
+    flex: 1;
 
-    padding:
-        14px;
+    padding: 14px;
 
     border:
         2px solid
         var(--border);
 
-    border-radius:
-        8px;
+    border-radius: 8px;
 
-    font-size:
-        16px;
+    font-size: 16px;
 
-    outline:
-        none;
+    outline: none;
 
-    min-width:
-        0;
+    min-width: 0;
 
 }
-
 
 input:focus {
 
@@ -237,103 +186,69 @@ input:focus {
 
 }
 
-
 button {
 
-    padding:
-        14px 28px;
+    padding: 14px 28px;
 
-    background:
-        var(--dark);
+    background: var(--dark);
 
-    color:
-        white;
+    color: white;
 
-    border:
-        none;
+    border: none;
 
-    border-radius:
-        8px;
+    border-radius: 8px;
 
-    font-weight:
-        bold;
+    font-weight: bold;
 
-    cursor:
-        pointer;
+    cursor: pointer;
 
-    font-size:
-        16px;
+    font-size: 16px;
 
 }
-
 
 button:hover {
 
-    background:
-        #333;
+    background: #333;
 
 }
 
-
-/* =========================================
-   SELECT
-========================================= */
-
 select {
 
-    width:
-        100%;
+    width: 100%;
 
-    padding:
-        14px;
+    padding: 14px;
 
     border:
         2px solid
         var(--border);
 
-    border-radius:
-        8px;
+    border-radius: 8px;
 
-    font-size:
-        16px;
+    font-size: 16px;
 
-    background:
-        white;
+    background: white;
 
-    margin-top:
-        10px;
+    margin-top: 10px;
 
 }
-
 
 select:disabled {
 
-    background:
-        #f1f1f4;
+    background: #f1f1f4;
 
 }
 
-
-/* =========================================
-   RESULTS
-========================================= */
-
 .results {
 
-    margin-top:
-        20px;
+    margin-top: 20px;
 
-    padding:
-        20px;
+    padding: 20px;
 
-    border-radius:
-        8px;
+    border-radius: 8px;
 
-    background:
-        #f1f1f6;
+    background: #f1f1f6;
 
-    display:
-        none;
+    display: none;
 
     border-left:
         5px solid
@@ -341,279 +256,204 @@ select:disabled {
 
 }
 
-
 .bank-item {
 
-    background:
-        white;
+    background: white;
 
     border:
         1px solid
         var(--border);
 
-    border-radius:
-        8px;
+    border-radius: 8px;
 
-    padding:
-        15px;
+    padding: 15px;
 
-    margin-bottom:
-        10px;
+    margin-bottom: 10px;
 
 }
-
 
 .bank-item:last-child {
 
-    margin-bottom:
-        0;
+    margin-bottom: 0;
 
 }
-
 
 .bank-name {
 
-    font-weight:
-        bold;
+    font-weight: bold;
 
-    font-size:
-        17px;
+    font-size: 17px;
 
 }
-
 
 .bank-meta {
 
-    color:
-        #666;
+    color: #666;
 
-    margin-top:
-        5px;
+    margin-top: 5px;
 
-    line-height:
-        1.5;
+    line-height: 1.5;
 
 }
-
 
 .bank-select {
 
-    margin-top:
-        10px;
+    margin-top: 10px;
 
-    background:
-        var(--dark);
+    background: var(--dark);
 
-    color:
-        white;
+    color: white;
 
-    border:
-        none;
+    border: none;
 
-    padding:
-        9px 13px;
+    padding: 9px 13px;
 
-    border-radius:
-        6px;
+    border-radius: 6px;
 
-    cursor:
-        pointer;
+    cursor: pointer;
 
 }
 
-
-/* =========================================
-   DATA
-========================================= */
-
 .data-row {
 
-    margin-bottom:
-        12px;
+    margin-bottom: 12px;
 
-    padding-bottom:
-        12px;
+    padding-bottom: 12px;
 
     border-bottom:
         1px solid
         var(--border);
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
-    word-break:
-        break-word;
+    word-break: break-word;
 
 }
-
 
 .data-row:last-child {
 
-    border:
-        none;
+    border: none;
 
-    margin:
-        0;
+    margin: 0;
 
-    padding:
-        0;
+    padding: 0;
 
 }
-
 
 .badge {
 
-    display:
-        inline-block;
+    display: inline-block;
 
-    background:
-        #333;
+    background: #333;
 
-    color:
-        white;
+    color: white;
 
-    padding:
-        4px 8px;
+    padding: 4px 8px;
 
-    border-radius:
-        4px;
+    border-radius: 4px;
 
-    font-size:
-        12px;
+    font-size: 12px;
 
-    font-weight:
-        bold;
+    font-weight: bold;
 
 }
 
+.branch-link {
 
-/* =========================================
-   LOADING
-========================================= */
+    display: inline-block;
+
+    margin-top: 12px;
+
+    padding: 10px 14px;
+
+    background: var(--dark);
+
+    color: white;
+
+    text-decoration: none;
+
+    border-radius: 7px;
+
+    font-weight: bold;
+
+}
+
+.branch-link:hover {
+
+    background: #333;
+
+}
 
 .loading {
 
-    display:
-        none;
+    display: none;
 
-    margin-top:
-        18px;
+    margin-top: 18px;
 
-    padding:
-        14px;
+    padding: 14px;
 
-    background:
-        #f1f1f6;
+    background: #f1f1f6;
 
-    border-radius:
-        7px;
+    border-radius: 7px;
 
-    color:
-        #555;
+    color: #555;
 
-    font-weight:
-        bold;
+    font-weight: bold;
 
 }
-
-
-/* =========================================
-   ERROR
-========================================= */
 
 .error {
 
-    display:
-        none;
+    display: none;
 
-    margin-top:
-        18px;
+    margin-top: 18px;
 
-    padding:
-        14px;
+    padding: 14px;
 
-    background:
-        #fde8e8;
+    background: #fde8e8;
 
-    border-radius:
-        7px;
+    border-radius: 7px;
 
-    color:
-        #d9383a;
+    color: #d9383a;
 
-    font-weight:
-        bold;
+    font-weight: bold;
 
 }
-
-
-/* =========================================
-   FOOTER
-========================================= */
 
 footer {
 
-    text-align:
-        center;
+    text-align: center;
 
-    color:
-        #777;
+    color: #777;
 
-    font-size:
-        13px;
+    font-size: 13px;
 
-    margin:
-        30px 0 10px;
+    margin: 30px 0 10px;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
 }
-
-
-/* =========================================
-   MOBILE
-========================================= */
 
 @media (max-width:600px) {
 
     body {
-
-        padding:
-            12px;
-
+        padding: 12px;
     }
-
 
     h1 {
-
-        font-size:
-            24px;
-
+        font-size: 24px;
     }
-
 
     .search-card {
-
-        padding:
-            18px;
-
+        padding: 18px;
     }
-
 
     .search-box {
-
-        flex-direction:
-            column;
-
+        flex-direction: column;
     }
 
-
     button {
-
-        width:
-            100%;
-
+        width: 100%;
     }
 
 }
@@ -622,17 +462,13 @@ footer {
 
 </head>
 
-
 <body>
 
-
 <div class="container">
-
 
 <h1>
 🇺🇸 U.S. Bank Finder
 </h1>
-
 
 <p class="intro">
 
@@ -642,17 +478,11 @@ by bank name, state and city.
 </p>
 
 
-<!-- =========================================
-     BANK SEARCH
-========================================= -->
-
 <div class="search-card">
-
 
 <h2>
 🏦 Search U.S. Bank
 </h2>
-
 
 <p>
 
@@ -661,7 +491,6 @@ FDIC-insured institutions.
 
 </p>
 
-
 <div class="search-box">
 
 <input
@@ -669,7 +498,6 @@ FDIC-insured institutions.
     id="bankInput"
     placeholder="Enter bank name e.g. Ally Bank"
     autocomplete="off">
-
 
 <button
     onclick="searchBanks()">
@@ -680,7 +508,6 @@ Search
 
 </div>
 
-
 <div
     id="bank-loading"
     class="loading">
@@ -689,36 +516,27 @@ Search
 
 </div>
 
-
 <div
     id="bank-error"
     class="error">
 </div>
-
 
 <div
     id="bank-results"
     class="results">
 </div>
 
-
 </div>
 
-
-<!-- =========================================
-     LOCATION SEARCH
-========================================= -->
 
 <div
     id="location-card"
     class="search-card"
     style="display:none;">
 
-
 <h2>
 📍 Find Bank Branches
 </h2>
-
 
 <p>
 
@@ -727,13 +545,9 @@ for the selected bank.
 
 </p>
 
-
 <label>
-<strong>
-State
-</strong>
+<strong>State</strong>
 </label>
-
 
 <select
     id="stateSelect"
@@ -745,16 +559,11 @@ Select State
 
 </select>
 
-
 <br>
 
-
 <label>
-<strong>
-City
-</strong>
+<strong>City</strong>
 </label>
-
 
 <select
     id="citySelect"
@@ -766,7 +575,6 @@ Select City
 
 </select>
 
-
 <div
     id="branch-loading"
     class="loading">
@@ -775,18 +583,15 @@ Select City
 
 </div>
 
-
 <div
     id="branch-error"
     class="error">
 </div>
 
-
 <div
     id="branch-results"
     class="results">
 </div>
-
 
 </div>
 
@@ -801,25 +606,14 @@ banking information with the institution.
 
 </footer>
 
-
 </div>
 
 
 <script>
 
-
-/* =========================================
-   GLOBAL DATA
-========================================= */
-
 let selectedCert = "";
 
 let selectedBankName = "";
-
-
-/* =========================================
-   ELEMENTS
-========================================= */
 
 const bankInput =
     document.getElementById(
@@ -873,7 +667,7 @@ const branchError =
 
 
 /* =========================================
-   SEARCH BANK
+   SEARCH BANKS
 ========================================= */
 
 async function searchBanks() {
@@ -881,13 +675,11 @@ async function searchBanks() {
     const q =
         bankInput.value.trim();
 
-
     bankResults.style.display =
         "none";
 
     bankError.style.display =
         "none";
-
 
     if (q.length < 2) {
 
@@ -901,10 +693,8 @@ async function searchBanks() {
 
     }
 
-
     bankLoading.style.display =
         "block";
-
 
     try {
 
@@ -914,10 +704,8 @@ async function searchBanks() {
                 encodeURIComponent(q)
             );
 
-
         const data =
             await response.json();
-
 
         if (!response.ok) {
 
@@ -928,10 +716,8 @@ async function searchBanks() {
 
         }
 
-
         bankLoading.style.display =
             "none";
-
 
         if (
             !data.banks ||
@@ -947,7 +733,6 @@ async function searchBanks() {
             return;
 
         }
-
 
         renderBankResults(
             data.banks
@@ -973,21 +758,18 @@ async function searchBanks() {
 
 
 /* =========================================
-   DISPLAY BANK RESULTS
+   BANK RESULTS
 ========================================= */
 
 function renderBankResults(
     banks
 ) {
 
-    let html = "";
-
-    html +=
+    let html =
         "<h3>🏦 Matching U.S. Banks</h3>";
 
-
     banks.forEach(
-        function(bank, index) {
+        function(bank) {
 
             html += `
 
@@ -1018,16 +800,18 @@ function renderBankResults(
                             bank.city || ""
                         )}
 
-                        ${bank.city && bank.state
+                        ${
+                            bank.city &&
+                            bank.state
                             ? ", "
-                            : ""}
+                            : ""
+                        }
 
                         ${escapeHtml(
                             bank.state || ""
                         )}
 
                     </div>
-
 
                     <button
                         class="bank-select"
@@ -1046,7 +830,6 @@ function renderBankResults(
 
         }
     );
-
 
     bankResults.innerHTML =
         html;
@@ -1072,10 +855,8 @@ async function selectBank(
     selectedBankName =
         name;
 
-
     locationCard.style.display =
         "block";
-
 
     stateSelect.innerHTML =
         "<option>Loading states...</option>";
@@ -1083,36 +864,28 @@ async function selectBank(
     stateSelect.disabled =
         true;
 
-
     citySelect.innerHTML =
         "<option>Select City</option>";
 
     citySelect.disabled =
         true;
 
-
     branchResults.style.display =
         "none";
 
-
     branchError.style.display =
         "none";
-
 
     try {
 
         const response =
             await fetch(
                 "/api/us-banks?type=states&cert=" +
-                encodeURIComponent(
-                    cert
-                )
+                encodeURIComponent(cert)
             );
-
 
         const data =
             await response.json();
-
 
         if (!response.ok) {
 
@@ -1123,10 +896,8 @@ async function selectBank(
 
         }
 
-
         stateSelect.innerHTML =
             '<option value="">Select State</option>';
-
 
         data.states.forEach(
             function(state) {
@@ -1136,14 +907,11 @@ async function selectBank(
                         "option"
                     );
 
-
                 option.value =
                     state.code;
 
-
                 option.textContent =
                     state.name;
-
 
                 stateSelect.appendChild(
                     option
@@ -1152,10 +920,8 @@ async function selectBank(
             }
         );
 
-
         stateSelect.disabled =
             false;
-
 
         locationCard.scrollIntoView({
             behavior: "smooth",
@@ -1192,21 +958,17 @@ stateSelect.addEventListener(
         const state =
             stateSelect.value;
 
-
         citySelect.innerHTML =
             '<option value="">Loading cities...</option>';
 
         citySelect.disabled =
             true;
 
-
         branchResults.style.display =
             "none";
 
-
         branchError.style.display =
             "none";
-
 
         if (!state) {
 
@@ -1216,7 +978,6 @@ stateSelect.addEventListener(
             return;
 
         }
-
 
         try {
 
@@ -1233,10 +994,8 @@ stateSelect.addEventListener(
                     )
                 );
 
-
             const data =
                 await response.json();
-
 
             if (!response.ok) {
 
@@ -1247,10 +1006,8 @@ stateSelect.addEventListener(
 
             }
 
-
             citySelect.innerHTML =
                 '<option value="">Select City</option>';
-
 
             data.cities.forEach(
                 function(city) {
@@ -1260,14 +1017,11 @@ stateSelect.addEventListener(
                             "option"
                         );
 
-
                     option.value =
                         city;
 
-
                     option.textContent =
                         city;
-
 
                     citySelect.appendChild(
                         option
@@ -1275,7 +1029,6 @@ stateSelect.addEventListener(
 
                 }
             );
-
 
             citySelect.disabled =
                 false;
@@ -1308,28 +1061,21 @@ citySelect.addEventListener(
         const city =
             citySelect.value;
 
-
         branchResults.style.display =
             "none";
 
-
         branchError.style.display =
             "none";
-
 
         if (
             !state ||
             !city
         ) {
-
             return;
-
         }
-
 
         branchLoading.style.display =
             "block";
-
 
         try {
 
@@ -1350,10 +1096,8 @@ citySelect.addEventListener(
                     )
                 );
 
-
             const data =
                 await response.json();
-
 
             if (!response.ok) {
 
@@ -1364,10 +1108,8 @@ citySelect.addEventListener(
 
             }
 
-
             branchLoading.style.display =
                 "none";
-
 
             renderBranches(
                 data
@@ -1401,10 +1143,7 @@ function renderBranches(
     data
 ) {
 
-    let html = "";
-
-
-    html += `
+    let html = `
 
         <h3>
             🏢 ${escapeHtml(
@@ -1413,19 +1152,22 @@ function renderBranches(
         </h3>
 
         <p>
+
             <strong>
                 ${escapeHtml(
                     data.city
                 )}
             </strong>
+
             -
+
             ${escapeHtml(
                 data.state
             )}
+
         </p>
 
     `;
-
 
     if (
         !data.branches ||
@@ -1441,6 +1183,13 @@ function renderBranches(
         data.branches.forEach(
             function(branch) {
 
+                const branchUrl =
+                    "/us-bank/" +
+                    encodeURIComponent(
+                        branch.id
+                    ) +
+                    "/";
+
                 html += `
 
                     <div class="data-row">
@@ -1455,7 +1204,6 @@ function renderBranches(
 
                         <br><br>
 
-
                         <strong>
                             Address:
                         </strong>
@@ -1467,7 +1215,6 @@ function renderBranches(
 
                         <br>
 
-
                         <strong>
                             City:
                         </strong>
@@ -1478,7 +1225,6 @@ function renderBranches(
                         )}
 
                         <br>
-
 
                         <strong>
                             State:
@@ -1492,7 +1238,6 @@ function renderBranches(
 
                         <br>
 
-
                         <strong>
                             ZIP:
                         </strong>
@@ -1504,7 +1249,6 @@ function renderBranches(
 
                         <br>
 
-
                         <strong>
                             County:
                         </strong>
@@ -1515,7 +1259,6 @@ function renderBranches(
                         )}
 
                         <br>
-
 
                         <strong>
                             FDIC Certificate:
@@ -1532,7 +1275,6 @@ function renderBranches(
 
                         <br>
 
-
                         <strong>
                             Service Type:
                         </strong>
@@ -1545,7 +1287,6 @@ function renderBranches(
 
                         <br>
 
-
                         <strong>
                             Main Office:
                         </strong>
@@ -1557,7 +1298,6 @@ function renderBranches(
 
                         <br>
 
-
                         <strong>
                             Last Updated:
                         </strong>
@@ -1568,7 +1308,6 @@ function renderBranches(
                         )}
 
                         <br>
-
 
                         <strong>
                             Coordinates:
@@ -1584,6 +1323,16 @@ function renderBranches(
                             "N/A"
                         )}
 
+                        <br>
+
+                        <a
+                            class="branch-link"
+                            href="${branchUrl}">
+
+                            View Full Branch Details →
+
+                        </a>
+
                     </div>
 
                 `;
@@ -1592,7 +1341,6 @@ function renderBranches(
         );
 
     }
-
 
     branchResults.innerHTML =
         html;
