@@ -20,7 +20,7 @@ export default {
         }
 
         // =========================================
-        // HOME PAGE / STATIC FILES
+        // HOME PAGE / STATIC FILES 
         // =========================================
 
         try {
