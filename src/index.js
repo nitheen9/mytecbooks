@@ -1,7 +1,51 @@
+import { onRequest as usBanksRequest } from "../functions/api/us-banks.js";
+import { onRequest as usBankBranchRequest } from "../functions/us-bank/[uninum].js";
+
 export default {
     async fetch(request, env) {
 
         const url = new URL(request.url);
+
+        // =========================================
+        // U.S. BANK API ROUTES
+        // /api/us-banks?type=search&q=Ally
+        // /api/us-banks?type=states&cert=57803
+        // /api/us-banks?type=cities&cert=57803&state=UT
+        // /api/us-banks?type=branches&cert=57803&state=UT&city=Sandy
+        // =========================================
+
+        if (url.pathname === "/api/us-banks") {
+
+            return await usBanksRequest({
+                request,
+                env,
+                params: {},
+                next: async () => env.ASSETS.fetch(request)
+            });
+        }
+
+        // =========================================
+        // U.S. BANK BRANCH ROUTE
+        // /us-bank/425730/
+        // =========================================
+
+        const bankBranchMatch = url.pathname.match(
+            /^\/us-bank\/(\d+)\/?$/
+        );
+
+        if (bankBranchMatch) {
+
+            const uninum = bankBranchMatch[1];
+
+            return await usBankBranchRequest({
+                request,
+                env,
+                params: {
+                    uninum: uninum
+                },
+                next: async () => env.ASSETS.fetch(request)
+            });
+        }
 
         // =========================================
         // PINCODE ROUTE
@@ -20,7 +64,7 @@ export default {
         }
 
         // =========================================
-        // HOME PAGE / STATIC FILES 
+        // HOME PAGE / STATIC FILES
         // =========================================
 
         try {
