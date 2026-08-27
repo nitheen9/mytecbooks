@@ -62,50 +62,53 @@ const STATES = [
 export async function onRequest(context) {
 
     const url = new URL(context.request.url);
-
     const type = url.searchParams.get("type");
 
     try {
 
+        // NEVER expose the complete bank database.
+        if (type === "banks") {
+
+            return notFoundResponse();
+
+        }
+
         if (type === "search") {
+
             return await searchBanks(
                 url.searchParams.get("q")
             );
+
         }
 
         if (type === "states") {
+
             return await getStates(
                 getCertParameter(url)
             );
+
         }
 
         if (type === "cities") {
+
             return await getCities(
                 getCertParameter(url),
                 url.searchParams.get("state")
             );
+
         }
 
         if (type === "branches") {
+
             return await getBranches(
                 getCertParameter(url),
                 url.searchParams.get("state"),
                 url.searchParams.get("city")
             );
+
         }
 
-        if (type === "branch") {
-            return await getBranch(
-                url.searchParams.get("uninum")
-            );
-        }
-
-        return json(
-            {
-                error: "Invalid API type."
-            },
-            400
-        );
+        return notFoundResponse();
 
     }
     catch (error) {
@@ -118,7 +121,6 @@ export async function onRequest(context) {
         return json(
             {
                 error:
-                    error.message ||
                     "Unable to load U.S. bank data."
             },
             500
@@ -128,15 +130,16 @@ export async function onRequest(context) {
 }
 
 
-/* =========================================
+/* =========================================================
    SEARCH BANKS
-========================================= */
+========================================================= */
 
 async function searchBanks(query) {
 
-    query = String(query || "").trim();
+    const q =
+        String(query || "").trim();
 
-    if (query.length < 2) {
+    if (q.length < 2) {
 
         return json(
             {
@@ -149,7 +152,7 @@ async function searchBanks(query) {
     }
 
     const searchText =
-        query
+        q
             .replace(/\\/g, "\\\\")
             .replace(/"/g, '\\"');
 
@@ -163,9 +166,12 @@ async function searchBanks(query) {
             "/institutions",
             {
                 filters: filter,
+
                 fields:
                     "NAME,CERT,CITY,STNAME,ACTIVE",
-                limit: 100,
+
+                limit: 50,
+
                 offset: 0
             }
         );
@@ -175,7 +181,8 @@ async function searchBanks(query) {
 
     const banks = [];
 
-    const seen = new Set();
+    const seen =
+        new Set();
 
     for (const item of rows) {
 
@@ -246,54 +253,50 @@ async function searchBanks(query) {
 
     return json({
 
-        count: banks.length,
+        count:
+            banks.length,
 
-        banks: banks
+        banks:
+            banks
 
     });
 
 }
 
 
-/* =========================================
+/* =========================================================
    CERT PARAMETER
-========================================= */
+========================================================= */
 
 function getCertParameter(url) {
 
     const certs =
-        url.searchParams.get(
-            "certs"
-        );
+        url.searchParams.get("certs");
 
     if (certs) {
         return certs;
     }
 
-    return url.searchParams.get(
-        "cert"
-    ) || "";
+    return url.searchParams.get("cert") || "";
 
 }
 
 
-/* =========================================
+/* =========================================================
    STATES
-========================================= */
+========================================================= */
 
 async function getStates(certParameter) {
 
     const certs =
-        parseCerts(
-            certParameter
-        );
+        parseCerts(certParameter);
 
     if (certs.length === 0) {
 
         return json(
             {
                 error:
-                    "Bank certificate list is required."
+                    "Bank certificate is required."
             },
             400
         );
@@ -301,9 +304,7 @@ async function getStates(certParameter) {
     }
 
     const search =
-        buildCertSearch(
-            certs
-        );
+        buildCertSearch(certs);
 
     const rows =
         await getAllLocations(
@@ -330,52 +331,53 @@ async function getStates(certParameter) {
     }
 
     const states =
-        Array.from(
-            stateSet
-        )
-        .sort()
-        .map(
-            function (code) {
+        Array.from(stateSet)
+            .sort()
+            .map(
+                function (code) {
 
-                const found =
-                    STATES.find(
-                        function (item) {
+                    const found =
+                        STATES.find(
+                            function (item) {
 
-                            return item[0] === code;
+                                return item[0] === code;
 
-                        }
-                    );
+                            }
+                        );
 
-                return {
+                    return {
 
-                    code: code,
+                        code: code,
 
-                    name:
-                        found
-                            ? found[1]
-                            : code
+                        name:
+                            found
+                                ? found[1]
+                                : code
 
-                };
+                    };
 
-            }
-        );
+                }
+            );
 
     return json({
 
-        certs: certs,
+        certs:
+            certs,
 
-        count: states.length,
+        count:
+            states.length,
 
-        states: states
+        states:
+            states
 
     });
 
 }
 
 
-/* =========================================
+/* =========================================================
    CITIES
-========================================= */
+========================================================= */
 
 async function getCities(
     certParameter,
@@ -383,16 +385,14 @@ async function getCities(
 ) {
 
     const certs =
-        parseCerts(
-            certParameter
-        );
+        parseCerts(certParameter);
 
     if (certs.length === 0) {
 
         return json(
             {
                 error:
-                    "Bank certificate list is required."
+                    "Bank certificate is required."
             },
             400
         );
@@ -417,18 +417,14 @@ async function getCities(
             .toUpperCase();
 
     const certSearch =
-        buildCertSearch(
-            certs
-        );
+        buildCertSearch(certs);
 
     const search =
         "(" +
         certSearch +
         ")" +
         " AND STALP:" +
-        escapeQuery(
-            stateCode
-        );
+        escapeQuery(stateCode);
 
     const rows =
         await getAllLocations(
@@ -479,22 +475,26 @@ async function getCities(
 
     return json({
 
-        certs: certs,
+        certs:
+            certs,
 
-        state: stateCode,
+        state:
+            stateCode,
 
-        count: cities.length,
+        count:
+            cities.length,
 
-        cities: cities
+        cities:
+            cities
 
     });
 
 }
 
 
-/* =========================================
+/* =========================================================
    BRANCHES
-========================================= */
+========================================================= */
 
 async function getBranches(
     certParameter,
@@ -503,16 +503,14 @@ async function getBranches(
 ) {
 
     const certs =
-        parseCerts(
-            certParameter
-        );
+        parseCerts(certParameter);
 
     if (certs.length === 0) {
 
         return json(
             {
                 error:
-                    "Bank certificate list is required."
+                    "Bank certificate is required."
             },
             400
         );
@@ -540,23 +538,17 @@ async function getBranches(
             .toUpperCase();
 
     const requestedCity =
-        normalizeCity(
-            city
-        );
+        normalizeCity(city);
 
     const certSearch =
-        buildCertSearch(
-            certs
-        );
+        buildCertSearch(certs);
 
     const search =
         "(" +
         certSearch +
         ")" +
         " AND STALP:" +
-        escapeQuery(
-            stateCode
-        );
+        escapeQuery(stateCode);
 
     const fields = [
         "UNINUM",
@@ -600,19 +592,19 @@ async function getBranches(
             continue;
         }
 
-        const id =
+        const uninum =
             String(
                 item.UNINUM ?? ""
             ).trim();
 
         if (
-            !id ||
-            seen.has(id)
+            !uninum ||
+            seen.has(uninum)
         ) {
             continue;
         }
 
-        seen.add(id);
+        seen.add(uninum);
 
         branches.push(
             formatBranch(item)
@@ -632,121 +624,38 @@ async function getBranches(
 
     return json({
 
-        state: stateCode,
+        state:
+            stateCode,
 
-        city: String(city),
+        city:
+            String(city),
 
-        count: branches.length,
+        count:
+            branches.length,
 
-        branches: branches
-
-    });
-
-}
-
-
-/* =========================================
-   SINGLE BRANCH
-========================================= */
-
-async function getBranch(uninum) {
-
-    uninum =
-        String(
-            uninum || ""
-        ).trim();
-
-    if (
-        !/^\d+$/.test(uninum)
-    ) {
-
-        return json(
-            {
-                error:
-                    "Invalid branch number."
-            },
-            400
-        );
-
-    }
-
-    const fields = [
-        "UNINUM",
-        "NAME",
-        "OFFNUM",
-        "OFFNAME",
-        "ADDRESS",
-        "CITY",
-        "STALP",
-        "STNAME",
-        "ZIP",
-        "COUNTY",
-        "STCNTY",
-        "CERT",
-        "SERVTYPE",
-        "SERVTYPE_DESC",
-        "MAINOFF",
-        "RUNDATE",
-        "LATITUDE",
-        "LONGITUDE"
-    ].join(",");
-
-    const data =
-        await fdicRequest(
-            "/locations",
-            {
-                filters:
-                    "UNINUM:" +
-                    escapeQuery(uninum),
-
-                fields: fields,
-
-                limit: 10,
-
-                offset: 0
-            }
-        );
-
-    const rows =
-        extractRows(data);
-
-    if (
-        rows.length === 0
-    ) {
-
-        return json(
-            {
-                error:
-                    "Branch not found."
-            },
-            404
-        );
-
-    }
-
-    const branch =
-        formatBranch(
-            rows[0]
-        );
-
-    return json({
-
-        branch: branch
+        branches:
+            branches
 
     });
 
 }
 
 
-/* =========================================
+/* =========================================================
    FORMAT BRANCH
-========================================= */
+========================================================= */
 
 function formatBranch(item) {
 
     return {
 
         id:
+            String(
+                item.UNINUM ||
+                ""
+            ).trim(),
+
+        uninum:
             String(
                 item.UNINUM ||
                 ""
@@ -860,9 +769,9 @@ function formatBranch(item) {
 }
 
 
-/* =========================================
-   ALL LOCATIONS
-========================================= */
+/* =========================================================
+   GET ALL LOCATIONS
+========================================================= */
 
 async function getAllLocations(
     search,
@@ -881,13 +790,17 @@ async function getAllLocations(
             await fdicRequest(
                 "/locations",
                 {
-                    filters: search,
+                    filters:
+                        search,
 
-                    fields: fields,
+                    fields:
+                        fields,
 
-                    limit: limit,
+                    limit:
+                        limit,
 
-                    offset: offset
+                    offset:
+                        offset
                 }
             );
 
@@ -925,11 +838,13 @@ async function getAllLocations(
 }
 
 
-/* =========================================
-   CERT SEARCH
-========================================= */
+/* =========================================================
+   BUILD CERT SEARCH
+========================================================= */
 
-function buildCertSearch(certs) {
+function buildCertSearch(
+    certs
+) {
 
     return certs
         .map(
@@ -947,9 +862,9 @@ function buildCertSearch(certs) {
 }
 
 
-/* =========================================
+/* =========================================================
    PARSE CERTS
-========================================= */
+========================================================= */
 
 function parseCerts(value) {
 
@@ -969,9 +884,7 @@ function parseCerts(value) {
         .filter(
             function (item) {
 
-                return /^\d+$/.test(
-                    item
-                );
+                return /^\d+$/.test(item);
 
             }
         );
@@ -979,9 +892,9 @@ function parseCerts(value) {
 }
 
 
-/* =========================================
+/* =========================================================
    MAIN OFFICE
-========================================= */
+========================================================= */
 
 function formatMainOffice(value) {
 
@@ -1015,9 +928,9 @@ function formatMainOffice(value) {
 }
 
 
-/* =========================================
-   NORMALIZE CITY
-========================================= */
+/* =========================================================
+   CITY NORMALIZATION
+========================================================= */
 
 function normalizeCity(value) {
 
@@ -1034,9 +947,9 @@ function normalizeCity(value) {
 }
 
 
-/* =========================================
-   ESCAPE FDIC QUERY
-========================================= */
+/* =========================================================
+   QUERY ESCAPE
+========================================================= */
 
 function escapeQuery(value) {
 
@@ -1056,9 +969,9 @@ function escapeQuery(value) {
 }
 
 
-/* =========================================
+/* =========================================================
    FDIC REQUEST
-========================================= */
+========================================================= */
 
 async function fdicRequest(
     endpoint,
@@ -1082,9 +995,7 @@ async function fdicRequest(
 
         apiUrl.searchParams.set(
             key,
-            String(
-                params[key]
-            )
+            String(params[key])
         );
 
     }
@@ -1134,14 +1045,6 @@ async function fdicRequest(
     }
     catch {
 
-        console.error(
-            "FDIC RESPONSE:",
-            text.substring(
-                0,
-                1000
-            )
-        );
-
         throw new Error(
             "FDIC returned invalid JSON."
         );
@@ -1151,9 +1054,9 @@ async function fdicRequest(
 }
 
 
-/* =========================================
+/* =========================================================
    EXTRACT ROWS
-========================================= */
+========================================================= */
 
 function extractRows(result) {
 
@@ -1190,9 +1093,9 @@ function extractRows(result) {
 }
 
 
-/* =========================================
+/* =========================================================
    JSON RESPONSE
-========================================= */
+========================================================= */
 
 function json(
     data,
@@ -1210,11 +1113,42 @@ function json(
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600",
+                    "public, max-age=300",
+
+                "X-Robots-Tag":
+                    "noindex, nofollow, noarchive",
 
                 "Access-Control-Allow-Origin":
                     "*"
 
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   HIDE FULL DATABASE ROUTE
+========================================================= */
+
+function notFoundResponse() {
+
+    return new Response(
+        "Not Found",
+        {
+            status: 404,
+
+            headers: {
+                "Content-Type":
+                    "text/plain; charset=UTF-8",
+
+                "Cache-Control":
+                    "no-store",
+
+                "X-Robots-Tag":
+                    "noindex, nofollow, noarchive"
             }
         }
     );
