@@ -49,7 +49,7 @@ export default {
 
         // =========================================
         // PINCODE ROUTE
-        // /pincode/521161/
+        // /pincode/521161/ 
         // =========================================
 
         const match = url.pathname.match(
