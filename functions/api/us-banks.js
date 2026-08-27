@@ -95,7 +95,6 @@ export async function onRequest(context) {
                 getCertParameter(url),
                 url.searchParams.get("state")
             );
-
         }
 
         if (type === "branches") {
