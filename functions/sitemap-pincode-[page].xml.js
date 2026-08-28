@@ -2,7 +2,7 @@ import { pincodes } from "./data/pincodes.js";
 
 const BASE_URL = "https://mytecbooks.pages.dev";
 
-const PER_PAGE = 800;
+const PER_PAGE = 5000;
 
 export async function onRequestGet(context) {
 
