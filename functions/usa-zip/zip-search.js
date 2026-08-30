@@ -1,22 +1,74 @@
 export async function onRequest(context) {
 
     const requestUrl =
-        new URL(context.request.url);
+        new URL(
+            context.request.url
+        );
 
-    const query =
+
+    const state =
         (
-            requestUrl.searchParams.get("q") || ""
+            requestUrl.searchParams.get(
+                "state"
+            ) ||
+            ""
         )
-        .trim();
+        .trim()
+        .toLowerCase();
 
 
-    if (query.length < 2) {
+    const city =
+        (
+            requestUrl.searchParams.get(
+                "city"
+            ) ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    if (
+        !/^[a-z]{2}$/.test(state)
+    ) {
 
         return jsonResponse(
             {
-                query: query,
-                count: 0,
-                results: []
+                query:
+                    city,
+
+                state:
+                    state,
+
+                count:
+                    0,
+
+                results:
+                    []
+            },
+            400
+        );
+
+    }
+
+
+    if (
+        city.length < 2
+    ) {
+
+        return jsonResponse(
+            {
+                query:
+                    city,
+
+                state:
+                    state,
+
+                count:
+                    0,
+
+                results:
+                    []
             },
             400
         );
@@ -25,31 +77,18 @@ export async function onRequest(context) {
 
 
     /*
-     * Search USGS postal records using
-     * the user's text.
+     * Zippopotam.us city/state API
      *
      * Example:
      *
-     * Wishon
-     *
-     * becomes:
-     *
-     * *Wishon*
+     * /us/ca/wishon
      */
 
-    const searchTerm =
-        "*" +
-        query +
-        "*";
-
-
     const apiUrl =
-        "https://dashboard.waterdata.usgs.gov/" +
-        "service/geocoder/get/location/1.0" +
-        "?term=" +
-        encodeURIComponent(searchTerm) +
-        "&include=postal" +
-        "&maxSuggestions=200";
+        "https://api.zippopotam.us/us/" +
+        encodeURIComponent(state) +
+        "/" +
+        encodeURIComponent(city);
 
 
     try {
@@ -59,28 +98,34 @@ export async function onRequest(context) {
                 apiUrl,
                 {
                     headers: {
+
                         "Accept":
                             "application/json"
+
                     }
                 }
             );
 
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
-            console.error(
-                "USGS HTTP status:",
-                response.status
-            );
+            return jsonResponse({
 
-            return jsonResponse(
-                {
-                    query: query,
-                    count: 0,
-                    results: []
-                },
-                500
-            );
+                query:
+                    city,
+
+                state:
+                    state,
+
+                count:
+                    0,
+
+                results:
+                    []
+
+            });
 
         }
 
@@ -89,19 +134,12 @@ export async function onRequest(context) {
             await response.json();
 
 
-        if (!Array.isArray(data)) {
-
-            return jsonResponse({
-
-                query: query,
-
-                count: 0,
-
-                results: []
-
-            });
-
-        }
+        const places =
+            Array.isArray(
+                data.places
+            )
+                ? data.places
+                : [];
 
 
         const results = [];
@@ -110,79 +148,29 @@ export async function onRequest(context) {
             new Set();
 
 
-        /*
-         * IMPORTANT:
-         *
-         * Do not filter the entire Name
-         * incorrectly.
-         *
-         * USGS postal records are commonly:
-         *
-         * 93669 Wishon
-         */
+        places.forEach(
+            function(place) {
 
-        data.forEach(
-            function(item) {
-
-                if (
-                    !item ||
-                    item.Source !== "postal"
-                ) {
-
-                    return;
-
-                }
-
-
-                const rawName =
+                const zip =
                     String(
-                        item.Name || ""
+                        place[
+                            "post code"
+                        ] ||
+                        ""
                     ).trim();
 
 
-                /*
-                 * Extract:
-                 *
-                 * ZIP = 93669
-                 * Area = Wishon
-                 */
+                const placeName =
+                    String(
+                        place[
+                            "place name"
+                        ] ||
+                        city
+                    ).trim();
 
-                const match =
-                    rawName.match(
-                        /^(\d{5})\s+(.+)$/i
-                    );
-
-
-                if (!match) {
-
-                    return;
-
-                }
-
-
-                const code =
-                    match[1];
-
-
-                const area =
-                    match[2].trim();
-
-
-                /*
-                 * TEXT FILTER
-                 *
-                 * Search ONLY the human-readable
-                 * area/name portion.
-                 *
-                 * Case insensitive.
-                 */
 
                 if (
-                    !area
-                        .toLowerCase()
-                        .includes(
-                            query.toLowerCase()
-                        )
+                    !/^\d{5}$/.test(zip)
                 ) {
 
                     return;
@@ -190,12 +178,8 @@ export async function onRequest(context) {
                 }
 
 
-                /*
-                 * One result per ZIP.
-                 */
-
                 if (
-                    seen.has(code)
+                    seen.has(zip)
                 ) {
 
                     return;
@@ -203,44 +187,39 @@ export async function onRequest(context) {
                 }
 
 
-                seen.add(code);
+                seen.add(zip);
 
 
                 results.push({
 
                     code:
-                        code,
+                        zip,
 
-                    name:
-                        area,
+                    place:
+                        placeName,
 
-                    county:
+                    state:
                         String(
-                            item.County || ""
-                        ),
+                            place.state ||
+                            ""
+                        ).trim(),
 
                     stateCode:
                         String(
-                            item.State || ""
+                            place[
+                                "state abbreviation"
+                            ] ||
+                            state
                         )
                         .trim()
                         .toUpperCase(),
 
-                    state:
-                        getStateName(
-                            String(
-                                item.State || ""
-                            )
-                            .trim()
-                            .toUpperCase()
-                        ),
-
                     latitude:
-                        item.Latitude ??
+                        place.latitude ??
                         "",
 
                     longitude:
-                        item.Longitude ??
+                        place.longitude ??
                         ""
 
                 });
@@ -248,10 +227,6 @@ export async function onRequest(context) {
             }
         );
 
-
-        /*
-         * Sort by ZIP.
-         */
 
         results.sort(
             function(a, b) {
@@ -268,16 +243,16 @@ export async function onRequest(context) {
         return jsonResponse({
 
             query:
-                query,
+                city,
+
+            state:
+                state,
 
             count:
                 results.length,
 
             results:
-                results.slice(
-                    0,
-                    100
-                )
+                results
 
         });
 
@@ -286,108 +261,31 @@ export async function onRequest(context) {
     catch (error) {
 
         console.error(
-            "USGS ZIP text search error:",
+            "ZIP city search error:",
             error
         );
 
 
         return jsonResponse(
             {
+
                 query:
-                    query,
+                    city,
+
+                state:
+                    state,
 
                 count:
                     0,
 
                 results:
                     []
+
             },
             500
         );
 
     }
-
-}
-
-
-/* =========================================
-   STATE NAME
-========================================= */
-
-function getStateName(code) {
-
-    const states = {
-
-        AL:"Alabama",
-        AK:"Alaska",
-        AZ:"Arizona",
-        AR:"Arkansas",
-        CA:"California",
-        CO:"Colorado",
-        CT:"Connecticut",
-        DE:"Delaware",
-        FL:"Florida",
-        GA:"Georgia",
-        HI:"Hawaii",
-        ID:"Idaho",
-        IL:"Illinois",
-        IN:"Indiana",
-        IA:"Iowa",
-        KS:"Kansas",
-        KY:"Kentucky",
-        LA:"Louisiana",
-        ME:"Maine",
-        MD:"Maryland",
-        MA:"Massachusetts",
-        MI:"Michigan",
-        MN:"Minnesota",
-        MS:"Mississippi",
-        MO:"Missouri",
-        MT:"Montana",
-        NE:"Nebraska",
-        NV:"Nevada",
-        NH:"New Hampshire",
-        NJ:"New Jersey",
-        NM:"New Mexico",
-        NY:"New York",
-        NC:"North Carolina",
-        ND:"North Dakota",
-        OH:"Ohio",
-        OK:"Oklahoma",
-        OR:"Oregon",
-        PA:"Pennsylvania",
-        RI:"Rhode Island",
-        SC:"South Carolina",
-        SD:"South Dakota",
-        TN:"Tennessee",
-        TX:"Texas",
-        UT:"Utah",
-        VT:"Vermont",
-        VA:"Virginia",
-        WA:"Washington",
-        WV:"West Virginia",
-        WI:"Wisconsin",
-        WY:"Wyoming",
-
-        DC:"District of Columbia",
-
-        AS:"American Samoa",
-        FM:"Federated States of Micronesia",
-        GU:"Guam",
-        MH:"Marshall Islands",
-        MP:"Northern Mariana Islands",
-        PR:"Puerto Rico",
-        PW:"Palau",
-        VI:"U.S. Virgin Islands",
-        UM:"U.S. Minor Outlying Islands"
-
-    };
-
-
-    return (
-        states[code] ||
-        code
-    );
 
 }
 
