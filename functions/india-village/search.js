@@ -1,9 +1,13 @@
 const RESOURCE_ID =
     "c967fe8f-69c4-42df-8afc-8a2c98057437";
 
-const MAX_RESULTS = 100;
+const API_BASE =
+    "https://api.data.gov.in/resource/" +
+    RESOURCE_ID;
 
 const PAGE_SIZE = 1000;
+const MAX_RESULTS = 100;
+const STATE_BATCH_SIZE = 5;
 
 const STATES = [
     "Andhra Pradesh",
@@ -44,26 +48,29 @@ const STATES = [
     "Puducherry"
 ];
 
+
 export async function onRequest(context) {
 
-    const url =
+    const requestUrl =
         new URL(context.request.url);
 
     const query =
         (
-            url.searchParams.get("q") || ""
+            requestUrl.searchParams.get("q") ||
+            ""
         ).trim();
 
     if (query.length < 2) {
 
         return jsonResponse(
             {
-                query,
+                query: query,
                 count: 0,
                 results: []
             },
             400
         );
+
     }
 
     const apiKey =
@@ -82,26 +89,48 @@ export async function onRequest(context) {
             },
             500
         );
+
     }
 
     const searchText =
-        query.toLowerCase();
+        normalizeText(query);
 
-    try {
+    const allResults = [];
 
-        /*
-         * Search all states in parallel.
-         *
-         * Each state starts with the first
-         * 1000 records.
-         */
+    const seenCodes =
+        new Set();
 
-        const stateResults =
+    /*
+     * Process only a few states at a time.
+     * This prevents a huge burst of requests.
+     */
+
+    for (
+        let i = 0;
+        i < STATES.length;
+        i += STATE_BATCH_SIZE
+    ) {
+
+        if (
+            allResults.length >=
+            MAX_RESULTS
+        ) {
+            break;
+        }
+
+        const stateBatch =
+            STATES.slice(
+                i,
+                i + STATE_BATCH_SIZE
+            );
+
+        const batchResults =
             await Promise.all(
-                STATES.map(
+                stateBatch.map(
                     function(state) {
 
                         return searchState(
+                            context,
                             apiKey,
                             state,
                             searchText
@@ -111,17 +140,25 @@ export async function onRequest(context) {
                 )
             );
 
-        const results = [];
-
-        const seen =
-            new Set();
+        /*
+         * Add successful results.
+         * Failed states simply return [].
+         */
 
         for (
-            const stateResult of stateResults
+            const stateResults of batchResults
         ) {
 
+            if (
+                !Array.isArray(
+                    stateResults
+                )
+            ) {
+                continue;
+            }
+
             for (
-                const item of stateResult
+                const item of stateResults
             ) {
 
                 if (
@@ -132,17 +169,23 @@ export async function onRequest(context) {
                 }
 
                 if (
-                    seen.has(item.code)
+                    seenCodes.has(
+                        item.code
+                    )
                 ) {
                     continue;
                 }
 
-                seen.add(item.code);
+                seenCodes.add(
+                    item.code
+                );
 
-                results.push(item);
+                allResults.push(
+                    item
+                );
 
                 if (
-                    results.length >=
+                    allResults.length >=
                     MAX_RESULTS
                 ) {
                     break;
@@ -151,7 +194,7 @@ export async function onRequest(context) {
             }
 
             if (
-                results.length >=
+                allResults.length >=
                 MAX_RESULTS
             ) {
                 break;
@@ -159,11 +202,14 @@ export async function onRequest(context) {
 
         }
 
-        results.sort(
-            function(a, b) {
+    }
 
-                const villageCompare =
-                    String(a.village)
+
+    allResults.sort(
+        function(a, b) {
+
+            const villageCompare =
+                String(a.village)
                     .localeCompare(
                         String(b.village),
                         "en",
@@ -173,13 +219,16 @@ export async function onRequest(context) {
                         }
                     );
 
-                if (
-                    villageCompare !== 0
-                ) {
-                    return villageCompare;
-                }
+            if (
+                villageCompare !== 0
+            ) {
 
-                return String(a.state)
+                return villageCompare;
+
+            }
+
+            const stateCompare =
+                String(a.state)
                     .localeCompare(
                         String(b.state),
                         "en",
@@ -189,41 +238,43 @@ export async function onRequest(context) {
                         }
                     );
 
+            if (
+                stateCompare !== 0
+            ) {
+
+                return stateCompare;
+
             }
-        );
 
-        return jsonResponse({
+            return String(a.district)
+                .localeCompare(
+                    String(b.district),
+                    "en",
+                    {
+                        sensitivity:
+                            "base"
+                    }
+                );
 
-            query,
+        }
+    );
 
-            count:
-                results.length,
 
-            results:
-                results.slice(
-                    0,
-                    MAX_RESULTS
-                )
+    return jsonResponse({
 
-        });
+        query: query,
 
-    }
-    catch (error) {
+        count:
+            allResults.length,
 
-        console.error(
-            "LGD search error:",
-            error
-        );
+        results:
+            allResults.slice(
+                0,
+                MAX_RESULTS
+            )
 
-        return jsonResponse(
-            {
-                query,
-                count: 0,
-                results: []
-            },
-            500
-        );
-    }
+    });
+
 }
 
 
@@ -232,6 +283,7 @@ export async function onRequest(context) {
 ========================================= */
 
 async function searchState(
+    context,
     apiKey,
     state,
     searchText
@@ -241,26 +293,52 @@ async function searchState(
 
     let offset = 0;
 
+    /*
+     * Prevent an unexpectedly large scan
+     * inside one visitor request.
+     */
+
+    const MAX_STATE_RECORDS = 50000;
+
+
     while (
-        matches.length < MAX_RESULTS &&
-        offset < 50000
+        offset < MAX_STATE_RECORDS &&
+        matches.length < MAX_RESULTS
     ) {
 
         const apiUrl =
-            buildUrl(
-                apiKey,
-                state,
-                offset
-            );
+            API_BASE +
+            "?api-key=" +
+            encodeURIComponent(apiKey) +
+            "&format=json" +
+            "&limit=" +
+            PAGE_SIZE +
+            "&offset=" +
+            offset +
+            "&filters[stateNameEnglish]=" +
+            encodeURIComponent(state);
+
 
         let response;
 
         try {
 
+            /*
+             * Cloudflare edge cache.
+             *
+             * The same state/page request
+             * can be reused for later searches.
+             */
+
             response =
                 await fetch(
                     apiUrl,
                     {
+                        cf: {
+                            cacheTtl: 86400,
+                            cacheEverything: true
+                        },
+
                         headers: {
                             "Accept":
                                 "application/json"
@@ -272,10 +350,15 @@ async function searchState(
         catch (error) {
 
             console.error(
-                "LGD request failed:",
+                "LGD network error:",
                 state,
+                offset,
                 error
             );
+
+            /*
+             * Do not fail the entire search.
+             */
 
             break;
         }
@@ -286,21 +369,46 @@ async function searchState(
         ) {
 
             const errorText =
-                await response.text();
+                await safeText(
+                    response
+                );
 
             console.error(
                 "LGD API error:",
                 state,
+                offset,
                 response.status,
                 errorText
             );
+
+            /*
+             * Skip this state/page and
+             * continue with other states.
+             */
 
             break;
         }
 
 
-        const data =
-            await response.json();
+        let data;
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+        catch (error) {
+
+            console.error(
+                "LGD JSON error:",
+                state,
+                offset,
+                error
+            );
+
+            break;
+        }
 
 
         const records =
@@ -314,7 +422,9 @@ async function searchState(
         if (
             records.length === 0
         ) {
+
             break;
+
         }
 
 
@@ -322,11 +432,20 @@ async function searchState(
             const record of records
         ) {
 
+            if (
+                matches.length >=
+                MAX_RESULTS
+            ) {
+                break;
+            }
+
+
             const village =
                 String(
                     record.villageNameEnglish ||
                     ""
                 ).trim();
+
 
             if (
                 !village
@@ -336,17 +455,26 @@ async function searchState(
 
 
             /*
-             * Text-only village-name filter.
+             * Exact text filter:
+             *
+             * "rampur"
+             *
+             * matches:
+             *
+             * Rampur
+             * Rampur Kalan
+             * Rampur Khurd
              */
 
             if (
-                !village
-                    .toLowerCase()
+                !normalizeText(village)
                     .includes(
                         searchText
                     )
             ) {
+
                 continue;
+
             }
 
 
@@ -365,9 +493,9 @@ async function searchState(
 
             matches.push({
 
-                code,
+                code: code,
 
-                village,
+                village: village,
 
                 state:
                     String(
@@ -389,79 +517,76 @@ async function searchState(
 
             });
 
-
-            if (
-                matches.length >= MAX_RESULTS
-            ) {
-                break;
-            }
-
         }
 
 
         /*
-         * Stop when the state has been
-         * completely read.
+         * Work out whether we've reached
+         * the end of this state's records.
          */
 
-        const total =
+        const reportedTotal =
             Number(
                 data.total ||
                 data.count ||
                 0
             );
 
-        const returned =
+
+        if (
+            reportedTotal > 0 &&
+            offset + records.length >=
+                reportedTotal
+        ) {
+
+            break;
+        }
+
+
+        /*
+         * If fewer than PAGE_SIZE records
+         * came back, this is normally the
+         * last page.
+         */
+
+        if (
+            records.length <
+            PAGE_SIZE
+        ) {
+
+            break;
+        }
+
+
+        offset +=
             records.length;
-
-
-        if (
-            total > 0 &&
-            offset + returned >= total
-        ) {
-            break;
-        }
-
-
-        if (
-            returned < PAGE_SIZE
-        ) {
-            break;
-        }
-
-
-        offset += returned;
 
     }
 
 
     return matches;
+
 }
 
 
 /* =========================================
-   BUILD API URL
+   NORMALIZE SEARCH TEXT
 ========================================= */
 
-function buildUrl(
-    apiKey,
-    state,
-    offset
+function normalizeText(
+    value
 ) {
 
-    return (
-        "https://api.data.gov.in/resource/" +
-        RESOURCE_ID +
-        "?api-key=" +
-        encodeURIComponent(apiKey) +
-        "&format=json" +
-        "&limit=" +
-        PAGE_SIZE +
-        "&offset=" +
-        offset +
-        "&filters[stateNameEnglish]=" +
-        encodeURIComponent(state)
-    );
+    return String(
+        value || ""
+    )
+        .normalize("NFKC")
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim()
+        .toLowerCase();
 
 }
 
@@ -478,21 +603,42 @@ function normalizeCode(
         value === null ||
         value === undefined
     ) {
+
         return "";
+
     }
 
-    const text =
-        String(value).trim();
 
-    /*
-     * API may serialize numeric codes
-     * as 216041 or 216041.0
-     */
+    return String(
+        value
+    )
+        .trim()
+        .replace(
+            /\.0$/,
+            ""
+        );
 
-    return text.replace(
-        /\.0$/,
-        ""
-    );
+}
+
+
+/* =========================================
+   SAFE RESPONSE TEXT
+========================================= */
+
+async function safeText(
+    response
+) {
+
+    try {
+
+        return await response.text();
+
+    }
+    catch {
+
+        return "";
+
+    }
 
 }
 
@@ -508,19 +654,27 @@ function jsonResponse(
 
     return new Response(
 
-        JSON.stringify(data),
+        JSON.stringify(
+            data
+        ),
 
         {
-
-            status,
+            status: status,
 
             headers: {
 
                 "Content-Type":
                     "application/json; charset=UTF-8",
 
+                /*
+                 * Keep successful searches
+                 * at the Cloudflare edge briefly.
+                 */
+
                 "Cache-Control":
-                    "public, max-age=60, s-maxage=300",
+                    status === 200
+                        ? "public, max-age=300, s-maxage=1800"
+                        : "no-store",
 
                 "Access-Control-Allow-Origin":
                     "*"
