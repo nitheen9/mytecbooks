@@ -13,19 +13,22 @@ export async function onRequest(context) {
             query: query,
             results: []
         });
-
     }
 
     /*
-     * CURRENT U.S. NAICS
+     * Latest released U.S. NAICS:
+     * 2022
      *
-     * 2022 remains the current
-     * official classification.
+     * Census is currently working toward
+     * future revisions, but 2022 remains
+     * the latest released classification.
      */
 
     const searchUrl =
         "https://www.census.gov/naics/" +
-        "?input=" +
+        "?details=" +
+        encodeURIComponent(query) +
+        "&input=" +
         encodeURIComponent(query) +
         "&year=2022";
 
@@ -36,13 +39,10 @@ export async function onRequest(context) {
                 searchUrl,
                 {
                     headers: {
-
                         "User-Agent":
                             "Mozilla/5.0 (compatible; MyTecBooks NAICS Search)",
-
                         "Accept":
                             "text/html,application/xhtml+xml,text/html"
-
                     }
                 }
             );
@@ -58,14 +58,16 @@ export async function onRequest(context) {
                 query: query,
                 results: []
             });
-
         }
 
         const html =
             await response.text();
 
         const results =
-            parseCensusResults(html);
+            parseCensusResults(
+                html,
+                query
+            );
 
         return jsonResponse({
 
@@ -75,8 +77,8 @@ export async function onRequest(context) {
                 results.slice(0, 50)
 
         });
-
     }
+
     catch (error) {
 
         console.error(
@@ -85,103 +87,80 @@ export async function onRequest(context) {
         );
 
         return jsonResponse({
-
             query: query,
-
             results: []
-
         });
-
     }
-
 }
 
 
-/* =========================================
-   PARSE CENSUS RESULTS
-========================================= */
+/*
+ * =========================================
+ * PARSE CENSUS RESULTS
+ * =========================================
+ *
+ * Current Census pages contain entries
+ * similar to:
+ *
+ * [Button: 513210] Software Publishers:
+ *
+ * and:
+ *
+ * [Button: 334610] Software, packaged...
+ *
+ */
 
-function parseCensusResults(html) {
+function parseCensusResults(
+    html,
+    query
+) {
 
     const results = [];
 
-    const seen = new Set();
+    const seen =
+        new Set();
 
     /*
-     * The Census page currently renders
-     * search results in links similar to:
-     *
-     * Button: 513140
-     * Directory and Mailing List Publishers
-     *
-     * The actual HTML can vary, so use
-     * several extraction methods.
+     * First convert the page to plain text.
      */
 
-    /*
-     * METHOD 1
-     *
-     * Look for href links containing
-     * details=NAICS_CODE.
-     */
-
-    const linkRegex =
-        /<a\b[^>]*href=["']([^"']*(?:details|input)=\d{2,6}[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
-
-    let match;
-
-    while (
-        (match = linkRegex.exec(html)) !== null
-    ) {
-
-        const url =
-            match[1];
-
-        const linkText =
-            cleanText(
-                decodeHtml(
-                    stripHtml(
-                        match[2]
-                    )
-                )
-            );
-
-        const codeMatch =
-            url.match(
-                /(?:details|input)=(\d{2,6})/i
-            );
-
-        if (!codeMatch) {
-            continue;
-        }
-
-        const code =
-            codeMatch[1];
-
-        addResult(
-            results,
-            seen,
-            code,
-            linkText
-        );
-
-    }
-
-
-    /*
-     * METHOD 2
-     *
-     * Search rendered text for:
-     *
-     * Button: 513140
-     * Directory and Mailing List Publishers
-     */
-
-    const text =
+    let text =
         htmlToText(html);
 
+    /*
+     * Decode common HTML entities.
+     */
+
+    text =
+        decodeHtml(text);
+
+    /*
+     * Normalize whitespace.
+     */
+
+    text =
+        text.replace(
+            /\s+/g,
+            " "
+        ).trim();
+
+
+    /*
+     * Current Census format:
+     *
+     * [Button: 513210] Software Publishers:
+     *
+     * Capture:
+     *
+     * 513210
+     * Software Publishers
+     *
+     */
+
     const buttonRegex =
-        /Button:\s*(\d{2,6})\s+([^\n]+?)(?=\s+This industry comprises|\s+See industry description|\s+Button:|\s*$)/gi;
+        /\[Button:\s*(\d{2,6})\]\s*([^[]+?)(?=\s*\[Button:|\s*2022 NAICS Definition|\s*NAICS Definition|$)/gi;
+
+    let match;
 
     while (
         (match = buttonRegex.exec(text)) !== null
@@ -194,222 +173,106 @@ function parseCensusResults(html) {
             match[2];
 
         title =
-            cleanText(title);
+            cleanResultTitle(title);
 
-        title =
-            cleanTitle(title);
-
-        addResult(
-            results,
-            seen,
-            code,
-            title
-        );
-
-    }
-
-
-    /*
-     * METHOD 3
-     *
-     * Current Census pages can expose
-     * search result text as:
-     *
-     * 513140 Directory and Mailing List
-     * Publishers
-     */
-
-    const directRegex =
-        /\b(\d{2,6})\s+([A-Z][A-Za-z0-9 ,&'()\-./]+?)(?=\s+This industry comprises|\s+See industry description|\s+Cross-References|\s*$)/g;
-
-    while (
-        (match = directRegex.exec(text)) !== null
-    ) {
-
-        const code =
-            match[1];
-
-        let title =
-            cleanText(match[2]);
-
-        title =
-            cleanTitle(title);
+        if (
+            !code ||
+            !title
+        ) {
+            continue;
+        }
 
         /*
-         * Only accept plausible NAICS
-         * result titles.
+         * Do not add navigation buttons.
          */
 
         if (
-            title.length >= 2 &&
-            title.length <= 200
+            isBadResultTitle(title)
         ) {
-
-            addResult(
-                results,
-                seen,
-                code,
-                title
-            );
-
+            continue;
         }
 
+        /*
+         * Avoid duplicate code/title pairs.
+         */
+
+        const key =
+            code + "|" + title.toLowerCase();
+
+        if (
+            seen.has(key)
+        ) {
+            continue;
+        }
+
+        seen.add(key);
+
+        results.push({
+            code: code,
+            title: title
+        });
     }
 
 
     /*
-     * Remove obviously incorrect
-     * navigation/year results.
-     */
-
-    return results.filter(
-        function(item) {
-
-            if (
-                !/^\d{2,6}$/.test(item.code)
-            ) {
-                return false;
-            }
-
-            if (
-                /^(NAICS|Search|Go|Main|History)$/i
-                .test(item.title)
-            ) {
-                return false;
-            }
-
-            /*
-             * Do not allow a result that is
-             * simply a year.
-             */
-
-            if (
-                /^(1997|2002|2007|2012|2017|2022)$/
-                .test(item.code)
-            ) {
-                return false;
-            }
-
-            return true;
-
-        }
-    );
-
-}
-
-
-/* =========================================
-   ADD RESULT
-========================================= */
-
-function addResult(
-    results,
-    seen,
-    code,
-    title
-) {
-
-    if (!code || !title) {
-        return;
-    }
-
-    title =
-        cleanTitle(title);
-
-    if (!title) {
-        return;
-    }
-
-    /*
-     * Remove Census navigation.
+     * Fallback parser.
+     *
+     * Some Census responses may contain
+     * HTML links instead of the text form.
      */
 
     if (
-        /^(go|search|home|menu|main|next|previous|naics)$/i
-        .test(title)
+        results.length === 0
     ) {
-        return;
+
+        parseAnchorResults(
+            html,
+            results,
+            seen
+        );
     }
+
 
     /*
-     * Remove very long page text.
+     * If the query itself is a numeric
+     * NAICS code, make sure the exact
+     * code can be returned.
      */
 
-    if (title.length > 250) {
-        return;
+    if (
+        /^\d{2,6}$/.test(query)
+    ) {
+
+        const exact =
+            results.filter(
+                item =>
+                    item.code === query
+            );
+
+        if (
+            exact.length > 0
+        ) {
+
+            return exact;
+        }
     }
 
-    const key =
-        code + "|" + title.toLowerCase();
 
-    if (seen.has(key)) {
-        return;
-    }
-
-    seen.add(key);
-
-    results.push({
-
-        code: code,
-
-        title: title
-
-    });
-
+    return results;
 }
 
 
-/* =========================================
-   CLEAN TITLE
-========================================= */
+/*
+ * =========================================
+ * HTML TO TEXT
+ * =========================================
+ */
 
-function cleanTitle(value) {
+function htmlToText(
+    html
+) {
 
-    let title =
-        cleanText(value);
-
-    title =
-        title.replace(
-            /\^?\{.*?\}/g,
-            ""
-        );
-
-    title =
-        title.replace(
-            /[†‡*]+$/g,
-            ""
-        );
-
-    title =
-        title.replace(
-            /\s+T$/g,
-            ""
-        );
-
-    title =
-        title.replace(
-            /\s+See industry description\.?$/i,
-            ""
-        );
-
-    title =
-        title.replace(
-            /\s+2022 NAICS Definition.*$/i,
-            ""
-        );
-
-    return title.trim();
-
-}
-
-
-/* =========================================
-   STRIP HTML
-========================================= */
-
-function stripHtml(value) {
-
-    return String(value || "")
+    return String(html || "")
 
         .replace(
             /<script[\s\S]*?<\/script>/gi,
@@ -427,70 +290,187 @@ function stripHtml(value) {
         )
 
         .replace(
-            /<br\s*\/?>/gi,
-            "\n"
-        )
-
-        .replace(
-            /<\/p>/gi,
-            "\n"
-        )
-
-        .replace(
-            /<\/div>/gi,
-            "\n"
-        )
-
-        .replace(
-            /<\/li>/gi,
-            "\n"
-        )
-
-        .replace(
             /<[^>]+>/g,
             " "
         )
 
         .replace(
-            /[ \t]+/g,
+            /\s+/g,
             " "
         )
 
         .trim();
-
 }
 
 
-/* =========================================
-   HTML TO TEXT
-========================================= */
+/*
+ * =========================================
+ * ANCHOR FALLBACK
+ * =========================================
+ */
 
-function htmlToText(html) {
+function parseAnchorResults(
+    html,
+    results,
+    seen
+) {
 
-    return decodeHtml(
-        stripHtml(html)
-    )
+    const regex =
+        /href=["'][^"']*details=(\d{2,6})[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
 
-    .replace(
-        /\r/g,
-        ""
-    )
+    let match;
 
-    .replace(
-        /\n\s*\n+/g,
-        "\n"
-    )
+    while (
+        (match = regex.exec(html)) !== null
+    ) {
 
-    .trim();
+        const code =
+            match[1];
 
+        let title =
+            htmlToText(
+                match[2]
+            );
+
+        title =
+            decodeHtml(title);
+
+        title =
+            cleanResultTitle(title);
+
+        if (
+            !code ||
+            !title
+        ) {
+            continue;
+        }
+
+        if (
+            isBadResultTitle(title)
+        ) {
+            continue;
+        }
+
+        const key =
+            code + "|" + title.toLowerCase();
+
+        if (
+            seen.has(key)
+        ) {
+            continue;
+        }
+
+        seen.add(key);
+
+        results.push({
+            code: code,
+            title: title
+        });
+    }
 }
 
 
-/* =========================================
-   DECODE HTML
-========================================= */
+/*
+ * =========================================
+ * CLEAN RESULT TITLE
+ * =========================================
+ */
 
-function decodeHtml(value) {
+function cleanResultTitle(
+    value
+) {
+
+    let title =
+        decodeHtml(
+            String(value || "")
+        );
+
+    title =
+        title.replace(
+            /\s+/g,
+            " "
+        ).trim();
+
+    /*
+     * Remove Census explanatory text.
+     */
+
+    title =
+        title.replace(
+            /\s+T\s*$/i,
+            ""
+        );
+
+    title =
+        title.replace(
+            /\s+This industry comprises[\s\S]*$/i,
+            ""
+        );
+
+    title =
+        title.replace(
+            /\s+See industry description[\s\S]*$/i,
+            ""
+        );
+
+    /*
+     * Remove footnote symbols.
+     */
+
+    title =
+        title.replace(
+            /[†‡*]+\s*$/g,
+            ""
+        );
+
+    /*
+     * Remove trailing colon.
+     */
+
+    title =
+        title.replace(
+            /:\s*$/g,
+            ""
+        );
+
+    return title.trim();
+}
+
+
+/*
+ * =========================================
+ * BAD TITLES
+ * =========================================
+ */
+
+function isBadResultTitle(
+    title
+) {
+
+    if (!title) {
+        return true;
+    }
+
+    if (
+        title.length < 2
+    ) {
+        return true;
+    }
+
+    return /^(go|search|home|menu|main|next|previous|history|concordances|downloadable files|naics)$/i
+        .test(title);
+}
+
+
+/*
+ * =========================================
+ * DECODE HTML
+ * =========================================
+ */
+
+function decodeHtml(
+    value
+) {
 
     return String(value || "")
 
@@ -528,45 +508,24 @@ function decodeHtml(value) {
             /&gt;/gi,
             ">"
         );
-
 }
 
 
-/* =========================================
-   CLEAN TEXT
-========================================= */
+/*
+ * =========================================
+ * JSON RESPONSE
+ * =========================================
+ */
 
-function cleanText(value) {
-
-    return String(value || "")
-
-        .replace(
-            /\s+/g,
-            " "
-        )
-
-        .replace(
-            /\s+([,.])/g,
-            "$1"
-        )
-
-        .trim();
-
-}
-
-
-/* =========================================
-   JSON RESPONSE
-========================================= */
-
-function jsonResponse(data) {
+function jsonResponse(
+    data
+) {
 
     return new Response(
 
         JSON.stringify(data),
 
         {
-
             status: 200,
 
             headers: {
@@ -581,9 +540,6 @@ function jsonResponse(data) {
                     "*"
 
             }
-
         }
-
     );
-
 }
