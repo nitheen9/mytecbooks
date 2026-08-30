@@ -6,41 +6,70 @@
 <meta charset="UTF-8">
 
 <meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+      content="width=device-width, initial-scale=1.0">
+
+<meta name="google-site-verification"
+      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
 
 <meta name="robots"
-content="index, follow">
+      content="index, follow">
 
 <meta name="description"
-content="Search U.S. ZIP Code Tabulation Areas by five-digit ZIP Code or ZIP prefix using U.S. Census Bureau TIGERweb.">
+      content="Search U.S. ZIP Codes by ZIP Code or city and area name. Find city, county, state, latitude and longitude information.">
 
 <link rel="icon"
-type="image/png"
-href="/favicon.png">
+      type="image/png"
+      href="/favicon.png">
 
 <title>
-U.S. ZIP Code Finder - Census ZCTA Search
+U.S. ZIP Code Search - ZIP Code Finder
 </title>
+
+<meta property="og:description"
+      content="Free U.S. ZIP Code Finder. Search ZIP Codes by ZIP Code or city and area name.">
+
+
+<!-- Google Analytics -->
+
+<script async
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
+</script>
+
+<script>
+
+window.dataLayer =
+    window.dataLayer || [];
+
+function gtag() {
+
+    dataLayer.push(arguments);
+
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-BP9YJW8LB9');
+
+</script>
+
 
 <style>
 
 :root {
 
-    --primary:#f48120;
-    --dark:#1e1e24;
-    --light:#f9f9fb;
-    --border:#e0e0e6;
+    --primary: #f48120;
+    --dark: #1e1e24;
+    --light: #f9f9fb;
+    --border: #e0e0e6;
+    --white: #ffffff;
 
 }
 
 * {
-    box-sizing:border-box;
+    box-sizing: border-box;
 }
 
 body {
-
-    margin:0;
-    padding:20px;
 
     font-family:
         -apple-system,
@@ -50,147 +79,186 @@ body {
         Arial,
         sans-serif;
 
-    background:var(--light);
-    color:var(--dark);
+    background: var(--light);
+
+    color: var(--dark);
+
+    margin: 0;
+
+    padding: 20px;
 
 }
 
 .container {
 
-    max-width:850px;
-    margin:auto;
+    max-width: 850px;
+
+    margin: 0 auto;
 
 }
 
 h1 {
 
-    text-align:center;
-    margin:10px 0 30px;
-    font-size:30px;
+    text-align: center;
+
+    color: var(--dark);
+
+    margin: 10px 0 30px;
+
+    font-size: 30px;
 
 }
 
 .intro {
 
-    text-align:center;
-    color:#666;
-    line-height:1.6;
-    margin-bottom:25px;
+    text-align: center;
+
+    color: #666;
+
+    margin-top: -15px;
+
+    margin-bottom: 25px;
+
+    line-height: 1.6;
 
 }
 
 
-/* TABS */
+/* =========================
+   TABS
+========================= */
 
 .tabs {
 
-    display:flex;
-    gap:10px;
-    justify-content:center;
-    margin-bottom:20px;
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+
+    justify-content: center;
 
 }
 
 .tab-btn {
 
-    padding:12px 24px;
+    padding: 12px 24px;
 
-    border:none;
+    font-weight: bold;
 
-    border-radius:6px;
+    border: none;
 
-    background:#e0e0e6;
+    background: #e0e0e6;
 
-    color:#333;
+    color: #333;
 
-    font-weight:bold;
+    cursor: pointer;
 
-    cursor:pointer;
+    border-radius: 6px;
 
-    font-size:15px;
+    font-size: 15px;
+
+    transition: 0.2s;
+
+}
+
+.tab-btn:hover {
+
+    background: #d3d3d9;
 
 }
 
 .tab-btn.active {
 
-    background:var(--primary);
-    color:#fff;
+    background: var(--primary);
+
+    color: white;
 
 }
 
 
-/* PANELS */
+/* =========================
+   PANELS
+========================= */
 
 .panel {
 
-    display:none;
+    display: none;
 
 }
 
 .panel.active {
 
-    display:block;
+    display: block;
 
 }
 
 
-/* CARD */
+/* =========================
+   SEARCH CARD
+========================= */
 
 .search-card {
 
-    background:#fff;
+    background: white;
 
-    padding:25px;
+    padding: 25px;
 
-    border-radius:12px;
+    border-radius: 12px;
 
     box-shadow:
-        0 4px 15px
-        rgba(0,0,0,.05);
+        0 4px 15px rgba(0,0,0,0.05);
+
+    margin-bottom: 25px;
 
 }
 
+.search-card h2,
 .search-card h3 {
 
-    margin-top:0;
+    margin-top: 0;
 
 }
 
 .search-card p {
 
-    color:#666;
+    color: #666;
 
-    line-height:1.6;
+    line-height: 1.6;
 
 }
 
 
-/* SEARCH */
+/* =========================
+   SEARCH BOX
+========================= */
 
 .search-box {
 
-    display:flex;
-    gap:10px;
-    margin-top:15px;
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
 
 }
 
 input {
 
-    flex:1;
+    flex: 1;
 
-    min-width:0;
-
-    padding:14px;
+    padding: 14px;
 
     border:
         2px solid var(--border);
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    font-size:16px;
+    font-size: 16px;
 
-    outline:none;
+    outline: none;
+
+    min-width: 0;
 
 }
 
@@ -203,63 +271,71 @@ input:focus {
 
 button.search-submit {
 
-    padding:
-        14px 28px;
+    padding: 14px 28px;
 
-    background:
-        var(--dark);
+    background: var(--dark);
 
-    color:#fff;
+    color: white;
 
-    border:none;
+    border: none;
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    font-weight:bold;
+    font-weight: bold;
 
-    cursor:pointer;
+    cursor: pointer;
 
-    font-size:16px;
+    font-size: 16px;
+
+}
+
+button.search-submit:hover {
+
+    background: #333;
 
 }
 
 
-/* RESULTS */
+/* =========================
+   RESULTS
+========================= */
 
 .results {
 
-    margin-top:20px;
+    margin-top: 20px;
 
-    padding:20px;
+    padding: 20px;
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    background:#f1f1f6;
+    background: #f1f1f6;
+
+    display: none;
 
     border-left:
         5px solid var(--primary);
-
-    display:none;
 
 }
 
 .results h4 {
 
-    margin-top:0;
+    margin-top: 0;
 
-    margin-bottom:20px;
+    margin-bottom: 20px;
+
+    font-size: 18px;
 
 }
 
 .match-item {
 
-    background:#fff;
+    background: white;
 
-    padding:15px;
+    padding: 15px;
 
-    margin-bottom:10px;
+    margin-bottom: 10px;
 
-    border-radius:7px;
+    border-radius: 7px;
 
     border:
         1px solid var(--border);
@@ -268,141 +344,176 @@ button.search-submit {
 
 .match-item:last-child {
 
-    margin-bottom:0;
+    margin-bottom: 0;
 
 }
 
 .match-code {
 
-    color:var(--primary);
+    font-weight: bold;
 
-    font-weight:bold;
+    color: var(--primary);
 
-    font-size:17px;
+    font-size: 17px;
 
 }
 
 .match-name {
 
-    margin-top:5px;
+    margin-top: 5px;
 
-    line-height:1.5;
+    line-height: 1.5;
 
 }
 
 .match-item a {
 
-    display:inline-block;
+    display: inline-block;
 
-    margin-top:8px;
+    margin-top: 8px;
 
-    color:var(--dark);
+    color: var(--dark);
 
-    font-weight:bold;
+    font-weight: bold;
 
-    text-decoration:none;
+    text-decoration: none;
 
 }
 
 .match-item a:hover {
 
-    text-decoration:underline;
+    text-decoration: underline;
 
 }
 
 
-/* ERROR */
+/* =========================
+   ERROR
+========================= */
 
 .error {
 
-    display:none;
+    color: #d9383a;
 
-    margin-top:20px;
+    font-weight: bold;
 
-    padding:15px;
+    background: #fde8e8;
 
-    background:#fde8e8;
+    padding: 15px;
 
-    color:#d9383a;
+    border-radius: 6px;
 
-    border-radius:6px;
+    display: none;
 
-    font-weight:bold;
+    margin-top: 20px;
 
 }
 
 
-/* INFO */
+/* =========================
+   LOADING
+========================= */
+
+.loading {
+
+    color: #555;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================
+   INFO
+========================= */
 
 .info {
 
-    margin-top:20px;
+    margin-top: 15px;
 
-    padding:15px;
+    padding: 12px 15px;
 
-    background:#fff8ef;
+    background: #fff8ef;
 
     border-left:
         4px solid var(--primary);
 
-    border-radius:7px;
+    border-radius: 6px;
 
-    color:#666;
+    color: #666;
 
-    font-size:14px;
+    font-size: 14px;
 
-    line-height:1.6;
+    line-height: 1.6;
 
 }
 
 
-/* FOOTER */
+/* =========================
+   FOOTER
+========================= */
 
 footer {
 
-    text-align:center;
+    text-align: center;
 
-    color:#777;
+    color: #777;
 
-    font-size:13px;
+    font-size: 13px;
 
-    margin:30px 0 10px;
+    margin: 30px 0 10px;
 
-    line-height:1.6;
+    line-height: 1.6;
 
 }
 
 
-/* MOBILE */
+/* =========================
+   MOBILE
+========================= */
 
-@media(max-width:600px) {
+@media (max-width: 600px) {
 
     body {
-        padding:12px;
+
+        padding: 12px;
+
     }
 
     h1 {
-        font-size:24px;
+
+        font-size: 24px;
+
     }
 
     .tabs {
-        flex-direction:column;
+
+        flex-direction: column;
+
     }
 
     .tab-btn {
-        width:100%;
+
+        width: 100%;
+
     }
 
     .search-box {
-        flex-direction:column;
+
+        flex-direction: column;
+
     }
 
     button.search-submit {
-        width:100%;
+
+        width: 100%;
+
     }
 
     .search-card {
-        padding:18px;
+
+        padding: 18px;
+
     }
 
 }
@@ -411,161 +522,185 @@ footer {
 
 </head>
 
+
 <body>
 
 <div class="container">
+
 
 <h1>
 🇺🇸 U.S. ZIP Code Finder
 </h1>
 
+
 <p class="intro">
 
-Search U.S. Census ZIP Code Tabulation Areas (ZCTAs)
-using five-digit ZIP codes or ZIP prefixes.
+Search United States ZIP Codes by ZIP Code
+or city and area name.
 
 </p>
 
 
-<!-- TABS -->
+<!-- =========================
+     TABS
+========================= -->
 
 <div class="tabs">
 
-<button
-class="tab-btn active"
-onclick="switchTab('zip', this)">
+    <button
+        class="tab-btn active"
+        onclick="switchTab('zip', this)">
 
-🔢 ZIP Code Lookup
+        🔢 ZIP Code Lookup
 
-</button>
+    </button>
 
-<button
-class="tab-btn"
-onclick="switchTab('prefix', this)">
 
-🔎 ZIP Prefix Search
+    <button
+        class="tab-btn"
+        onclick="switchTab('place', this)">
 
-</button>
+        🔎 City / Area Search
+
+    </button>
 
 </div>
 
 
-<!-- ZIP LOOKUP -->
+<!-- =========================
+     ZIP CODE SEARCH
+========================= -->
 
 <div
-id="zip-panel"
-class="panel active search-card">
+    id="zip-panel"
+    class="panel active search-card">
 
-<h3>
-Search U.S. ZIP Code
-</h3>
 
-<p>
+    <h3>
+        Search U.S. ZIP Code
+    </h3>
 
-Enter a 5-digit ZIP Code to view the
-corresponding Census ZCTA information.
 
-</p>
+    <p>
 
-<div class="search-box">
+        Enter a 5-digit U.S. ZIP Code
+        to view its city, county, state and coordinates.
 
-<input
-type="text"
-id="zipInput"
-maxlength="5"
-inputmode="numeric"
-placeholder="Enter ZIP Code e.g. 10001"
-autocomplete="off">
+    </p>
 
-<button
-class="search-submit"
-onclick="searchZip()">
 
-Search
+    <div class="search-box">
 
-</button>
+        <input
+            type="text"
+            id="zipInput"
+            placeholder="Enter ZIP Code e.g. 93669"
+            maxlength="5"
+            inputmode="numeric"
+            autocomplete="off">
+
+
+        <button
+            class="search-submit"
+            onclick="searchZipCode()">
+
+            Search
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="zip-error"
+        class="error">
+    </div>
+
+
+    <div
+        id="zip-results"
+        class="results">
+    </div>
+
 
 </div>
+
+
+<!-- =========================
+     CITY / AREA SEARCH
+========================= -->
 
 <div
-id="zip-error"
-class="error">
-</div>
-
-</div>
+    id="place-panel"
+    class="panel search-card">
 
 
-<!-- PREFIX SEARCH -->
+    <h3>
+        Search U.S. ZIP Codes by City / Area
+    </h3>
 
-<div
-id="prefix-panel"
-class="panel search-card">
 
-<h3>
-Search ZIP Code Prefix
-</h3>
+    <p>
 
-<p>
+        Enter a city or area name to find
+        matching U.S. ZIP Codes.
 
-Enter 1 to 5 digits to find matching
-2020 Census ZCTAs.
+    </p>
 
-</p>
 
-<div class="search-box">
+    <div class="search-box">
 
-<input
-type="text"
-id="prefixInput"
-maxlength="5"
-inputmode="numeric"
-placeholder="Enter ZIP prefix e.g. 100"
-autocomplete="off">
+        <input
+            type="text"
+            id="placeInput"
+            placeholder="Enter city or area e.g. Wishon"
+            autocomplete="off">
 
-<button
-class="search-submit"
-onclick="searchPrefix()">
 
-Search
+        <button
+            class="search-submit"
+            onclick="searchPlace()">
 
-</button>
+            Search
 
-</div>
+        </button>
 
-<div
-id="prefix-error"
-class="error">
-</div>
+    </div>
 
-<div
-id="prefix-results"
-class="results">
-</div>
+
+    <div
+        id="place-error"
+        class="error">
+    </div>
+
+
+    <div
+        id="place-results"
+        class="results">
+    </div>
+
 
 </div>
 
 
 <div class="info">
 
-<strong>Important:</strong>
+<strong>U.S. ZIP Code Finder:</strong>
 
-This tool uses U.S. Census Bureau
-ZIP Code Tabulation Areas (ZCTAs).
-ZCTAs are Census geographic areas and
-are not official USPS mailing ZIP Codes.
+Search results are retrieved from the
+U.S. Geological Survey public geocoder.
 
 </div>
 
 
 <footer>
 
-U.S. ZIP Code Finder<br>
+U.S. ZIP Code Search<br>
 
-U.S. Census Bureau TIGERweb<br>
-
-2020 Census ZCTA
+United States ZIP Code Finder
 
 </footer>
+
 
 </div>
 
@@ -594,6 +729,7 @@ function switchTab(
             }
         );
 
+
     document
         .querySelectorAll(".tab-btn")
         .forEach(
@@ -606,6 +742,7 @@ function switchTab(
             }
         );
 
+
     document
         .getElementById(
             tabName + "-panel"
@@ -613,6 +750,7 @@ function switchTab(
         .classList.add(
             "active"
         );
+
 
     button.classList.add(
         "active"
@@ -622,10 +760,10 @@ function switchTab(
 
 
 /* =========================
-   ZIP LOOKUP
+   ZIP CODE SEARCH
 ========================= */
 
-function searchZip() {
+async function searchZipCode() {
 
     const input =
         document
@@ -635,21 +773,35 @@ function searchZip() {
         .value
         .trim();
 
+
     const error =
         document
         .getElementById(
             "zip-error"
         );
 
+
+    const results =
+        document
+        .getElementById(
+            "zip-results"
+        );
+
+
     error.style.display =
         "none";
+
+
+    results.style.display =
+        "none";
+
 
     if (
         !/^\d{5}$/.test(input)
     ) {
 
         error.innerText =
-            "Please enter a valid 5-digit ZIP Code.";
+            "Please enter a valid 5-digit U.S. ZIP Code.";
 
         error.style.display =
             "block";
@@ -658,52 +810,117 @@ function searchZip() {
 
     }
 
-    window.location.href =
-        "/usa-zip/" +
-        encodeURIComponent(input) +
-        "/";
+
+    results.innerHTML =
+        '<div class="loading">' +
+        '🔄 Searching U.S. ZIP Code...' +
+        '</div>';
+
+
+    results.style.display =
+        "block";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/usa-zip/" +
+                encodeURIComponent(input) +
+                "/",
+                {
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "ZIP Code not found"
+            );
+
+        }
+
+
+        window.location.href =
+            "/usa-zip/" +
+            encodeURIComponent(input) +
+            "/";
+
+    }
+
+    catch (errorObject) {
+
+        console.error(
+            "ZIP search error:",
+            errorObject
+        );
+
+
+        results.style.display =
+            "none";
+
+
+        error.innerText =
+            "U.S. ZIP Code " +
+            input +
+            " was not found.";
+
+        error.style.display =
+            "block";
+
+    }
 
 }
 
 
 /* =========================
-   PREFIX SEARCH
+   CITY / AREA SEARCH
 ========================= */
 
-async function searchPrefix() {
+async function searchPlace() {
 
     const input =
         document
         .getElementById(
-            "prefixInput"
+            "placeInput"
         )
         .value
         .trim();
 
+
     const error =
         document
         .getElementById(
-            "prefix-error"
+            "place-error"
         );
+
 
     const results =
         document
         .getElementById(
-            "prefix-results"
+            "place-results"
         );
+
 
     error.style.display =
         "none";
 
+
     results.style.display =
         "none";
 
+
     if (
-        !/^\d{1,5}$/.test(input)
+        input.length < 2
     ) {
 
         error.innerText =
-            "Please enter 1 to 5 digits.";
+            "Please enter at least 2 characters.";
 
         error.style.display =
             "block";
@@ -712,8 +929,12 @@ async function searchPrefix() {
 
     }
 
+
     results.innerHTML =
-        '<div>🔄 Searching Census ZCTAs...</div>';
+        '<div class="loading">' +
+        '🔄 Searching U.S. ZIP Codes...' +
+        '</div>';
+
 
     results.style.display =
         "block";
@@ -731,18 +952,21 @@ async function searchPrefix() {
                 }
             );
 
+
         if (
             !response.ok
         ) {
 
             throw new Error(
-                "Search failed"
+                "Place search failed"
             );
 
         }
 
+
         const data =
             await response.json();
+
 
         if (
             !data ||
@@ -755,10 +979,9 @@ async function searchPrefix() {
             results.style.display =
                 "none";
 
+
             error.innerText =
-                "No Census ZCTAs found for prefix " +
-                input +
-                ".";
+                "No matching U.S. ZIP Codes found.";
 
             error.style.display =
                 "block";
@@ -767,95 +990,29 @@ async function searchPrefix() {
 
         }
 
-        let html =
-            '<h4>🔎 ZCTAs starting with "' +
-            escapeHtml(input) +
-            '"</h4>';
 
-
-        data.results.forEach(
-            function(item) {
-
-                const code =
-                    String(
-                        item.code || ""
-                    );
-
-                const name =
-                    String(
-                        item.name || ""
-                    );
-
-
-                if (
-                    !/^\d{5}$/.test(code)
-                ) {
-
-                    return;
-
-                }
-
-
-                html +=
-
-                    '<div class="match-item">' +
-
-                        '<div class="match-code">' +
-
-                            'ZCTA ' +
-
-                            escapeHtml(code) +
-
-                        '</div>' +
-
-                        '<div class="match-name">' +
-
-                            escapeHtml(
-                                name ||
-                                "Census ZIP Code Tabulation Area"
-                            ) +
-
-                        '</div>' +
-
-                        '<a href="/usa-zip/' +
-
-                            encodeURIComponent(code) +
-
-                            '/">' +
-
-                            'View ZCTA ' +
-
-                            escapeHtml(code) +
-
-                            ' Details →' +
-
-                        '</a>' +
-
-                    '</div>';
-
-            }
+        displayPlaceResults(
+            data.results,
+            results,
+            input
         );
 
-
-        results.innerHTML =
-            html;
-
-        results.style.display =
-            "block";
-
     }
+
     catch (errorObject) {
 
         console.error(
-            "ZIP prefix search error:",
+            "ZIP place search error:",
             errorObject
         );
+
 
         results.style.display =
             "none";
 
+
         error.innerText =
-            "Unable to search Census ZCTAs.";
+            "Unable to search U.S. ZIP Codes.";
 
         error.style.display =
             "block";
@@ -866,10 +1023,131 @@ async function searchPrefix() {
 
 
 /* =========================
+   DISPLAY PLACE RESULTS
+========================= */
+
+function displayPlaceResults(
+    items,
+    results,
+    searchText
+) {
+
+    let html =
+        '<h4>🔎 ZIP Codes for "' +
+        escapeHtml(searchText) +
+        '"</h4>';
+
+
+    items.forEach(
+        function(item) {
+
+            const code =
+                String(
+                    item.code || ""
+                );
+
+
+            const name =
+                String(
+                    item.name || ""
+                );
+
+
+            const county =
+                String(
+                    item.county || ""
+                );
+
+
+            const state =
+                String(
+                    item.state || ""
+                );
+
+
+            if (
+                !/^\d{5}$/.test(code)
+            ) {
+
+                return;
+
+            }
+
+
+            html +=
+
+                '<div class="match-item">' +
+
+                    '<div class="match-code">' +
+
+                        'U.S. ZIP Code ' +
+
+                        escapeHtml(code) +
+
+                    '</div>' +
+
+                    '<div class="match-name">' +
+
+                        escapeHtml(
+                            name ||
+                            "ZIP Code Area"
+                        ) +
+
+                        (
+                            county
+                                ? '<br>' +
+                                  escapeHtml(county)
+                                : ""
+                        ) +
+
+                        (
+                            state
+                                ? '<br>' +
+                                  escapeHtml(state)
+                                : ""
+                        ) +
+
+                    '</div>' +
+
+                    '<a href="/usa-zip/' +
+
+                        encodeURIComponent(
+                            code
+                        ) +
+
+                        '/">' +
+
+                        'View ZIP ' +
+
+                        escapeHtml(code) +
+
+                        ' Details →' +
+
+                    '</a>' +
+
+                '</div>';
+
+        }
+    );
+
+
+    results.innerHTML =
+        html;
+
+
+    results.style.display =
+        "block";
+
+}
+
+
+/* =========================
    HTML ESCAPE
 ========================= */
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
     return String(
         value ?? ""
@@ -908,43 +1186,47 @@ function escapeHtml(value) {
 ========================= */
 
 document
-.getElementById("zipInput")
-.addEventListener(
-    "keydown",
-    function(event) {
+    .getElementById(
+        "zipInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
 
-        if (
-            event.key === "Enter"
-        ) {
+            if (
+                event.key === "Enter"
+            ) {
 
-            searchZip();
+                searchZipCode();
+
+            }
 
         }
-
-    }
-);
+    );
 
 
 /* =========================
-   ENTER KEY - PREFIX
+   ENTER KEY - PLACE
 ========================= */
 
 document
-.getElementById("prefixInput")
-.addEventListener(
-    "keydown",
-    function(event) {
+    .getElementById(
+        "placeInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
 
-        if (
-            event.key === "Enter"
-        ) {
+            if (
+                event.key === "Enter"
+            ) {
 
-            searchPrefix();
+                searchPlace();
+
+            }
 
         }
-
-    }
-);
+    );
 
 </script>
 
