@@ -1,16 +1,11 @@
 const RESOURCE_ID =
     "c967fe8f-69c4-42df-8afc-8a2c98057437";
 
+const MAX_RESULTS = 100;
 
-/*
- * States / UTs used by LGD.
- *
- * The API page exposes stateNameEnglish
- * as a filter, so we search state-by-state.
- */
+const PAGE_SIZE = 1000;
 
 const STATES = [
-
     "Andhra Pradesh",
     "Arunachal Pradesh",
     "Assam",
@@ -47,70 +42,38 @@ const STATES = [
     "Ladakh",
     "Lakshadweep",
     "Puducherry"
-
 ];
 
+export async function onRequest(context) {
 
-const STATE_BATCH_SIZE =
-    10000;
-
-
-const MAX_RESULTS =
-    100;
-
-
-export async function onRequest(
-    context
-) {
-
-    const requestUrl =
-        new URL(
-            context.request.url
-        );
-
+    const url =
+        new URL(context.request.url);
 
     const query =
         (
-            requestUrl.searchParams.get(
-                "q"
-            ) ||
-            ""
+            url.searchParams.get("q") || ""
         ).trim();
 
-
-    if (
-        query.length < 2
-    ) {
+    if (query.length < 2) {
 
         return jsonResponse(
             {
-                query:
-                    query,
-
-                count:
-                    0,
-
-                results:
-                    []
+                query,
+                count: 0,
+                results: []
             },
             400
         );
-
     }
-
 
     const apiKey =
         context.env.DATA_GOV_IN_API_KEY;
 
-
-    if (
-        !apiKey
-    ) {
+    if (!apiKey) {
 
         console.error(
-            "DATA_GOV_IN_API_KEY missing."
+            "DATA_GOV_IN_API_KEY is missing."
         );
-
 
         return jsonResponse(
             {
@@ -119,292 +82,90 @@ export async function onRequest(
             },
             500
         );
-
     }
 
-
-    const search =
+    const searchText =
         query.toLowerCase();
-
-
-    const results = [];
-
-    const seen =
-        new Set();
-
 
     try {
 
         /*
-         * Search state-by-state.
+         * Search all states in parallel.
          *
-         * We first get a large batch for each
-         * state and then perform the actual
-         * text filter against villageNameEnglish.
+         * Each state starts with the first
+         * 1000 records.
          */
 
+        const stateResults =
+            await Promise.all(
+                STATES.map(
+                    function(state) {
+
+                        return searchState(
+                            apiKey,
+                            state,
+                            searchText
+                        );
+
+                    }
+                )
+            );
+
+        const results = [];
+
+        const seen =
+            new Set();
+
         for (
-            const state of STATES
+            const stateResult of stateResults
         ) {
+
+            for (
+                const item of stateResult
+            ) {
+
+                if (
+                    !item ||
+                    !item.code
+                ) {
+                    continue;
+                }
+
+                if (
+                    seen.has(item.code)
+                ) {
+                    continue;
+                }
+
+                seen.add(item.code);
+
+                results.push(item);
+
+                if (
+                    results.length >=
+                    MAX_RESULTS
+                ) {
+                    break;
+                }
+
+            }
 
             if (
                 results.length >=
                 MAX_RESULTS
             ) {
-
                 break;
-
-            }
-
-
-            let offset =
-                0;
-
-
-            while (
-                results.length <
-                    MAX_RESULTS
-                &&
-                offset <
-                    STATE_BATCH_SIZE
-            ) {
-
-                const apiUrl =
-                    buildApiUrl(
-                        apiKey,
-                        state,
-                        offset
-                    );
-
-
-                const response =
-                    await fetch(
-                        apiUrl,
-                        {
-                            headers: {
-                                "Accept":
-                                    "application/json"
-                            }
-                        }
-                    );
-
-
-                if (
-                    !response.ok
-                ) {
-
-                    const text =
-                        await response.text();
-
-
-                    console.error(
-                        "LGD API:",
-                        response.status,
-                        state,
-                        text
-                    );
-
-
-                    /*
-                     * Skip a state if the API
-                     * rejects it, but continue
-                     * searching the others.
-                     */
-
-                    break;
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                const records =
-                    Array.isArray(
-                        data.records
-                    )
-                        ? data.records
-                        : [];
-
-
-                if (
-                    records.length === 0
-                ) {
-
-                    break;
-
-                }
-
-
-                for (
-                    const record of records
-                ) {
-
-                    const village =
-                        String(
-                            record[
-                                "villageNameEnglish"
-                            ] ||
-                            ""
-                        ).trim();
-
-
-                    if (
-                        !village
-                    ) {
-
-                        continue;
-
-                    }
-
-
-                    /*
-                     * ACTUAL TEXT FILTER
-                     */
-
-                    if (
-                        !village
-                            .toLowerCase()
-                            .includes(
-                                search
-                            )
-                    ) {
-
-                        continue;
-
-                    }
-
-
-                    const code =
-                        String(
-                            record[
-                                "villageCode"
-                            ] ??
-                            ""
-                        ).trim();
-
-
-                    const stateName =
-                        String(
-                            record[
-                                "stateNameEnglish"
-                            ] ||
-                            state
-                        ).trim();
-
-
-                    const district =
-                        String(
-                            record[
-                                "districtNameEnglish"
-                            ] ||
-                            ""
-                        ).trim();
-
-
-                    const subDistrict =
-                        String(
-                            record[
-                                "subDistrictNameEnglish"
-                            ] ||
-                            ""
-                        ).trim();
-
-
-                    if (
-                        !code
-                    ) {
-
-                        continue;
-
-                    }
-
-
-                    if (
-                        seen.has(code)
-                    ) {
-
-                        continue;
-
-                    }
-
-
-                    seen.add(
-                        code
-                    );
-
-
-                    results.push({
-
-                        code:
-                            code,
-
-                        village:
-                            village,
-
-                        state:
-                            stateName,
-
-                        district:
-                            district,
-
-                        subDistrict:
-                            subDistrict
-
-                    });
-
-
-                    if (
-                        results.length >=
-                        MAX_RESULTS
-                    ) {
-
-                        break;
-
-                    }
-
-                }
-
-
-                /*
-                 * The API response includes
-                 * "count". Stop when this state
-                 * has been fully paged.
-                 */
-
-                const total =
-                    Number(
-                        data.count ||
-                        0
-                    );
-
-
-                if (
-                    total <=
-                    offset +
-                    records.length
-                ) {
-
-                    break;
-
-                }
-
-
-                offset +=
-                    records.length;
-
             }
 
         }
-
 
         results.sort(
             function(a, b) {
 
                 const villageCompare =
-                    a.village.localeCompare(
-                        b.village,
+                    String(a.village)
+                    .localeCompare(
+                        String(b.village),
                         "en",
                         {
                             sensitivity:
@@ -412,40 +173,37 @@ export async function onRequest(
                         }
                     );
 
-
                 if (
-                    villageCompare !==
-                    0
+                    villageCompare !== 0
                 ) {
-
                     return villageCompare;
-
                 }
 
-
-                return a.state.localeCompare(
-                    b.state,
-                    "en",
-                    {
-                        sensitivity:
-                            "base"
-                    }
-                );
+                return String(a.state)
+                    .localeCompare(
+                        String(b.state),
+                        "en",
+                        {
+                            sensitivity:
+                                "base"
+                        }
+                    );
 
             }
         );
 
-
         return jsonResponse({
 
-            query:
-                query,
+            query,
 
             count:
                 results.length,
 
             results:
-                results
+                results.slice(
+                    0,
+                    MAX_RESULTS
+                )
 
         });
 
@@ -453,27 +211,231 @@ export async function onRequest(
     catch (error) {
 
         console.error(
-            "LGD village search error:",
+            "LGD search error:",
             error
         );
 
-
         return jsonResponse(
             {
-                query:
-                    query,
-
-                count:
-                    0,
-
-                results:
-                    []
+                query,
+                count: 0,
+                results: []
             },
             500
         );
+    }
+}
+
+
+/* =========================================
+   SEARCH ONE STATE
+========================================= */
+
+async function searchState(
+    apiKey,
+    state,
+    searchText
+) {
+
+    const matches = [];
+
+    let offset = 0;
+
+    while (
+        matches.length < MAX_RESULTS &&
+        offset < 50000
+    ) {
+
+        const apiUrl =
+            buildUrl(
+                apiKey,
+                state,
+                offset
+            );
+
+        let response;
+
+        try {
+
+            response =
+                await fetch(
+                    apiUrl,
+                    {
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                );
+
+        }
+        catch (error) {
+
+            console.error(
+                "LGD request failed:",
+                state,
+                error
+            );
+
+            break;
+        }
+
+
+        if (
+            !response.ok
+        ) {
+
+            const errorText =
+                await response.text();
+
+            console.error(
+                "LGD API error:",
+                state,
+                response.status,
+                errorText
+            );
+
+            break;
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const records =
+            Array.isArray(
+                data.records
+            )
+                ? data.records
+                : [];
+
+
+        if (
+            records.length === 0
+        ) {
+            break;
+        }
+
+
+        for (
+            const record of records
+        ) {
+
+            const village =
+                String(
+                    record.villageNameEnglish ||
+                    ""
+                ).trim();
+
+            if (
+                !village
+            ) {
+                continue;
+            }
+
+
+            /*
+             * Text-only village-name filter.
+             */
+
+            if (
+                !village
+                    .toLowerCase()
+                    .includes(
+                        searchText
+                    )
+            ) {
+                continue;
+            }
+
+
+            const code =
+                normalizeCode(
+                    record.villageCode
+                );
+
+
+            if (
+                !code
+            ) {
+                continue;
+            }
+
+
+            matches.push({
+
+                code,
+
+                village,
+
+                state:
+                    String(
+                        record.stateNameEnglish ||
+                        state
+                    ).trim(),
+
+                district:
+                    String(
+                        record.districtNameEnglish ||
+                        ""
+                    ).trim(),
+
+                subDistrict:
+                    String(
+                        record.subDistrictNameEnglish ||
+                        ""
+                    ).trim()
+
+            });
+
+
+            if (
+                matches.length >= MAX_RESULTS
+            ) {
+                break;
+            }
+
+        }
+
+
+        /*
+         * Stop when the state has been
+         * completely read.
+         */
+
+        const total =
+            Number(
+                data.total ||
+                data.count ||
+                0
+            );
+
+        const returned =
+            records.length;
+
+
+        if (
+            total > 0 &&
+            offset + returned >= total
+        ) {
+            break;
+        }
+
+
+        if (
+            returned < PAGE_SIZE
+        ) {
+            break;
+        }
+
+
+        offset += returned;
 
     }
 
+
+    return matches;
 }
 
 
@@ -481,40 +443,55 @@ export async function onRequest(
    BUILD API URL
 ========================================= */
 
-function buildApiUrl(
+function buildUrl(
     apiKey,
     state,
     offset
 ) {
 
     return (
-
         "https://api.data.gov.in/resource/" +
-
         RESOURCE_ID +
-
         "?api-key=" +
-
-        encodeURIComponent(
-            apiKey
-        ) +
-
+        encodeURIComponent(apiKey) +
         "&format=json" +
-
         "&limit=" +
-
-        STATE_BATCH_SIZE +
-
+        PAGE_SIZE +
         "&offset=" +
-
         offset +
-
         "&filters[stateNameEnglish]=" +
+        encodeURIComponent(state)
+    );
 
-        encodeURIComponent(
-            state
-        )
+}
 
+
+/* =========================================
+   NORMALIZE VILLAGE CODE
+========================================= */
+
+function normalizeCode(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    const text =
+        String(value).trim();
+
+    /*
+     * API may serialize numeric codes
+     * as 216041 or 216041.0
+     */
+
+    return text.replace(
+        /\.0$/,
+        ""
     );
 
 }
@@ -531,14 +508,11 @@ function jsonResponse(
 
     return new Response(
 
-        JSON.stringify(
-            data
-        ),
+        JSON.stringify(data),
 
         {
 
-            status:
-                status,
+            status,
 
             headers: {
 
@@ -546,7 +520,7 @@ function jsonResponse(
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=300, s-maxage=3600",
+                    "public, max-age=60, s-maxage=300",
 
                 "Access-Control-Allow-Origin":
                     "*"
