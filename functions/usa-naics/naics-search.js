@@ -4,9 +4,11 @@ export async function onRequest(context) {
         new URL(context.request.url);
 
     const query =
-        (requestUrl.searchParams.get("q") || "")
+        (
+            requestUrl.searchParams.get("q") ||
+            ""
+        )
         .trim();
-
 
     if (query.length < 2) {
 
@@ -17,20 +19,22 @@ export async function onRequest(context) {
 
     }
 
-
     /*
-     * Only search the CURRENT 2022
-     * U.S. NAICS classification.
+     * Census 2022 NAICS public search.
+     *
+     * IMPORTANT:
+     *
+     * "input" is the search value.
+     *
+     * We do NOT put a keyword into
+     * "details".
      */
 
     const searchUrl =
         "https://www.census.gov/naics/" +
-        "?details=" +
-        encodeURIComponent(query) +
-        "&input=" +
+        "?input=" +
         encodeURIComponent(query) +
         "&year=2022";
-
 
     try {
 
@@ -39,17 +43,14 @@ export async function onRequest(context) {
                 searchUrl,
                 {
                     headers: {
-
                         "User-Agent":
                             "Mozilla/5.0 (compatible; MyTecBooks NAICS Search)",
 
                         "Accept":
-                            "text/html,application/xhtml+xml"
-
+                            "text/html,application/xhtml+xml,text/html"
                     }
                 }
             );
-
 
         if (!response.ok) {
 
@@ -59,23 +60,19 @@ export async function onRequest(context) {
             );
 
             return jsonResponse({
-
                 query: query,
-
                 results: []
-
             });
-
         }
-
 
         const html =
             await response.text();
 
-
         const results =
-            parseCensusResults(html);
-
+            parseCensusResults(
+                html,
+                query
+            );
 
         return jsonResponse({
 
@@ -87,14 +84,12 @@ export async function onRequest(context) {
         });
 
     }
-
     catch (error) {
 
         console.error(
             "NAICS search error:",
             error
         );
-
 
         return jsonResponse({
 
@@ -105,7 +100,6 @@ export async function onRequest(context) {
         });
 
     }
-
 }
 
 
@@ -113,70 +107,59 @@ export async function onRequest(context) {
    PARSE CENSUS RESULTS
 ========================================= */
 
-function parseCensusResults(html) {
+function parseCensusResults(
+    html,
+    query
+) {
 
     const results = [];
 
-    const seen = new Set();
-
+    const seen =
+        new Set();
 
     /*
-     * Census result links are normally:
+     * Find Census links containing
      *
-     * ?details=513210&input=software&year=2022
+     * details=123456
      *
-     * or similar links containing
-     * the NAICS code.
      */
 
-    const regex =
-        /href=["']([^"']*details=(\d{2,6})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
-
+    const linkRegex =
+        /<a\b[^>]*href=["']([^"']*details=(\d{2,6})[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
     let match;
 
-
     while (
-        (match = regex.exec(html)) !== null
+        (match = linkRegex.exec(html)) !== null
     ) {
 
         const url =
             match[1];
 
-
         const code =
             match[2];
-
 
         let title =
             match[3];
 
-
         title =
             stripHtml(title);
-
 
         title =
             decodeHtml(title);
 
-
         title =
             cleanText(title);
-
 
         if (
             !code ||
             !title
         ) {
-
             continue;
-
         }
 
-
         /*
-         * Remove unnecessary superscript
-         * / footnote characters.
+         * Remove common footnote symbols.
          */
 
         title =
@@ -187,69 +170,186 @@ function parseCensusResults(html) {
             )
             .trim();
 
-
         /*
-         * Ignore links that aren't
-         * actual NAICS industry results.
+         * Ignore navigation links.
          */
 
         if (
-            title.length < 2
-        ) {
-
-            continue;
-
-        }
-
-
-        if (
-            /^(go|search|home|menu|main|next|previous)$/i
+            /^(go|search|home|menu|main|next|previous|back)$/i
             .test(title)
         ) {
-
             continue;
-
         }
 
-
         /*
-         * Census can return both a
-         * 5-digit parent and 6-digit
-         * industry.
-         *
-         * Keep both because they are
-         * valid NAICS hierarchy levels.
+         * Ignore extremely long
+         * navigation/content links.
          */
 
-        const key =
-            code + "|" + title;
+        if (
+            title.length > 300
+        ) {
+            continue;
+        }
 
+        const key =
+            code +
+            "|" +
+            title;
 
         if (
             seen.has(key)
         ) {
-
             continue;
-
         }
 
-
         seen.add(key);
-
 
         results.push({
 
             code: code,
 
-            title: title
+            title: title,
+
+            url:
+                "/usa-naics/" +
+                encodeURIComponent(code) +
+                "/"
 
         });
+    }
+
+    /*
+     * Some Census page versions
+     * expose the code/title as text
+     * rather than an anchor.
+     *
+     * Try a second parser.
+     */
+
+    if (
+        results.length === 0
+    ) {
+
+        parseTextResults(
+            html,
+            query,
+            results,
+            seen
+        );
 
     }
 
-
     return results;
+}
 
+
+/* =========================================
+   TEXT FALLBACK
+========================================= */
+
+function parseTextResults(
+    html,
+    query,
+    results,
+    seen
+) {
+
+    let text =
+        html
+        .replace(
+            /<script[\s\S]*?<\/script>/gi,
+            " "
+        )
+        .replace(
+            /<style[\s\S]*?<\/style>/gi,
+            " "
+        )
+        .replace(
+            /<[^>]+>/g,
+            " "
+        );
+
+    text =
+        decodeHtml(text);
+
+    text =
+        cleanText(text);
+
+    /*
+     * Look for a code followed
+     * by an industry title.
+     */
+
+    const regex =
+        /\b(\d{2,6})\s+([A-Z][A-Za-z0-9 ,&()'\/.\-]{2,180}?)(?=\s+\d{2,6}\s+|\s+This industry comprises|\s+Cross-References|$)/g;
+
+    let match;
+
+    while (
+        (match = regex.exec(text)) !== null
+    ) {
+
+        const code =
+            match[1];
+
+        let title =
+            cleanText(match[2]);
+
+        if (
+            !code ||
+            !title
+        ) {
+            continue;
+        }
+
+        /*
+         * Only accept titles that
+         * contain the search text.
+         */
+
+        if (
+            !title
+                .toLowerCase()
+                .includes(
+                    query.toLowerCase()
+                )
+        ) {
+            continue;
+        }
+
+        const key =
+            code +
+            "|" +
+            title;
+
+        if (
+            seen.has(key)
+        ) {
+            continue;
+        }
+
+        seen.add(key);
+
+        results.push({
+
+            code: code,
+
+            title: title,
+
+            url:
+                "/usa-naics/" +
+                encodeURIComponent(code) +
+                "/"
+
+        });
+
+        if (
+            results.length >= 50
+        ) {
+            break;
+        }
+    }
 }
 
 
@@ -282,7 +382,6 @@ function stripHtml(value) {
         )
 
         .trim();
-
 }
 
 
@@ -328,7 +427,6 @@ function decodeHtml(value) {
             /&gt;/gi,
             ">"
         );
-
 }
 
 
@@ -351,7 +449,6 @@ function cleanText(value) {
         )
 
         .trim();
-
 }
 
 
@@ -366,7 +463,6 @@ function jsonResponse(data) {
         JSON.stringify(data),
 
         {
-
             status: 200,
 
             headers: {
@@ -385,5 +481,4 @@ function jsonResponse(data) {
         }
 
     );
-
 }
