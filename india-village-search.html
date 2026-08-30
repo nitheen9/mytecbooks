@@ -6,25 +6,21 @@
 <meta charset="UTF-8">
 
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+content="width=device-width, initial-scale=1.0">
 
 <meta name="robots"
-      content="index, follow">
+content="index, follow">
 
 <meta name="description"
-      content="Search Indian villages by village name and view State, District, Sub-District and village information.">
+content="Search Indian villages by name and find State, District, Sub-District and Village Code information.">
 
 <link rel="icon"
-      type="image/png"
-      href="/favicon.png">
+type="image/png"
+href="/favicon.png">
 
 <title>
 India Village Search - Village Finder
 </title>
-
-<meta property="og:description"
-      content="Search Indian villages by name and find State, District, Sub-District and village details.">
-
 
 <style>
 
@@ -34,7 +30,6 @@ India Village Search - Village Finder
     --dark:#1e1e24;
     --light:#f9f9fb;
     --border:#e0e0e6;
-    --white:#ffffff;
 
 }
 
@@ -45,7 +40,6 @@ India Village Search - Village Finder
 body {
 
     margin:0;
-
     padding:20px;
 
     font-family:
@@ -56,18 +50,14 @@ body {
         Arial,
         sans-serif;
 
-    background:
-        var(--light);
-
-    color:
-        var(--dark);
+    background:var(--light);
+    color:var(--dark);
 
 }
 
 .container {
 
     max-width:850px;
-
     margin:0 auto;
 
 }
@@ -75,9 +65,7 @@ body {
 h1 {
 
     text-align:center;
-
     margin:10px 0 15px;
-
     font-size:30px;
 
 }
@@ -85,22 +73,16 @@ h1 {
 .intro {
 
     text-align:center;
-
     color:#666;
-
     line-height:1.6;
-
-    margin:
-        0 0 25px;
+    margin-bottom:25px;
 
 }
 
 .search-card {
 
     background:#fff;
-
     padding:25px;
-
     border-radius:12px;
 
     box-shadow:
@@ -118,7 +100,6 @@ h1 {
 .search-card p {
 
     color:#666;
-
     line-height:1.6;
 
 }
@@ -126,9 +107,7 @@ h1 {
 .search-box {
 
     display:flex;
-
     gap:10px;
-
     margin-top:15px;
 
 }
@@ -136,7 +115,6 @@ h1 {
 input {
 
     flex:1;
-
     min-width:0;
 
     padding:14px;
@@ -148,7 +126,6 @@ input {
     border-radius:8px;
 
     font-size:16px;
-
     outline:none;
 
 }
@@ -162,8 +139,7 @@ input:focus {
 
 button {
 
-    padding:
-        14px 28px;
+    padding:14px 28px;
 
     background:
         var(--dark);
@@ -209,7 +185,6 @@ button:hover {
 .results h4 {
 
     margin-top:0;
-
     margin-bottom:20px;
 
     font-size:18px;
@@ -253,7 +228,7 @@ button:hover {
 
     margin-top:7px;
 
-    line-height:1.6;
+    line-height:1.65;
 
     color:#444;
 
@@ -273,14 +248,13 @@ button:hover {
 
     display:inline-block;
 
-    margin-top:9px;
+    margin-top:10px;
 
-    color:
-        var(--dark);
-
-    text-decoration:none;
+    color:var(--dark);
 
     font-weight:700;
+
+    text-decoration:none;
 
 }
 
@@ -311,7 +285,6 @@ button:hover {
 .loading {
 
     color:#555;
-
     font-weight:bold;
 
 }
@@ -380,52 +353,41 @@ footer {
 
 </head>
 
-
 <body>
 
 <div class="container">
-
 
 <h1>
 🇮🇳 India Village Finder
 </h1>
 
-
 <p class="intro">
 
-Search Indian villages by name and view
-their State, District and Sub-District information.
+Search Indian villages by name to find
+matching State, District, Sub-District and Village Code.
 
 </p>
 
-
 <div class="search-card">
-
 
 <h3>
 🔎 Search Indian Village
 </h3>
 
-
 <p>
-
-Enter a village name to find matching
-villages across India.
-
+Enter a village name to find matching villages across India.
 </p>
-
 
 <div class="search-box">
 
 <input
-    type="text"
-    id="villageInput"
-    placeholder="Enter village name e.g. Rampur"
-    autocomplete="off">
-
+type="text"
+id="villageInput"
+placeholder="Enter village name e.g. Rampur"
+autocomplete="off">
 
 <button
-    onclick="searchVillage()">
+onclick="searchVillage()">
 
 Search
 
@@ -433,29 +395,24 @@ Search
 
 </div>
 
+<div
+id="search-error"
+class="error">
+</div>
 
 <div
-    id="search-error"
-    class="error">
+id="search-results"
+class="results">
 </div>
 
-
-<div
-    id="search-results"
-    class="results">
 </div>
-
-
-</div>
-
 
 <div class="info">
 
-Search results use the India Government Open
-Data village directory.
+Village information is taken from the
+Government of India's Local Government Directory (LGD).
 
 </div>
-
 
 <footer>
 
@@ -463,15 +420,13 @@ India Village Finder
 
 </footer>
 
-
 </div>
 
 
 <script>
 
-
 /* =========================
-   SEARCH VILLAGE
+   SEARCH
 ========================= */
 
 async function searchVillage() {
@@ -502,7 +457,6 @@ async function searchVillage() {
     error.style.display =
         "none";
 
-
     results.style.display =
         "none";
 
@@ -527,7 +481,6 @@ async function searchVillage() {
         '🔄 Searching Indian villages...' +
         '</div>';
 
-
     results.style.display =
         "block";
 
@@ -541,8 +494,7 @@ async function searchVillage() {
                     input
                 ),
                 {
-                    cache:
-                        "no-store"
+                    cache:"no-store"
                 }
             );
 
@@ -552,7 +504,7 @@ async function searchVillage() {
         ) {
 
             throw new Error(
-                "Village search failed"
+                "Search failed"
             );
 
         }
@@ -573,23 +525,20 @@ async function searchVillage() {
             results.style.display =
                 "none";
 
-
             error.innerText =
                 'No matching Indian villages found for "' +
                 input +
                 '".';
 
-
             error.style.display =
                 "block";
-
 
             return;
 
         }
 
 
-        displayVillageResults(
+        displayResults(
             data.results,
             results,
             input
@@ -603,10 +552,8 @@ async function searchVillage() {
             errorObject
         );
 
-
         results.style.display =
             "none";
-
 
         error.innerText =
             "Unable to search Indian villages.";
@@ -620,10 +567,10 @@ async function searchVillage() {
 
 
 /* =========================
-   DISPLAY RESULTS
+   DISPLAY
 ========================= */
 
-function displayVillageResults(
+function displayResults(
     items,
     results,
     searchText
@@ -644,31 +591,36 @@ function displayVillageResults(
 
             const code =
                 String(
-                    item.code || ""
+                    item.code ||
+                    ""
                 ).trim();
 
 
             const village =
                 String(
-                    item.village || ""
+                    item.village ||
+                    ""
                 ).trim();
 
 
             const state =
                 String(
-                    item.state || ""
+                    item.state ||
+                    ""
                 ).trim();
 
 
             const district =
                 String(
-                    item.district || ""
+                    item.district ||
+                    ""
                 ).trim();
 
 
             const subDistrict =
                 String(
-                    item.subDistrict || ""
+                    item.subDistrict ||
+                    ""
                 ).trim();
 
 
@@ -677,29 +629,6 @@ function displayVillageResults(
             ) {
 
                 return;
-
-            }
-
-
-            /*
-             * The code is the unique village
-             * identifier returned by the API.
-             */
-
-            let detailUrl =
-                "";
-
-
-            if (
-                code
-            ) {
-
-                detailUrl =
-                    "/india-village/" +
-                    encodeURIComponent(
-                        code
-                    ) +
-                    "/";
 
             }
 
@@ -751,10 +680,10 @@ function displayVillageResults(
                     ) +
 
                     (
-                        detailUrl
-                            ? '<a class="details-link" href="' +
-                              detailUrl +
-                              '">' +
+                        code
+                            ? '<a class="details-link" href="/india-village/' +
+                              encodeURIComponent(code) +
+                              '/">' +
                               'View Village Details →' +
                               '</a>'
                             : ""
@@ -776,7 +705,7 @@ function displayVillageResults(
 
 
 /* =========================
-   ESCAPE HTML
+   ESCAPE
 ========================= */
 
 function escapeHtml(
@@ -816,27 +745,27 @@ function escapeHtml(
 
 
 /* =========================
-   ENTER KEY
+   ENTER
 ========================= */
 
 document
-    .getElementById(
-        "villageInput"
-    )
-    .addEventListener(
-        "keydown",
-        function(event) {
+.getElementById(
+    "villageInput"
+)
+.addEventListener(
+    "keydown",
+    function(event) {
 
-            if (
-                event.key === "Enter"
-            ) {
+        if (
+            event.key === "Enter"
+        ) {
 
-                searchVillage();
-
-            }
+            searchVillage();
 
         }
-    );
+
+    }
+);
 
 </script>
 
