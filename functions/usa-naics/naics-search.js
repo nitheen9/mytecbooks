@@ -5,42 +5,34 @@ export async function onRequest(context) {
 
     const query =
         (requestUrl.searchParams.get("q") || "")
-        .trim()
-        .toLowerCase();
+            .trim()
+            .toLowerCase();
 
     if (query.length < 2) {
 
         return jsonResponse({
             query: query,
+            year: 2022,
             results: []
         });
 
     }
 
-    /*
-     * OFFICIAL 2022 NAICS SOURCE
-     *
-     * U.S. Bureau of Labor Statistics
-     * QCEW NAICS 2022 Industry Crosswalk
-     *
-     * This page contains the complete
-     * 2022 six-digit NAICS hierarchy.
-     */
-
-    const sourceUrl =
-        "https://www.bls.gov/cew/classifications/industry/qcew-naics-hierarchy-crosswalk.htm";
-
     try {
+
+        const jsonUrl =
+            new URL(
+                "/data/naics2022_all.json",
+                requestUrl
+            );
 
         const response =
             await fetch(
-                sourceUrl,
+                jsonUrl,
                 {
-                    headers: {
-                        "User-Agent":
-                            "Mozilla/5.0 (compatible; MyTecBooks NAICS Search)",
-                        "Accept":
-                            "text/html"
+                    cf: {
+                        cacheTtl: 86400,
+                        cacheEverything: true
                     }
                 }
             );
@@ -48,62 +40,109 @@ export async function onRequest(context) {
         if (!response.ok) {
 
             console.error(
-                "BLS HTTP status:",
+                "NAICS JSON load failed:",
                 response.status
             );
 
-            return jsonResponse({
-                query: query,
-                results: []
-            });
-
+            return jsonResponse(
+                {
+                    query: query,
+                    year: 2022,
+                    results: []
+                },
+                500
+            );
         }
 
-        const html =
-            await response.text();
-
         const records =
-            parseBLS2022Table(html);
+            await response.json();
+
+        if (!Array.isArray(records)) {
+
+            console.error(
+                "naics2022_all.json is not an array"
+            );
+
+            return jsonResponse(
+                {
+                    query: query,
+                    year: 2022,
+                    results: []
+                },
+                500
+            );
+        }
 
         /*
-         * Search only the 2022 records.
-         *
-         * Exact code:
-         * 513210
-         *
-         * Keyword:
-         * software
+         * Keep ONLY valid 6-digit codes.
          */
 
-        let results;
+        const naics =
+            records.filter(
+                function (item) {
 
-        if (/^\d{2,6}$/.test(query)) {
+                    return (
+                        item &&
+                        /^\d{6}$/.test(
+                            String(item.code || "")
+                        ) &&
+                        String(
+                            item.title || ""
+                        ).trim() !== ""
+                    );
+
+                }
+            );
+
+        let results = [];
+
+
+        /*
+         * CODE SEARCH
+         *
+         * Example:
+         * 513210
+         */
+
+        if (
+            /^\d{2,6}$/.test(query)
+        ) {
 
             results =
-                records.filter(
-                    function(item) {
+                naics.filter(
+                    function (item) {
 
-                        return (
-                            item.code === query ||
-                            item.code.startsWith(query)
+                        return String(
+                            item.code
+                        ).startsWith(
+                            query
                         );
 
                     }
                 );
 
         }
+
+        /*
+         * TEXT SEARCH
+         *
+         * Example:
+         * software
+         */
+
         else {
 
             const words =
                 query
-                .split(/\s+/)
-                .filter(Boolean);
+                    .split(/\s+/)
+                    .filter(Boolean);
+
 
             results =
-                records.filter(
-                    function(item) {
+                naics.filter(
+                    function (item) {
 
-                        const haystack =
+                        const text =
                             (
                                 item.code +
                                 " " +
@@ -112,9 +151,9 @@ export async function onRequest(context) {
                             .toLowerCase();
 
                         return words.every(
-                            function(word) {
+                            function (word) {
 
-                                return haystack.includes(
+                                return text.includes(
                                     word
                                 );
 
@@ -126,8 +165,55 @@ export async function onRequest(context) {
 
         }
 
+
         /*
-         * Keep a maximum of 50 results.
+         * Remove duplicate codes.
+         */
+
+        const seen =
+            new Set();
+
+        results =
+            results.filter(
+                function (item) {
+
+                    const code =
+                        String(item.code);
+
+                    if (
+                        seen.has(code)
+                    ) {
+
+                        return false;
+
+                    }
+
+                    seen.add(code);
+
+                    return true;
+
+                }
+            );
+
+
+        /*
+         * Sort by NAICS code.
+         */
+
+        results.sort(
+            function (a, b) {
+
+                return (
+                    Number(a.code) -
+                    Number(b.code)
+                );
+
+            }
+        );
+
+
+        /*
+         * Maximum 50 results.
          */
 
         results =
@@ -143,7 +229,29 @@ export async function onRequest(context) {
 
             year: 2022,
 
-            results: results
+            count:
+                results.length,
+
+            results:
+                results.map(
+                    function (item) {
+
+                        return {
+
+                            code:
+                                String(
+                                    item.code
+                                ),
+
+                            title:
+                                String(
+                                    item.title
+                                )
+
+                        };
+
+                    }
+                )
 
         });
 
@@ -155,227 +263,17 @@ export async function onRequest(context) {
             error
         );
 
-        return jsonResponse({
-
-            query: query,
-
-            year: 2022,
-
-            results: []
-
-        });
-
-    }
-}
-
-
-/* =========================================
-   PARSE BLS 2022 TABLE
-========================================= */
-
-function parseBLS2022Table(html) {
-
-    const results = [];
-
-    const seen =
-        new Set();
-
-    /*
-     * Find all table rows.
-     */
-
-    const rowRegex =
-        /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-
-    let rowMatch;
-
-    while (
-        (rowMatch = rowRegex.exec(html)) !== null
-    ) {
-
-        const rowHtml =
-            rowMatch[1];
-
-        /*
-         * Extract cells.
-         */
-
-        const cells = [];
-
-        const cellRegex =
-            /<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi;
-
-        let cellMatch;
-
-        while (
-            (cellMatch =
-                cellRegex.exec(rowHtml)) !== null
-        ) {
-
-            cells.push(
-                cleanCell(
-                    cellMatch[1]
-                )
-            );
-
-        }
-
-        /*
-         * BLS 2022 table format:
-         *
-         * 0 = naics6_code
-         * 1 = naics6_title
-         * 2 = naics5_code
-         * 3 = naics5_title
-         * 4 = naics4_code
-         * 5 = naics4_title
-         */
-
-        if (
-            cells.length < 6
-        ) {
-            continue;
-        }
-
-        const code =
-            cells[0];
-
-        const title =
-            cells[1];
-
-        if (
-            !/^\d{6}$/.test(code)
-        ) {
-            continue;
-        }
-
-        if (
-            !title ||
-            title.length < 2
-        ) {
-            continue;
-        }
-
-        /*
-         * Avoid duplicate entries.
-         */
-
-        if (
-            seen.has(code)
-        ) {
-            continue;
-        }
-
-        seen.add(code);
-
-        results.push({
-
-            code: code,
-
-            title: title,
-
-            year: 2022
-
-        });
-
-    }
-
-    /*
-     * Sort numerically.
-     */
-
-    results.sort(
-        function(a, b) {
-
-            return (
-                Number(a.code) -
-                Number(b.code)
-            );
-
-        }
-    );
-
-    return results;
-}
-
-
-/* =========================================
-   CLEAN CELL
-========================================= */
-
-function cleanCell(value) {
-
-    return decodeHtml(
-        String(value || "")
-
-            .replace(
-                /<script[\s\S]*?<\/script>/gi,
-                " "
-            )
-
-            .replace(
-                /<style[\s\S]*?<\/style>/gi,
-                " "
-            )
-
-            .replace(
-                /<[^>]+>/g,
-                " "
-            )
-
-            .replace(
-                /\s+/g,
-                " "
-            )
-
-            .trim()
-    );
-}
-
-
-/* =========================================
-   HTML ENTITY DECODE
-========================================= */
-
-function decodeHtml(value) {
-
-    return String(value || "")
-
-        .replace(
-            /&nbsp;/gi,
-            " "
-        )
-
-        .replace(
-            /&amp;/gi,
-            "&"
-        )
-
-        .replace(
-            /&quot;/gi,
-            '"'
-        )
-
-        .replace(
-            /&#039;/gi,
-            "'"
-        )
-
-        .replace(
-            /&#39;/gi,
-            "'"
-        )
-
-        .replace(
-            /&lt;/gi,
-            "<"
-        )
-
-        .replace(
-            /&gt;/gi,
-            ">"
+        return jsonResponse(
+            {
+                query: query,
+                year: 2022,
+                count: 0,
+                results: []
+            },
+            500
         );
 
+    }
 }
 
 
@@ -383,14 +281,17 @@ function decodeHtml(value) {
    JSON RESPONSE
 ========================================= */
 
-function jsonResponse(data) {
+function jsonResponse(
+    data,
+    status = 200
+) {
 
     return new Response(
 
         JSON.stringify(data),
 
         {
-            status: 200,
+            status: status,
 
             headers: {
 
@@ -406,5 +307,6 @@ function jsonResponse(data) {
             }
 
         }
+
     );
 }
