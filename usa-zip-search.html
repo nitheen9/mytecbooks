@@ -15,7 +15,7 @@
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. ZIP Codes by ZIP Code or city and area name. Find city, state, latitude and longitude information.">
+      content="Search U.S. ZIP Codes by ZIP Code or city and area name. Find city, state, country, latitude and longitude information.">
 
 <link rel="icon"
       type="image/png"
@@ -26,7 +26,7 @@ U.S. ZIP Code Search - ZIP Code Finder
 </title>
 
 <meta property="og:description"
-      content="Free U.S. ZIP Code Finder. Search ZIP Codes by ZIP Code or city and area name.">
+      content="Free U.S. ZIP Code Finder. Search U.S. ZIP Codes by ZIP Code or city and area name.">
 
 
 <style>
@@ -227,7 +227,6 @@ h1 {
 
 }
 
-.search-card h2,
 .search-card h3 {
 
     margin-top:
@@ -424,12 +423,6 @@ button.search-submit:hover {
 
     line-height:
         1.6;
-
-    color:
-        var(--dark);
-
-    font-weight:
-        bold;
 
 }
 
@@ -788,8 +781,7 @@ or city and area name.
 
 <strong>U.S. ZIP Code Finder:</strong>
 
-Search a ZIP Code directly or search
-for ZIP Codes by city or area name.
+Search by ZIP Code or by city / area name.
 
 </div>
 
@@ -861,7 +853,7 @@ function switchTab(
 
 
 /* =========================
-   ZIP CODE LOOKUP
+   ZIP CODE SEARCH
 ========================= */
 
 function searchZipCode() {
@@ -976,7 +968,9 @@ async function searchCity() {
         const response =
             await fetch(
                 "/usa-zip/zip-search?q=" +
-                encodeURIComponent(input),
+                encodeURIComponent(
+                    input
+                ),
                 {
                     cache:
                         "no-store"
@@ -1049,7 +1043,6 @@ async function searchCity() {
         error.innerText =
             "Unable to search U.S. ZIP Codes.";
 
-
         error.style.display =
             "block";
 
@@ -1093,18 +1086,18 @@ function displayCityResults(
                 ).trim();
 
 
+            const state =
+                String(
+                    item.state || ""
+                ).trim();
+
+
             const stateCode =
                 String(
                     item.stateCode || ""
                 )
                 .trim()
                 .toUpperCase();
-
-
-            const state =
-                String(
-                    item.state || ""
-                ).trim();
 
 
             if (
@@ -1125,17 +1118,7 @@ function displayCityResults(
             }
 
 
-            /*
-             * City and state are plain text.
-             *
-             * They are NOT clickable.
-             *
-             * Only the ZIP Details link
-             * below is clickable.
-             */
-
-
-            let locationText =
+            let location =
                 escapeHtml(
                     place
                 );
@@ -1145,7 +1128,7 @@ function displayCityResults(
                 state
             ) {
 
-                locationText +=
+                location +=
                     ", " +
                     escapeHtml(
                         state
@@ -1158,7 +1141,7 @@ function displayCityResults(
                 stateCode
             ) {
 
-                locationText +=
+                location +=
                     " (" +
                     escapeHtml(
                         stateCode
@@ -1172,7 +1155,6 @@ function displayCityResults(
 
                 '<div class="match-item">' +
 
-
                     '<div class="match-code">' +
 
                         'U.S. ZIP Code ' +
@@ -1183,13 +1165,11 @@ function displayCityResults(
 
                     '</div>' +
 
-
                     '<div class="match-name">' +
 
-                        locationText +
+                        location +
 
                     '</div>' +
-
 
                     '<a ' +
                     'class="details-link" ' +
@@ -1208,7 +1188,6 @@ function displayCityResults(
                         ' Details →' +
 
                     '</a>' +
-
 
                 '</div>';
 
@@ -1267,7 +1246,7 @@ function escapeHtml(
 
 
 /* =========================
-   ENTER KEY - ZIP
+   ENTER - ZIP
 ========================= */
 
 document
@@ -1291,7 +1270,7 @@ document
 
 
 /* =========================
-   ENTER KEY - CITY
+   ENTER - CITY
 ========================= */
 
 document
