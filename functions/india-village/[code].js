@@ -1,17 +1,25 @@
-export async function onRequest(context) {
+const RESOURCE_ID =
+    "c967fe8f-69c4-42df-8afc-8a2c98057437";
 
-    const code =
+
+export async function onRequest(
+    context
+) {
+
+    const villageCode =
         String(
             context.params.code || ""
         ).trim();
 
 
     if (
-        code.length < 2
+        !/^\d+$/.test(
+            villageCode
+        )
     ) {
 
         return notFound(
-            "Invalid village identifier."
+            "Invalid village code."
         );
 
     }
@@ -41,198 +49,173 @@ export async function onRequest(context) {
     }
 
 
-    /*
-     * First try to find the record using
-     * MDDS PLCN / location code.
-     */
-
-    const codeUrl =
-        "https://api.data.gov.in" +
-        "/catalog/fd5ac8e1-32cd-4f74-b95e-fd55b76d53e0" +
-        "?api-key=" +
-        encodeURIComponent(
-            apiKey
-        ) +
-        "&format=json" +
-        "&limit=10" +
-        "&offset=0" +
-        "&filters[mdds_plcn]=" +
-        encodeURIComponent(
-            code
-        );
-
-
     try {
 
+        /*
+         * The resource exposes villageCode
+         * in the actual records.
+         *
+         * We request records using the
+         * state filter only when necessary.
+         *
+         * First try the field filter.
+         */
+
+        const apiUrl =
+            "https://api.data.gov.in/resource/" +
+            RESOURCE_ID +
+            "?api-key=" +
+            encodeURIComponent(
+                apiKey
+            ) +
+            "&format=json" +
+            "&limit=10" +
+            "&offset=0" +
+            "&filters[villageCode]=" +
+            encodeURIComponent(
+                villageCode
+            );
+
+
+        let response =
+            await fetch(
+                apiUrl,
+                {
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+
         let data =
-            await fetchJson(
-                codeUrl
-            );
+            null;
 
-
-        let records =
-            getRecords(
-                data
-            );
-
-
-        /*
-         * Some records may use a different
-         * code field, so check them.
-         */
-
-        let record =
-            findRecordByCode(
-                records,
-                code
-            );
-
-
-        /*
-         * If code lookup did not find the
-         * record, try document_id.
-         */
 
         if (
-            !record
+            response.ok
         ) {
 
-            const documentUrl =
-                "https://api.data.gov.in" +
-                "/catalog/fd5ac8e1-32cd-4f74-b95e-fd55b76d53e0" +
-                "?api-key=" +
-                encodeURIComponent(
-                    apiKey
-                ) +
-                "&format=json" +
-                "&limit=10" +
-                "&offset=0" +
-                "&filters[document_id]=" +
-                encodeURIComponent(
-                    code
-                );
-
-
             data =
-                await fetchJson(
-                    documentUrl
-                );
-
-
-            records =
-                getRecords(
-                    data
-                );
-
-
-            record =
-                findRecordByCode(
-                    records,
-                    code
-                );
+                await response.json();
 
         }
 
+
+        let records =
+            data &&
+            Array.isArray(
+                data.records
+            )
+                ? data.records
+                : [];
+
+
+        let record =
+            findVillage(
+                records,
+                villageCode
+            );
+
+
+        /*
+         * If villageCode is not accepted as
+         * a public filter, return a clear
+         * not-found result rather than showing
+         * the wrong village.
+         */
 
         if (
             !record
         ) {
 
             return notFound(
-                "Village information was not found."
+                "Village " +
+                villageCode +
+                " was not found."
             );
 
         }
 
 
         const village =
-            getField(
-                record,
-                [
-                    "area_name",
-                    "AREA NAME",
-                    "Village Name",
-                    "VILLAGE NAME",
-                    "village_name",
-                    "village",
-                    "VILLAGE",
-                    "Town/Village Name"
-                ]
-            );
+            String(
+                record[
+                    "villageNameEnglish"
+                ] ||
+                ""
+            ).trim();
 
 
         const state =
-            getField(
-                record,
-                [
-                    "state_name",
-                    "STATE NAME",
-                    "State Name",
-                    "state"
-                ]
-            );
+            String(
+                record[
+                    "stateNameEnglish"
+                ] ||
+                ""
+            ).trim();
 
 
         const district =
-            getField(
-                record,
-                [
-                    "district_name",
-                    "DISTRICT NAME",
-                    "District Name",
-                    "district"
-                ]
-            );
+            String(
+                record[
+                    "districtNameEnglish"
+                ] ||
+                ""
+            ).trim();
 
 
         const subDistrict =
-            getField(
-                record,
-                [
-                    "sub_district_name",
-                    "SUB-DISTRICT NAME",
-                    "Sub-District Name",
-                    "sub_district"
-                ]
-            );
+            String(
+                record[
+                    "subDistrictNameEnglish"
+                ] ||
+                ""
+            ).trim();
 
 
-        const villageCode =
-            getField(
-                record,
-                [
-                    "mdds_plcn",
-                    "MDDS PLCN",
-                    "village_code",
-                    "VILLAGE CODE",
-                    "Village Code",
-                    "town_village_code",
-                    "Town Village Code"
-                ]
-            ) ||
-            code;
+        const villageCensusCode =
+            String(
+                record[
+                    "villageCensus2011Code"
+                ] ??
+                ""
+            ).trim();
 
 
-        if (
-            !village
-        ) {
-
-            return notFound(
-                "Village information was not found."
-            );
-
-        }
+        const lgdVillageCode =
+            String(
+                record[
+                    "villageCode"
+                ] ??
+                villageCode
+            ).trim();
 
 
         return new Response(
 
-            createPage(
-                village,
-                state,
-                district,
-                subDistrict,
-                villageCode
-            ),
+            createPage({
+
+                village:
+                    village,
+
+                state:
+                    state,
+
+                district:
+                    district,
+
+                subDistrict:
+                    subDistrict,
+
+                villageCode:
+                    lgdVillageCode,
+
+                villageCensusCode:
+                    villageCensusCode
+
+            }),
 
             {
 
@@ -257,7 +240,7 @@ export async function onRequest(context) {
     catch (error) {
 
         console.error(
-            "India village detail error:",
+            "LGD village detail error:",
             error
         );
 
@@ -281,27 +264,101 @@ export async function onRequest(context) {
 
 
 /* =========================================
+   FIND VILLAGE
+========================================= */
+
+function findVillage(
+    records,
+    villageCode
+) {
+
+    for (
+        const record of records
+    ) {
+
+        const code =
+            String(
+                record[
+                    "villageCode"
+                ] ??
+                ""
+            ).trim();
+
+
+        if (
+            code ===
+            villageCode
+        ) {
+
+            return record;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================
    CREATE PAGE
 ========================================= */
 
 function createPage(
-    village,
-    state,
-    district,
-    subDistrict,
-    villageCode
+    data
 ) {
 
+    const village =
+        escapeHtml(
+            data.village
+        );
+
+
+    const state =
+        escapeHtml(
+            data.state ||
+            "India"
+        );
+
+
+    const district =
+        escapeHtml(
+            data.district ||
+            "Not available"
+        );
+
+
+    const subDistrict =
+        escapeHtml(
+            data.subDistrict ||
+            "Not available"
+        );
+
+
+    const villageCode =
+        escapeHtml(
+            data.villageCode
+        );
+
+
+    const censusCode =
+        escapeHtml(
+            data.villageCensusCode ||
+            "Not available"
+        );
+
+
     const title =
-        village +
+        data.village +
         " Village, " +
-        state;
+        data.state;
 
 
     const description =
-        "Information for " +
-        village +
-        " village including State, District, Sub-District and village code.";
+        data.village +
+        " village information including State, District, Sub-District, LGD Village Code and Census 2011 village code.";
 
 
     return `<!DOCTYPE html>
@@ -329,7 +386,6 @@ href="/favicon.png">
 ${escapeHtml(title)}
 </title>
 
-
 <style>
 
 :root {
@@ -348,7 +404,6 @@ ${escapeHtml(title)}
 body {
 
     margin:0;
-
     padding:20px;
 
     font-family:
@@ -369,53 +424,42 @@ body {
 
 .container {
 
-    max-width:
-        850px;
+    max-width:850px;
 
-    margin:
-        0 auto;
+    margin:0 auto;
 
 }
 
 h1 {
 
-    text-align:
-        center;
+    text-align:center;
 
     margin:
         10px 0 12px;
 
-    font-size:
-        30px;
+    font-size:30px;
 
 }
 
 .subtitle {
 
-    text-align:
-        center;
+    text-align:center;
 
-    color:
-        #666;
+    color:#666;
 
-    line-height:
-        1.6;
+    line-height:1.6;
 
-    margin-bottom:
-        25px;
+    margin-bottom:25px;
 
 }
 
 .card {
 
-    background:
-        #fff;
+    background:#fff;
 
-    padding:
-        28px;
+    padding:28px;
 
-    border-radius:
-        12px;
+    border-radius:12px;
 
     box-shadow:
         0 4px 18px
@@ -429,111 +473,87 @@ h1 {
 
 .card h2 {
 
-    margin-top:
-        0;
+    margin-top:0;
 
-    color:
-        #333;
+    color:#333;
 
 }
 
 .data-row {
 
-    padding:
-        15px 0;
+    padding:15px 0;
 
     border-bottom:
         1px solid
         var(--border);
 
-    line-height:
-        1.7;
+    line-height:1.7;
 
 }
 
 .data-row:last-child {
 
-    border-bottom:
-        none;
+    border-bottom:none;
 
 }
 
 .label {
 
-    display:
-        block;
+    display:block;
 
-    font-weight:
-        700;
+    font-weight:700;
 
-    margin-bottom:
-        4px;
+    margin-bottom:4px;
 
 }
 
 .code {
 
-    display:
-        inline-block;
+    display:inline-block;
 
     background:
         var(--dark);
 
-    color:
-        #fff;
+    color:#fff;
 
-    padding:
-        7px 12px;
+    padding:7px 12px;
 
-    border-radius:
-        6px;
+    border-radius:6px;
 
-    font-weight:
-        700;
+    font-weight:700;
 
-    letter-spacing:
-        1px;
+    letter-spacing:1px;
 
 }
 
 .back {
 
-    display:
-        inline-block;
+    display:inline-block;
 
-    margin-top:
-        25px;
+    margin-top:25px;
 
-    padding:
-        12px 18px;
+    padding:12px 18px;
 
     background:
         var(--dark);
 
-    color:
-        #fff;
+    color:#fff;
 
-    text-decoration:
-        none;
+    text-decoration:none;
 
-    border-radius:
-        7px;
+    border-radius:7px;
 
-    font-weight:
-        700;
+    font-weight:700;
 
 }
 
 footer {
 
-    text-align:
-        center;
+    text-align:center;
 
-    color:
-        #777;
+    color:#777;
 
-    font-size:
-        13px;
+    font-size:13px;
 
     margin:
         30px 0 10px;
@@ -566,17 +586,12 @@ footer {
 
 
 <h1>
-🇮🇳 ${escapeHtml(village)} Village
+🇮🇳 ${village} Village
 </h1>
 
 
 <p class="subtitle">
-
-${escapeHtml(
-    state ||
-    "India"
-)}
-
+${state}
 </p>
 
 
@@ -584,7 +599,7 @@ ${escapeHtml(
 
 
 <h2>
-📍 ${escapeHtml(village)}
+📍 ${village}
 </h2>
 
 
@@ -594,7 +609,7 @@ ${escapeHtml(
 Village Name
 </span>
 
-${escapeHtml(village)}
+${village}
 
 </div>
 
@@ -605,10 +620,7 @@ ${escapeHtml(village)}
 State
 </span>
 
-${escapeHtml(
-    state ||
-    "Not available"
-)}
+${state}
 
 </div>
 
@@ -619,10 +631,7 @@ ${escapeHtml(
 District
 </span>
 
-${escapeHtml(
-    district ||
-    "Not available"
-)}
+${district}
 
 </div>
 
@@ -633,10 +642,7 @@ ${escapeHtml(
 Sub-District
 </span>
 
-${escapeHtml(
-    subDistrict ||
-    "Not available"
-)}
+${subDistrict}
 
 </div>
 
@@ -644,16 +650,23 @@ ${escapeHtml(
 <div class="data-row">
 
 <span class="label">
-Village Code
+LGD Village Code
 </span>
 
 <span class="code">
-
-${escapeHtml(
-    villageCode
-)}
-
+${villageCode}
 </span>
+
+</div>
+
+
+<div class="data-row">
+
+<span class="label">
+Census 2011 Village Code
+</span>
+
+${censusCode}
 
 </div>
 
@@ -682,277 +695,6 @@ India Village Finder
 </body>
 
 </html>`;
-}
-
-
-/* =========================================
-   FIND RECORD BY CODE
-========================================= */
-
-function findRecordByCode(
-    records,
-    code
-) {
-
-    for (
-        const record of records
-    ) {
-
-        const possibleCodes = [
-
-            getField(
-                record,
-                [
-                    "mdds_plcn",
-                    "MDDS PLCN",
-                    "village_code",
-                    "VILLAGE CODE",
-                    "Village Code",
-                    "town_village_code",
-                    "Town Village Code"
-                ]
-            ),
-
-            getField(
-                record,
-                [
-                    "document_id",
-                    "DOCUMENT ID",
-                    "Document ID"
-                ]
-            )
-
-        ];
-
-
-        if (
-            possibleCodes.some(
-                function(value) {
-
-                    return (
-                        String(
-                            value
-                        ).trim() ===
-                        String(
-                            code
-                        ).trim()
-                    );
-
-                }
-            )
-        ) {
-
-            return record;
-
-        }
-
-    }
-
-
-    return null;
-
-}
-
-
-/* =========================================
-   FETCH JSON
-========================================= */
-
-async function fetchJson(
-    url
-) {
-
-    const response =
-        await fetch(
-            url,
-            {
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        );
-
-
-    if (
-        !response.ok
-    ) {
-
-        const text =
-            await response.text();
-
-
-        throw new Error(
-            "data.gov.in HTTP " +
-            response.status +
-            ": " +
-            text
-        );
-
-    }
-
-
-    return await response.json();
-
-}
-
-
-/* =========================================
-   GET RECORDS
-========================================= */
-
-function getRecords(
-    data
-) {
-
-    if (
-        Array.isArray(data)
-    ) {
-
-        return data;
-
-    }
-
-
-    if (
-        data &&
-        Array.isArray(
-            data.records
-        )
-    ) {
-
-        return data.records;
-
-    }
-
-
-    if (
-        data &&
-        Array.isArray(
-            data.data
-        )
-    ) {
-
-        return data.data;
-
-    }
-
-
-    if (
-        data &&
-        Array.isArray(
-            data.results
-        )
-    ) {
-
-        return data.results;
-
-    }
-
-
-    return [];
-
-}
-
-
-/* =========================================
-   GET FIELD
-========================================= */
-
-function getField(
-    record,
-    names
-) {
-
-    if (
-        !record ||
-        typeof record !== "object"
-    ) {
-
-        return "";
-
-    }
-
-
-    for (
-        const name of names
-    ) {
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                record,
-                name
-            )
-        ) {
-
-            const value =
-                record[name];
-
-
-            if (
-                value !== null &&
-                value !== undefined &&
-                String(value).trim() !== ""
-            ) {
-
-                return String(
-                    value
-                ).trim();
-
-            }
-
-        }
-
-    }
-
-
-    const keys =
-        Object.keys(record);
-
-
-    for (
-        const wanted of names
-    ) {
-
-        const found =
-            keys.find(
-                function(key) {
-
-                    return (
-                        key.toLowerCase() ===
-                        wanted.toLowerCase()
-                    );
-
-                }
-            );
-
-
-        if (
-            found
-        ) {
-
-            const value =
-                record[found];
-
-
-            if (
-                value !== null &&
-                value !== undefined &&
-                String(value).trim() !== ""
-            ) {
-
-                return String(
-                    value
-                ).trim();
-
-            }
-
-        }
-
-    }
-
-
-    return "";
 
 }
 
@@ -996,30 +738,24 @@ body {
     background:
         #f9f9fb;
 
+    text-align:center;
+
     padding:
         40px 20px;
-
-    text-align:
-        center;
 
 }
 
 .box {
 
-    max-width:
-        650px;
+    max-width:650px;
 
-    margin:
-        auto;
+    margin:auto;
 
-    background:
-        #fff;
+    background:#fff;
 
-    padding:
-        30px;
+    padding:30px;
 
-    border-radius:
-        12px;
+    border-radius:12px;
 
     box-shadow:
         0 4px 18px
@@ -1027,35 +763,23 @@ body {
 
 }
 
-h1 {
-    color:#1e1e24;
-}
-
 a {
 
-    display:
-        inline-block;
+    display:inline-block;
 
-    margin-top:
-        20px;
+    margin-top:20px;
 
-    padding:
-        12px 18px;
+    padding:12px 18px;
 
-    background:
-        #f48120;
+    background:#f48120;
 
-    color:
-        #fff;
+    color:#fff;
 
-    text-decoration:
-        none;
+    text-decoration:none;
 
-    border-radius:
-        7px;
+    border-radius:7px;
 
-    font-weight:
-        bold;
+    font-weight:bold;
 
 }
 
