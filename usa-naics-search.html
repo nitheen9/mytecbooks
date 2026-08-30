@@ -1,1083 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<meta name="google-site-verification"
-      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
-
-<meta name="robots"
-      content="index, follow">
-
-<meta name="description"
-      content="Search 2022 U.S. NAICS six-digit codes by code number or industry description. Find official North American Industry Classification System codes and industry details.">
-
-<link rel="icon"
-      type="image/png"
-      href="/favicon.png">
-
-<title>
-U.S. NAICS Code Search - Industry Classification Finder
-</title>
-
-<meta property="og:description"
-      content="Free U.S. NAICS Code Search. Find 2022 six-digit NAICS codes, industry descriptions and classification details.">
-
-
-<!-- Google Analytics -->
-
-<script async
-src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
-</script>
-
-<script>
-
-window.dataLayer =
-    window.dataLayer || [];
-
-function gtag() {
-
-    dataLayer.push(arguments);
-
-}
-
-gtag('js', new Date());
-
-gtag('config', 'G-BP9YJW8LB9');
-
-</script>
-
-
-<style>
-
-:root {
-
-    --primary: #f48120;
-    --dark: #1e1e24;
-    --light: #f9f9fb;
-    --border: #e0e0e6;
-    --white: #ffffff;
-
-}
-
-* {
-
-    box-sizing: border-box;
-
-}
-
-body {
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Arial,
-        sans-serif;
-
-    background:
-        var(--light);
-
-    color:
-        var(--dark);
-
-    margin:
-        0;
-
-    padding:
-        20px;
-
-}
-
-.container {
-
-    max-width:
-        850px;
-
-    margin:
-        0 auto;
-
-}
-
-h1 {
-
-    text-align:
-        center;
-
-    color:
-        var(--dark);
-
-    margin:
-        10px 0 30px;
-
-    font-size:
-        30px;
-
-}
-
-.intro {
-
-    text-align:
-        center;
-
-    color:
-        #666;
-
-    margin-top:
-        -15px;
-
-    margin-bottom:
-        25px;
-
-    line-height:
-        1.6;
-
-}
-
-
-/* =========================
-   TABS
-========================= */
-
-.tabs {
-
-    display:
-        flex;
-
-    gap:
-        10px;
-
-    margin-bottom:
-        20px;
-
-    justify-content:
-        center;
-
-}
-
-.tab-btn {
-
-    padding:
-        12px 24px;
-
-    font-weight:
-        bold;
-
-    border:
-        none;
-
-    background:
-        #e0e0e6;
-
-    color:
-        #333;
-
-    cursor:
-        pointer;
-
-    border-radius:
-        6px;
-
-    font-size:
-        15px;
-
-    transition:
-        0.2s;
-
-}
-
-.tab-btn:hover {
-
-    background:
-        #d3d3d9;
-
-}
-
-.tab-btn.active {
-
-    background:
-        var(--primary);
-
-    color:
-        white;
-
-}
-
-
-/* =========================
-   SEARCH CARD
-========================= */
-
-.search-card {
-
-    background:
-        white;
-
-    padding:
-        25px;
-
-    border-radius:
-        12px;
-
-    box-shadow:
-        0 4px 15px
-        rgba(0,0,0,0.05);
-
-    margin-bottom:
-        25px;
-
-}
-
-.search-card h2,
-.search-card h3 {
-
-    margin-top:
-        0;
-
-}
-
-.search-card p {
-
-    color:
-        #666;
-
-    line-height:
-        1.6;
-
-}
-
-
-/* =========================
-   SEARCH BOX
-========================= */
-
-.search-box {
-
-    display:
-        flex;
-
-    gap:
-        10px;
-
-    margin-top:
-        15px;
-
-}
-
-input {
-
-    flex:
-        1;
-
-    padding:
-        14px;
-
-    border:
-        2px solid
-        var(--border);
-
-    border-radius:
-        8px;
-
-    font-size:
-        16px;
-
-    outline:
-        none;
-
-    min-width:
-        0;
-
-}
-
-input:focus {
-
-    border-color:
-        var(--primary);
-
-}
-
-button.search-submit {
-
-    padding:
-        14px 28px;
-
-    background:
-        var(--dark);
-
-    color:
-        white;
-
-    border:
-        none;
-
-    border-radius:
-        8px;
-
-    font-weight:
-        bold;
-
-    cursor:
-        pointer;
-
-    font-size:
-        16px;
-
-}
-
-button.search-submit:hover {
-
-    background:
-        #333;
-
-}
-
-
-/* =========================
-   PANELS
-========================= */
-
-.panel {
-
-    display:
-        none;
-
-}
-
-.panel.active {
-
-    display:
-        block;
-
-}
-
-
-/* =========================
-   RESULTS
-========================= */
-
-.results {
-
-    margin-top:
-        20px;
-
-    padding:
-        20px;
-
-    border-radius:
-        8px;
-
-    background:
-        #f1f1f6;
-
-    display:
-        none;
-
-    border-left:
-        5px solid
-        var(--primary);
-
-}
-
-.results h4 {
-
-    margin-top:
-        0;
-
-    margin-bottom:
-        20px;
-
-    font-size:
-        18px;
-
-}
-
-
-/* =========================
-   ERROR
-========================= */
-
-.error {
-
-    color:
-        #d9383a;
-
-    font-weight:
-        bold;
-
-    background:
-        #fde8e8;
-
-    padding:
-        15px;
-
-    border-radius:
-        6px;
-
-    display:
-        none;
-
-    margin-top:
-        20px;
-
-}
-
-
-/* =========================
-   MATCH ITEMS
-========================= */
-
-.match-item {
-
-    background:
-        white;
-
-    padding:
-        15px;
-
-    margin-bottom:
-        10px;
-
-    border-radius:
-        7px;
-
-    border:
-        1px solid
-        var(--border);
-
-}
-
-.match-item:last-child {
-
-    margin-bottom:
-        0;
-
-}
-
-.match-code {
-
-    font-weight:
-        bold;
-
-    color:
-        var(--primary);
-
-}
-
-.match-name {
-
-    margin-top:
-        5px;
-
-    line-height:
-        1.5;
-
-}
-
-.match-item a {
-
-    display:
-        inline-block;
-
-    margin-top:
-        8px;
-
-    color:
-        var(--dark);
-
-    font-weight:
-        bold;
-
-    text-decoration:
-        none;
-
-}
-
-.match-item a:hover {
-
-    text-decoration:
-        underline;
-
-}
-
-
-/* =========================
-   LOADING
-========================= */
-
-.loading {
-
-    color:
-        #555;
-
-    font-weight:
-        bold;
-
-}
-
-
-/* =========================
-   INFO
-========================= */
-
-.info {
-
-    margin-top:
-        15px;
-
-    padding:
-        12px 15px;
-
-    background:
-        #fff8ef;
-
-    border-left:
-        4px solid
-        var(--primary);
-
-    border-radius:
-        6px;
-
-    color:
-        #666;
-
-    font-size:
-        14px;
-
-    line-height:
-        1.6;
-
-}
-
-
-/* =========================
-   FOOTER
-========================= */
-
-footer {
-
-    text-align:
-        center;
-
-    color:
-        #777;
-
-    font-size:
-        13px;
-
-    margin:
-        30px 0 10px;
-
-    line-height:
-        1.6;
-
-}
-
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 600px) {
-
-    body {
-
-        padding:
-            12px;
-
-    }
-
-    h1 {
-
-        font-size:
-            24px;
-
-    }
-
-    .tabs {
-
-        flex-direction:
-            column;
-
-    }
-
-    .tab-btn {
-
-        width:
-            100%;
-
-    }
-
-    .search-box {
-
-        flex-direction:
-            column;
-
-    }
-
-    button.search-submit {
-
-        width:
-            100%;
-
-    }
-
-    .search-card {
-
-        padding:
-            18px;
-
-    }
-
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-<div class="container">
-
-
-<h1>
-🇺🇸 U.S. NAICS Code Finder
-</h1>
-
-
-<p class="intro">
-
-Search United States North American Industry Classification
-System (NAICS) codes by code number or industry description.
-
-</p>
-
-
-<!-- =========================
-     TABS
-========================= -->
-
-<div class="tabs">
-
-    <button
-        class="tab-btn active"
-        onclick="switchTab('code', this)">
-
-        🔢 NAICS Code Lookup
-
-    </button>
-
-
-    <button
-        class="tab-btn"
-        onclick="switchTab('description', this)">
-
-        🔎 Industry Search
-
-    </button>
-
-</div>
-
-
-<!-- =========================
-     CODE SEARCH
-========================= -->
-
-<div
-    id="code-panel"
-    class="panel active search-card">
-
-
-    <h3>
-        Search U.S. NAICS Code
-    </h3>
-
-
-    <p>
-
-        Enter a 6-digit 2022 U.S. NAICS code
-        to view the industry classification details.
-
-    </p>
-
-
-    <div class="search-box">
-
-        <input
-            type="text"
-            id="codeInput"
-            placeholder="Enter NAICS code e.g. 513210"
-            maxlength="6"
-            inputmode="numeric"
-            autocomplete="off">
-
-
-        <button
-            class="search-submit"
-            onclick="searchNAICSCode()">
-
-            Search
-
-        </button>
-
-    </div>
-
-
-    <div
-        id="code-error"
-        class="error">
-    </div>
-
-
-    <div
-        id="code-results"
-        class="results">
-    </div>
-
-
-</div>
-
-
-<!-- =========================
-     DESCRIPTION SEARCH
-========================= -->
-
-<div
-    id="description-panel"
-    class="panel search-card">
-
-
-    <h3>
-        Search U.S. NAICS Industry
-    </h3>
-
-
-    <p>
-
-        Enter an industry name or description
-        to find matching 2022 six-digit U.S. NAICS codes.
-
-    </p>
-
-
-    <div class="search-box">
-
-        <input
-            type="text"
-            id="descriptionInput"
-            placeholder="Enter industry e.g. software"
-            autocomplete="off">
-
-
-        <button
-            class="search-submit"
-            onclick="searchDescription()">
-
-            Search
-
-        </button>
-
-    </div>
-
-
-    <div
-        id="description-error"
-        class="error">
-    </div>
-
-
-    <div
-        id="description-results"
-        class="results">
-    </div>
-
-
-</div>
-
-
-<div class="info">
-
-<strong>2022 NAICS only:</strong>
-
-This finder searches only the
-official 2022 six-digit U.S. NAICS code list.
-
-</div>
-
-
-<footer>
-
-U.S. NAICS Code Search<br>
-
-2022 North American Industry Classification System
-
-<br><br>
-
-Data source:
-U.S. Census Bureau 2022 NAICS
-
-</footer>
-
-
-</div>
-
-
-<script>
-
-
-/* =========================
-   TAB SWITCH
-========================= */
-
-function switchTab(
-    tabName,
-    button
-) {
-
-    document
-        .querySelectorAll(".panel")
-        .forEach(
-            function(panel) {
-
-                panel.classList.remove(
-                    "active"
-                );
-
-            }
-        );
-
-
-    document
-        .querySelectorAll(".tab-btn")
-        .forEach(
-            function(btn) {
-
-                btn.classList.remove(
-                    "active"
-                );
-
-            }
-        );
-
-
-    document
-        .getElementById(
-            tabName + "-panel"
-        )
-        .classList.add(
-            "active"
-        );
-
-
-    button.classList.add(
-        "active"
-    );
-
-}
-
-
-/* =========================
-   SEARCH NAICS CODE
-========================= */
-
 function searchNAICSCode() {
 
     const input =
         document
-        .getElementById(
-            "codeInput"
-        )
+        .getElementById("codeInput")
         .value
         .trim();
 
-
     const error =
         document
-        .getElementById(
-            "code-error"
-        );
+        .getElementById("code-error");
 
+    error.style.display = "none";
 
-    const results =
-        document
-        .getElementById(
-            "code-results"
-        );
-
-
-    error.style.display =
-        "none";
-
-
-    results.style.display =
-        "none";
-
-
-    /*
-     * ONLY six-digit codes.
-     */
-
-    if (
-        !/^\d{6}$/.test(input)
-    ) {
+    if (!/^\d{6}$/.test(input)) {
 
         error.innerText =
             "Please enter a valid 6-digit 2022 U.S. NAICS code.";
 
-        error.style.display =
-            "block";
+        error.style.display = "block";
 
         return;
-
     }
 
-
-    results.innerHTML =
-        '<div class="loading">' +
-        '🔄 Searching 2022 U.S. NAICS code...' +
-        '</div>';
-
-
-    results.style.display =
-        "block";
-
-
-    /*
-     * Your Cloudflare route:
-     *
-     * /usa-naics/513210/
-     */
-
-    fetch(
+    window.location.href =
         "/usa-naics/" +
         encodeURIComponent(input) +
-        "/",
-        {
-            cache:
-                "no-store"
-        }
-    )
-    .then(
-        function(response) {
-
-            if (
-                !response.ok
-            ) {
-
-                throw new Error(
-                    "NAICS code not found"
-                );
-
-            }
-
-            /*
-             * Redirect after successful
-             * request.
-             */
-
-            window.location.href =
-                "/usa-naics/" +
-                encodeURIComponent(input) +
-                "/";
-
-        }
-    )
-    .catch(
-        function(errorObject) {
-
-            console.error(
-                "NAICS code search error:",
-                errorObject
-            );
-
-
-            results.style.display =
-                "none";
-
-
-            error.innerText =
-                "U.S. NAICS code " +
-                input +
-                " was not found in the 2022 classification.";
-
-
-            error.style.display =
-                "block";
-
-        }
-    );
-
+        "/";
 }
 
-
-/* =========================
-   SEARCH INDUSTRY
-========================= */
 
 async function searchDescription() {
 
     const input =
         document
-        .getElementById(
-            "descriptionInput"
-        )
+        .getElementById("descriptionInput")
         .value
         .trim();
 
-
     const error =
         document
-        .getElementById(
-            "description-error"
-        );
-
+        .getElementById("description-error");
 
     const results =
         document
-        .getElementById(
-            "description-results"
-        );
+        .getElementById("description-results");
 
+    error.style.display = "none";
+    results.style.display = "none";
 
-    error.style.display =
-        "none";
-
-
-    results.style.display =
-        "none";
-
-
-    if (
-        input.length < 2
-    ) {
+    if (input.length < 2) {
 
         error.innerText =
             "Please enter at least 2 characters.";
 
-        error.style.display =
-            "block";
+        error.style.display = "block";
 
         return;
-
     }
 
-
     results.innerHTML =
-        '<div class="loading">' +
-        '🔄 Searching 2022 U.S. NAICS industries...' +
-        '</div>';
+        '<div class="loading">🔄 Searching 2022 U.S. NAICS industries...</div>';
 
-
-    results.style.display =
-        "block";
-
+    results.style.display = "block";
 
     try {
 
@@ -1086,41 +70,35 @@ async function searchDescription() {
                 "/usa-naics/naics-search?q=" +
                 encodeURIComponent(input),
                 {
-                    cache:
-                        "no-store"
+                    cache: "no-store"
                 }
             );
 
-
-        if (
-            !response.ok
-        ) {
+        if (!response.ok) {
 
             throw new Error(
                 "Search failed"
             );
-
         }
-
 
         const data =
             await response.json();
 
-
         if (
             !data ||
-            !Array.isArray(
-                data.results
-            ) ||
+            !Array.isArray(data.results) ||
             data.results.length === 0
         ) {
 
-            throw new Error(
-                "No results"
-            );
+            results.style.display = "none";
 
+            error.innerText =
+                "No matching 2022 U.S. NAICS industries found.";
+
+            error.style.display = "block";
+
+            return;
         }
-
 
         displayDescriptionResults(
             data.results,
@@ -1129,8 +107,6 @@ async function searchDescription() {
         );
 
     }
-
-
     catch (errorObject) {
 
         console.error(
@@ -1138,25 +114,15 @@ async function searchDescription() {
             errorObject
         );
 
-
-        results.style.display =
-            "none";
-
+        results.style.display = "none";
 
         error.innerText =
-            "No matching 2022 U.S. NAICS industries found.";
+            "Unable to search the 2022 U.S. NAICS database.";
 
-        error.style.display =
-            "block";
-
+        error.style.display = "block";
     }
-
 }
 
-
-/* =========================
-   DISPLAY SEARCH RESULTS
-========================= */
 
 function displayDescriptionResults(
     items,
@@ -1165,188 +131,66 @@ function displayDescriptionResults(
 ) {
 
     let html =
-        "";
-
-
-    html +=
-        '<h4>' +
-        '🔎 2022 U.S. NAICS Results for "' +
+        '<h4>🔎 2022 U.S. NAICS Results for "' +
         escapeHtml(searchText) +
-        '"' +
-        '</h4>';
+        '"</h4>';
 
+    items.forEach(function(item) {
 
-    items.forEach(
-        function(item) {
+        const code =
+            String(item.code || "");
 
-            const code =
-                item.code ||
-                "";
+        const title =
+            String(item.title || "");
 
+        if (
+            !/^\d{6}$/.test(code) ||
+            !title
+        ) {
 
-            const title =
-                item.title ||
-                item.description ||
-                "";
-
-
-            /*
-             * ONLY SIX DIGIT CODES.
-             */
-
-            if (
-                !/^\d{6}$/.test(
-                    String(code)
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-                !title
-            ) {
-
-                return;
-
-            }
-
-
-            html +=
-
-                '<div class="match-item">' +
-
-                    '<div class="match-code">' +
-
-                        'U.S. NAICS ' +
-
-                        escapeHtml(code) +
-
-                    '</div>' +
-
-                    '<div class="match-name">' +
-
-                        escapeHtml(title) +
-
-                    '</div>' +
-
-                    '<a href="/usa-naics/' +
-
-                        encodeURIComponent(code) +
-
-                        '/">' +
-
-                        'View NAICS ' +
-
-                        escapeHtml(code) +
-
-                        ' Details →' +
-
-                    '</a>' +
-
-                '</div>';
-
+            return;
         }
-    );
 
+        html +=
+            '<div class="match-item">' +
+
+                '<div class="match-code">' +
+                    'U.S. NAICS ' +
+                    escapeHtml(code) +
+                '</div>' +
+
+                '<div class="match-name">' +
+                    escapeHtml(title) +
+                '</div>' +
+
+                '<a href="/usa-naics/' +
+                    encodeURIComponent(code) +
+                    '/">' +
+
+                    'View NAICS ' +
+                    escapeHtml(code) +
+                    ' Details →' +
+
+                '</a>' +
+
+            '</div>';
+
+    });
 
     results.innerHTML =
         html;
 
-
     results.style.display =
         "block";
-
 }
 
 
-/* =========================
-   HTML ESCAPE
-========================= */
+function escapeHtml(value) {
 
-function escapeHtml(
-    value
-) {
-
-    return String(
-        value ?? ""
-    )
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
-
-
-/* =========================
-   ENTER KEY
-========================= */
-
-document
-    .getElementById(
-        "codeInput"
-    )
-    .addEventListener(
-        "keydown",
-        function(event) {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                searchNAICSCode();
-
-            }
-
-        }
-    );
-
-
-document
-    .getElementById(
-        "descriptionInput"
-    )
-    .addEventListener(
-        "keydown",
-        function(event) {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                searchDescription();
-
-            }
-
-        }
-    );
-
-</script>
-
-</body>
-
-</html>
