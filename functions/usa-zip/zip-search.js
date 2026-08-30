@@ -1,145 +1,143 @@
+const STATES = [
+    "al","ak","az","ar","ca","co","ct","de","fl","ga",
+    "hi","id","il","in","ia","ks","ky","la","me","md",
+    "ma","mi","mn","ms","mo","mt","ne","nv","nh","nj",
+    "nm","ny","nc","nd","oh","ok","or","pa","ri","sc",
+    "sd","tn","tx","ut","vt","va","wa","wv","wi","wy",
+    "dc"
+];
+
 export async function onRequest(context) {
 
-    const requestUrl =
-        new URL(
-            context.request.url
-        );
-
-
-    const state =
-        (
-            requestUrl.searchParams.get(
-                "state"
-            ) ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
+    const url =
+        new URL(context.request.url);
 
     const city =
         (
-            requestUrl.searchParams.get(
-                "city"
-            ) ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
+            url.searchParams.get("q") || ""
+        ).trim();
 
-
-    if (
-        !/^[a-z]{2}$/.test(state)
-    ) {
+    if (city.length < 2) {
 
         return jsonResponse(
             {
-                query:
-                    city,
-
-                state:
-                    state,
-
-                count:
-                    0,
-
-                results:
-                    []
+                query: city,
+                count: 0,
+                results: []
             },
             400
         );
 
     }
-
-
-    if (
-        city.length < 2
-    ) {
-
-        return jsonResponse(
-            {
-                query:
-                    city,
-
-                state:
-                    state,
-
-                count:
-                    0,
-
-                results:
-                    []
-            },
-            400
-        );
-
-    }
-
-
-    /*
-     * Zippopotam.us city/state API
-     *
-     * Example:
-     *
-     * /us/ca/wishon
-     */
-
-    const apiUrl =
-        "https://api.zippopotam.us/us/" +
-        encodeURIComponent(state) +
-        "/" +
-        encodeURIComponent(city);
-
 
     try {
 
-        const response =
-            await fetch(
-                apiUrl,
-                {
-                    headers: {
+        const requests =
+            STATES.map(
+                async function(state) {
 
-                        "Accept":
-                            "application/json"
+                    const apiUrl =
+                        "https://api.zippopotam.us/us/" +
+                        state +
+                        "/" +
+                        encodeURIComponent(city);
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                apiUrl,
+                                {
+                                    headers: {
+                                        "Accept":
+                                            "application/json"
+                                    }
+                                }
+                            );
+
+                        if (!response.ok) {
+                            return [];
+                        }
+
+                        const data =
+                            await response.json();
+
+                        if (
+                            !data ||
+                            !Array.isArray(
+                                data.places
+                            )
+                        ) {
+                            return [];
+                        }
+
+                        return data.places.map(
+                            function(place) {
+
+                                return {
+
+                                    code:
+                                        String(
+                                            place[
+                                                "post code"
+                                            ] || ""
+                                        ).trim(),
+
+                                    place:
+                                        String(
+                                            place[
+                                                "place name"
+                                            ] || ""
+                                        ).trim(),
+
+                                    state:
+                                        String(
+                                            place.state ||
+                                            ""
+                                        ).trim(),
+
+                                    stateCode:
+                                        String(
+                                            place[
+                                                "state abbreviation"
+                                            ] ||
+                                            state
+                                        )
+                                        .trim()
+                                        .toUpperCase(),
+
+                                    latitude:
+                                        place.latitude ??
+                                        "",
+
+                                    longitude:
+                                        place.longitude ??
+                                        ""
+
+                                };
+
+                            }
+                        );
 
                     }
+                    catch (error) {
+
+                        return [];
+
+                    }
+
                 }
             );
 
 
-        if (
-            !response.ok
-        ) {
-
-            return jsonResponse({
-
-                query:
-                    city,
-
-                state:
-                    state,
-
-                count:
-                    0,
-
-                results:
-                    []
-
-            });
-
-        }
+        const groups =
+            await Promise.all(
+                requests
+            );
 
 
-        const data =
-            await response.json();
-
-
-        const places =
-            Array.isArray(
-                data.places
-            )
-                ? data.places
-                : [];
+        const allResults =
+            groups.flat();
 
 
         const results = [];
@@ -148,81 +146,44 @@ export async function onRequest(context) {
             new Set();
 
 
-        places.forEach(
-            function(place) {
-
-                const zip =
-                    String(
-                        place[
-                            "post code"
-                        ] ||
-                        ""
-                    ).trim();
-
-
-                const placeName =
-                    String(
-                        place[
-                            "place name"
-                        ] ||
-                        city
-                    ).trim();
-
+        allResults.forEach(
+            function(item) {
 
                 if (
-                    !/^\d{5}$/.test(zip)
+                    !/^\d{5}$/.test(
+                        item.code
+                    )
                 ) {
-
                     return;
-
                 }
 
+                /*
+                 * Make sure the returned place
+                 * actually matches the user's
+                 * city/area search.
+                 */
 
                 if (
-                    seen.has(zip)
-                ) {
-
-                    return;
-
-                }
-
-
-                seen.add(zip);
-
-
-                results.push({
-
-                    code:
-                        zip,
-
-                    place:
-                        placeName,
-
-                    state:
-                        String(
-                            place.state ||
-                            ""
-                        ).trim(),
-
-                    stateCode:
-                        String(
-                            place[
-                                "state abbreviation"
-                            ] ||
-                            state
+                    !item.place
+                        .toLowerCase()
+                        .includes(
+                            city.toLowerCase()
                         )
-                        .trim()
-                        .toUpperCase(),
+                ) {
+                    return;
+                }
 
-                    latitude:
-                        place.latitude ??
-                        "",
+                if (
+                    seen.has(item.code)
+                ) {
+                    return;
+                }
 
-                    longitude:
-                        place.longitude ??
-                        ""
+                seen.add(
+                    item.code
+                );
 
-                });
+                results.push(item);
 
             }
         );
@@ -245,9 +206,6 @@ export async function onRequest(context) {
             query:
                 city,
 
-            state:
-                state,
-
             count:
                 results.length,
 
@@ -255,7 +213,6 @@ export async function onRequest(context) {
                 results
 
         });
-
 
     }
     catch (error) {
@@ -265,22 +222,11 @@ export async function onRequest(context) {
             error
         );
 
-
         return jsonResponse(
             {
-
-                query:
-                    city,
-
-                state:
-                    state,
-
-                count:
-                    0,
-
-                results:
-                    []
-
+                query: city,
+                count: 0,
+                results: []
             },
             500
         );
@@ -290,36 +236,26 @@ export async function onRequest(context) {
 }
 
 
-/* =========================================
-   JSON RESPONSE
-========================================= */
-
 function jsonResponse(
     data,
     status = 200
 ) {
 
     return new Response(
-
         JSON.stringify(data),
-
         {
-
-            status:
-                status,
+            status: status,
 
             headers: {
-
                 "Content-Type":
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400"
+                    "public, max-age=3600, s-maxage=86400",
 
+                "Access-Control-Allow-Origin":
+                    "*"
             }
-
         }
-
     );
-
 }
