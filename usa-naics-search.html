@@ -15,16 +15,16 @@
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. NAICS codes by code number or industry description. Find 2022 North American Industry Classification System codes and industry details.">
+      content="Search 2022 U.S. NAICS codes by code number or industry description. Find official U.S. NAICS industry classifications and details.">
 
 <link rel="icon"
       type="image/png"
       href="/favicon.png">
 
-<title>U.S. NAICS Code Search - Industry Classification Finder</title>
+<title>
+U.S. NAICS Code Search - Industry Classification Finder
+</title>
 
-<meta property="og:description"
-      content="Free U.S. NAICS Code Search. Search 2022 NAICS codes by industry name, description or code.">
 
 <!-- Google Analytics -->
 
@@ -34,15 +34,24 @@ src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
 
 <script>
 
-window.dataLayer = window.dataLayer || [];
+window.dataLayer =
+    window.dataLayer || [];
 
 function gtag() {
+
     dataLayer.push(arguments);
+
 }
 
-gtag('js', new Date());
+gtag(
+    "js",
+    new Date()
+);
 
-gtag('config', 'G-BP9YJW8LB9');
+gtag(
+    "config",
+    "G-BP9YJW8LB9"
+);
 
 </script>
 
@@ -50,15 +59,18 @@ gtag('config', 'G-BP9YJW8LB9');
 <style>
 
 :root {
+
     --primary: #f48120;
     --dark: #1e1e24;
     --light: #f9f9fb;
     --border: #e0e0e6;
-    --white: #ffffff;
+
 }
 
 * {
+
     box-sizing: border-box;
+
 }
 
 body {
@@ -71,269 +83,373 @@ body {
         Arial,
         sans-serif;
 
-    background: var(--light);
+    background:
+        var(--light);
 
-    color: var(--dark);
+    color:
+        var(--dark);
 
-    margin: 0;
+    margin:
+        0;
 
-    padding: 20px;
+    padding:
+        20px;
+
 }
 
 .container {
 
-    max-width: 850px;
+    max-width:
+        850px;
 
-    margin: 0 auto;
+    margin:
+        0 auto;
+
 }
 
 h1 {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: var(--dark);
+    color:
+        var(--dark);
 
-    margin: 10px 0 30px;
+    margin:
+        10px 0 30px;
 
-    font-size: 30px;
+    font-size:
+        30px;
+
 }
 
 .intro {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #666;
+    color:
+        #666;
 
-    margin-top: -15px;
+    margin:
+        0 0 25px;
 
-    margin-bottom: 25px;
+    line-height:
+        1.6;
 
-    line-height: 1.6;
 }
 
 .search-card {
 
-    background: white;
+    background:
+        #fff;
 
-    padding: 25px;
+    padding:
+        25px;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
     box-shadow:
         0 4px 15px
-        rgba(0,0,0,0.05);
+        rgba(0,0,0,.05);
 
-    margin-bottom: 25px;
+    margin-bottom:
+        25px;
+
 }
 
-.search-card h2,
 .search-card h3 {
 
-    margin-top: 0;
+    margin-top:
+        0;
 
-    color: var(--dark);
 }
 
 .search-card p {
 
-    color: #666;
+    color:
+        #666;
 
-    line-height: 1.6;
+    line-height:
+        1.6;
+
 }
 
 .search-box {
 
-    display: flex;
+    display:
+        flex;
 
-    gap: 10px;
+    gap:
+        10px;
 
-    margin-top: 15px;
+    margin-top:
+        15px;
+
 }
 
 input {
 
-    flex: 1;
+    flex:
+        1;
 
-    padding: 14px;
+    min-width:
+        0;
+
+    padding:
+        14px;
 
     border:
         2px solid var(--border);
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    font-size: 16px;
+    font-size:
+        16px;
 
-    outline: none;
+    outline:
+        none;
 
-    min-width: 0;
 }
 
 input:focus {
 
     border-color:
         var(--primary);
+
 }
 
 button.search-submit {
 
-    padding: 14px 28px;
+    padding:
+        14px 28px;
 
-    background: var(--dark);
+    background:
+        var(--dark);
 
-    color: white;
+    color:
+        white;
 
-    border: none;
+    border:
+        none;
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    font-weight: bold;
+    font-weight:
+        bold;
 
-    cursor: pointer;
+    cursor:
+        pointer;
 
-    font-size: 16px;
+    font-size:
+        16px;
+
 }
 
 button.search-submit:hover {
 
-    background: #333;
+    background:
+        #333;
+
 }
 
 .results {
 
-    margin-top: 20px;
+    margin-top:
+        20px;
 
-    padding: 20px;
+    padding:
+        20px;
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    background: #f1f1f6;
+    background:
+        #f1f1f6;
 
-    display: none;
+    display:
+        none;
 
     border-left:
         5px solid var(--primary);
+
 }
 
 .results h4 {
 
-    margin-top: 0;
+    margin-top:
+        0;
 
-    margin-bottom: 20px;
+    margin-bottom:
+        20px;
 
-    font-size: 18px;
+    font-size:
+        18px;
+
 }
 
 .match-item {
 
-    background: white;
+    background:
+        #fff;
 
-    padding: 15px;
+    padding:
+        15px;
 
-    margin-bottom: 10px;
+    margin-bottom:
+        10px;
 
-    border-radius: 7px;
+    border-radius:
+        7px;
 
     border:
         1px solid var(--border);
-}
 
-.match-item:last-child {
-
-    margin-bottom: 0;
 }
 
 .match-code {
 
-    font-weight: bold;
+    font-weight:
+        bold;
 
-    color: var(--primary);
+    color:
+        var(--primary);
 
-    font-size: 17px;
+    font-size:
+        17px;
+
 }
 
 .match-name {
 
-    margin-top: 5px;
+    margin-top:
+        5px;
 
-    line-height: 1.5;
+    line-height:
+        1.5;
+
 }
 
 .match-item a {
 
-    display: inline-block;
+    display:
+        inline-block;
 
-    margin-top: 8px;
+    margin-top:
+        8px;
 
-    color: var(--dark);
+    color:
+        var(--dark);
 
-    font-weight: bold;
+    font-weight:
+        bold;
 
-    text-decoration: none;
+    text-decoration:
+        none;
+
 }
 
 .match-item a:hover {
 
-    text-decoration: underline;
+    text-decoration:
+        underline;
+
 }
 
 .error {
 
-    color: #d9383a;
+    color:
+        #d9383a;
 
-    font-weight: bold;
+    font-weight:
+        bold;
 
-    background: #fde8e8;
+    background:
+        #fde8e8;
 
-    padding: 15px;
+    padding:
+        15px;
 
-    border-radius: 6px;
+    border-radius:
+        6px;
 
-    display: none;
+    display:
+        none;
 
-    margin-top: 20px;
+    margin-top:
+        20px;
+
 }
 
 .loading {
 
-    color: #555;
+    color:
+        #555;
 
-    font-weight: bold;
+    font-weight:
+        bold;
+
 }
 
 footer {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #777;
+    color:
+        #777;
 
-    font-size: 13px;
+    font-size:
+        13px;
 
-    margin: 30px 0 10px;
+    margin:
+        30px 0 10px;
 
-    line-height: 1.6;
+    line-height:
+        1.6;
+
 }
 
-@media (max-width: 600px) {
+@media(max-width:600px) {
 
     body {
-        padding: 12px;
+
+        padding:
+            12px;
+
     }
 
     h1 {
-        font-size: 24px;
+
+        font-size:
+            24px;
+
     }
 
     .search-box {
-        flex-direction: column;
+
+        flex-direction:
+            column;
+
     }
 
     button.search-submit {
-        width: 100%;
+
+        width:
+            100%;
+
     }
 
     .search-card {
-        padding: 18px;
+
+        padding:
+            18px;
+
     }
+
 }
 
 </style>
@@ -353,14 +469,15 @@ footer {
 
 <p class="intro">
 
-Search the United States
-North American Industry Classification System
-(NAICS) codes by code number or industry description.
+Search the 2022 U.S. North American Industry Classification
+System (NAICS) by code number or industry description.
 
 </p>
 
 
-<!-- SEARCH BY CODE -->
+<!-- =========================================
+     CODE SEARCH
+========================================= -->
 
 <div class="search-card">
 
@@ -370,8 +487,7 @@ North American Industry Classification System
 
 <p>
 
-Enter a 2 to 6 digit U.S. NAICS code
-to view its 2022 industry classification details.
+Enter a 2 to 6 digit 2022 U.S. NAICS code.
 
 </p>
 
@@ -385,6 +501,7 @@ to view its 2022 industry classification details.
     maxlength="6"
     inputmode="numeric"
     autocomplete="off">
+
 
 <button
     class="search-submit"
@@ -402,16 +519,12 @@ Search
     class="error">
 </div>
 
-
-<div
-    id="code-results"
-    class="results">
-</div>
-
 </div>
 
 
-<!-- SEARCH BY INDUSTRY -->
+<!-- =========================================
+     INDUSTRY SEARCH
+========================================= -->
 
 <div class="search-card">
 
@@ -434,6 +547,7 @@ matching 2022 U.S. NAICS codes.
     id="descriptionInput"
     placeholder="Enter industry description e.g. software"
     autocomplete="off">
+
 
 <button
     class="search-submit"
@@ -464,11 +578,9 @@ Search
 
 U.S. NAICS Code Search<br>
 
-2022 North American Industry Classification System
+2022 North American Industry Classification System<br><br>
 
-<br><br>
-
-Source: U.S. Census Bureau
+Source: U.S. Census Bureau and U.S. Bureau of Labor Statistics
 
 </footer>
 
@@ -479,39 +591,41 @@ Source: U.S. Census Bureau
 <script>
 
 
-async function searchNAICSCode() {
+/* =========================================
+   CODE SEARCH
+========================================= */
+
+function searchNAICSCode() {
 
     const input =
-        document.getElementById("codeInput")
+        document
+        .getElementById("codeInput")
         .value
         .trim();
 
-    const results =
-        document.getElementById("code-results");
-
     const error =
-        document.getElementById("code-error");
-
-    results.style.display = "none";
-    error.style.display = "none";
+        document
+        .getElementById("code-error");
 
 
-    if (!/^\d{2,6}$/.test(input)) {
+    error.style.display =
+        "none";
+
+
+    if (
+        !/^\d{2,6}$/.test(input)
+    ) {
 
         error.innerText =
-            "Please enter a valid 2 to 6 digit U.S. NAICS code.";
+            "Please enter a valid 2 to 6 digit 2022 U.S. NAICS code.";
 
-        error.style.display = "block";
+        error.style.display =
+            "block";
 
         return;
+
     }
 
-
-    /*
-     * Do not fetch the detail page here.
-     *
-     * Just open the 2022 NAICS page.
-     */
 
     window.location.href =
         "/usa-naics/" +
@@ -521,40 +635,56 @@ async function searchNAICSCode() {
 }
 
 
+/* =========================================
+   INDUSTRY SEARCH
+========================================= */
+
 async function searchDescription() {
 
     const input =
-        document.getElementById("descriptionInput")
+        document
+        .getElementById("descriptionInput")
         .value
         .trim();
 
+
     const results =
-        document.getElementById("description-results");
+        document
+        .getElementById("description-results");
+
 
     const error =
-        document.getElementById("description-error");
+        document
+        .getElementById("description-error");
 
 
-    results.style.display = "none";
+    results.style.display =
+        "none";
 
-    error.style.display = "none";
+    error.style.display =
+        "none";
 
 
-    if (input.length < 2) {
+    if (
+        input.length < 2
+    ) {
 
         error.innerText =
             "Please enter at least 2 characters.";
 
-        error.style.display = "block";
+        error.style.display =
+            "block";
 
         return;
+
     }
 
 
     results.innerHTML =
         '<div class="loading">🔄 Searching 2022 U.S. NAICS industries...</div>';
 
-    results.style.display = "block";
+    results.style.display =
+        "block";
 
 
     try {
@@ -562,14 +692,20 @@ async function searchDescription() {
         const response =
             await fetch(
                 "/usa-naics/naics-search?q=" +
-                encodeURIComponent(input)
+                encodeURIComponent(input),
+                {
+                    cache:
+                        "no-store"
+                }
             );
 
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
-                "Search request failed"
+                "Search failed"
             );
 
         }
@@ -581,18 +717,26 @@ async function searchDescription() {
 
         if (
             !data ||
-            !Array.isArray(data.results) ||
+            !Array.isArray(
+                data.results
+            ) ||
             data.results.length === 0
         ) {
 
-            results.style.display = "none";
+            results.style.display =
+                "none";
+
 
             error.innerText =
-                "No matching 2022 U.S. NAICS industries found.";
+                'No matching 2022 U.S. NAICS industries found.';
 
-            error.style.display = "block";
+
+            error.style.display =
+                "block";
+
 
             return;
+
         }
 
 
@@ -604,20 +748,32 @@ async function searchDescription() {
 
     }
 
-    catch (err) {
+    catch (errorObject) {
 
-        console.error(err);
+        console.error(
+            errorObject
+        );
 
-        results.style.display = "none";
+
+        results.style.display =
+            "none";
+
 
         error.innerText =
-            "Unable to search the U.S. NAICS database.";
+            "Unable to search the 2022 U.S. NAICS database.";
 
-        error.style.display = "block";
+
+        error.style.display =
+            "block";
+
     }
 
 }
 
+
+/* =========================================
+   DISPLAY RESULTS
+========================================= */
 
 function displayResults(
     items,
@@ -627,70 +783,136 @@ function displayResults(
 
     let html = "";
 
+
     html +=
-        '<h4>🔎 2022 U.S. NAICS Results for "' +
+        '<h4>' +
+        '🔎 2022 U.S. NAICS Results for "' +
         escapeHtml(searchText) +
-        '"</h4>';
+        '"' +
+        '</h4>';
 
 
-    items.forEach(function(item) {
+    items.forEach(
+        function(item) {
 
-        const code =
-            item.code || "";
+            const code =
+                item.code || "";
 
-        const title =
-            item.title || "";
+            const title =
+                item.title || "";
 
 
-        if (!/^\d{2,6}$/.test(code)) {
-            return;
+            if (
+                !/^\d{6}$/.test(code)
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !title
+            ) {
+
+                return;
+
+            }
+
+
+            html +=
+
+                '<div class="match-item">' +
+
+                    '<div class="match-code">' +
+
+                        'U.S. NAICS ' +
+
+                        escapeHtml(code) +
+
+                    '</div>' +
+
+
+                    '<div class="match-name">' +
+
+                        escapeHtml(title) +
+
+                    '</div>' +
+
+
+                    '<a href="/usa-naics/' +
+
+                        encodeURIComponent(code) +
+
+                        '/">' +
+
+                        'View NAICS ' +
+
+                        escapeHtml(code) +
+
+                        ' Details →' +
+
+                    '</a>' +
+
+                '</div>';
+
         }
+    );
 
 
-        html +=
-            '<div class="match-item">' +
-
-                '<div class="match-code">' +
-                    'U.S. NAICS ' +
-                    escapeHtml(code) +
-                '</div>' +
-
-                '<div class="match-name">' +
-                    escapeHtml(title) +
-                '</div>' +
-
-                '<a href="/usa-naics/' +
-                    encodeURIComponent(code) +
-                    '/">' +
-
-                    'View NAICS ' +
-                    escapeHtml(code) +
-                    ' Details →' +
-
-                '</a>' +
-
-            '</div>';
-
-    });
+    results.innerHTML =
+        html;
 
 
-    results.innerHTML = html;
+    results.style.display =
+        "block";
 
-    results.style.display = "block";
 }
 
 
-function escapeHtml(value) {
+/* =========================================
+   HTML ESCAPE
+========================================= */
 
-    return String(value ?? "")
+function escapeHtml(
+    value
+) {
 
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value ?? ""
+    )
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
+
+/* =========================================
+   ENTER KEY
+========================================= */
 
 document
 .getElementById("codeInput")
@@ -698,7 +920,9 @@ document
     "keydown",
     function(event) {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             searchNAICSCode();
 
@@ -714,7 +938,9 @@ document
     "keydown",
     function(event) {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             searchDescription();
 
