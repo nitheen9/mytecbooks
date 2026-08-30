@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<meta name="robots"
+      content="index, follow">
+
+<meta name="description"
+      content="Search Indian villages by village name and view State, District, Sub-District and village information.">
+
+<link rel="icon"
+      type="image/png"
+      href="/favicon.png">
+
+<title>
+India Village Search - Village Finder
+</title>
+
+<meta property="og:description"
+      content="Search Indian villages by name and find State, District, Sub-District and village details.">
+
+
+<style>
+
+:root {
+
+    --primary:#f48120;
+    --dark:#1e1e24;
+    --light:#f9f9fb;
+    --border:#e0e0e6;
+    --white:#ffffff;
+
+}
+
+* {
+    box-sizing:border-box;
+}
+
+body {
+
+    margin:0;
+
+    padding:20px;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background:
+        var(--light);
+
+    color:
+        var(--dark);
+
+}
+
+.container {
+
+    max-width:850px;
+
+    margin:0 auto;
+
+}
+
+h1 {
+
+    text-align:center;
+
+    margin:10px 0 15px;
+
+    font-size:30px;
+
+}
+
+.intro {
+
+    text-align:center;
+
+    color:#666;
+
+    line-height:1.6;
+
+    margin:
+        0 0 25px;
+
+}
+
+.search-card {
+
+    background:#fff;
+
+    padding:25px;
+
+    border-radius:12px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,.05);
+
+}
+
+.search-card h3 {
+
+    margin-top:0;
+
+}
+
+.search-card p {
+
+    color:#666;
+
+    line-height:1.6;
+
+}
+
+.search-box {
+
+    display:flex;
+
+    gap:10px;
+
+    margin-top:15px;
+
+}
+
+input {
+
+    flex:1;
+
+    min-width:0;
+
+    padding:14px;
+
+    border:
+        2px solid
+        var(--border);
+
+    border-radius:8px;
+
+    font-size:16px;
+
+    outline:none;
+
+}
+
+input:focus {
+
+    border-color:
+        var(--primary);
+
+}
+
+button {
+
+    padding:
+        14px 28px;
+
+    background:
+        var(--dark);
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+}
+
+button:hover {
+
+    background:#333;
+
+}
+
+.results {
+
+    margin-top:20px;
+
+    padding:20px;
+
+    border-radius:8px;
+
+    background:#f1f1f6;
+
+    border-left:
+        5px solid
+        var(--primary);
+
+    display:none;
+
+}
+
+.results h4 {
+
+    margin-top:0;
+
+    margin-bottom:20px;
+
+    font-size:18px;
+
+}
+
+.match-item {
+
+    background:#fff;
+
+    padding:15px;
+
+    margin-bottom:10px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:7px;
+
+}
+
+.match-item:last-child {
+
+    margin-bottom:0;
+
+}
+
+.match-title {
+
+    color:
+        var(--primary);
+
+    font-size:17px;
+
+    font-weight:700;
+
+}
+
+.match-location {
+
+    margin-top:7px;
+
+    line-height:1.6;
+
+    color:#444;
+
+}
+
+.match-code {
+
+    margin-top:5px;
+
+    color:#666;
+
+    font-size:14px;
+
+}
+
+.details-link {
+
+    display:inline-block;
+
+    margin-top:9px;
+
+    color:
+        var(--dark);
+
+    text-decoration:none;
+
+    font-weight:700;
+
+}
+
+.details-link:hover {
+
+    text-decoration:underline;
+
+}
+
+.error {
+
+    display:none;
+
+    margin-top:20px;
+
+    padding:15px;
+
+    background:#fde8e8;
+
+    color:#d9383a;
+
+    border-radius:6px;
+
+    font-weight:bold;
+
+}
+
+.loading {
+
+    color:#555;
+
+    font-weight:bold;
+
+}
+
+.info {
+
+    margin-top:20px;
+
+    padding:14px 15px;
+
+    background:#fff8ef;
+
+    border-left:
+        4px solid
+        var(--primary);
+
+    border-radius:7px;
+
+    color:#666;
+
+    font-size:14px;
+
+    line-height:1.6;
+
+}
+
+footer {
+
+    text-align:center;
+
+    color:#777;
+
+    font-size:13px;
+
+    margin:30px 0 10px;
+
+    line-height:1.6;
+
+}
+
+@media(max-width:600px) {
+
+    body {
+        padding:12px;
+    }
+
+    h1 {
+        font-size:24px;
+    }
+
+    .search-box {
+        flex-direction:column;
+    }
+
+    button {
+        width:100%;
+    }
+
+    .search-card {
+        padding:18px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+<h1>
+🇮🇳 India Village Finder
+</h1>
+
+
+<p class="intro">
+
+Search Indian villages by name and view
+their State, District and Sub-District information.
+
+</p>
+
+
+<div class="search-card">
+
+
+<h3>
+🔎 Search Indian Village
+</h3>
+
+
+<p>
+
+Enter a village name to find matching
+villages across India.
+
+</p>
+
+
+<div class="search-box">
+
+<input
+    type="text"
+    id="villageInput"
+    placeholder="Enter village name e.g. Rampur"
+    autocomplete="off">
+
+
+<button
+    onclick="searchVillage()">
+
+Search
+
+</button>
+
+</div>
+
+
+<div
+    id="search-error"
+    class="error">
+</div>
+
+
+<div
+    id="search-results"
+    class="results">
+</div>
+
+
+</div>
+
+
+<div class="info">
+
+Search results use the India Government Open
+Data village directory.
+
+</div>
+
+
+<footer>
+
+India Village Finder
+
+</footer>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================
+   SEARCH VILLAGE
+========================= */
+
+async function searchVillage() {
+
+    const input =
+        document
+        .getElementById(
+            "villageInput"
+        )
+        .value
+        .trim();
+
+
+    const error =
+        document
+        .getElementById(
+            "search-error"
+        );
+
+
+    const results =
+        document
+        .getElementById(
+            "search-results"
+        );
+
+
+    error.style.display =
+        "none";
+
+
+    results.style.display =
+        "none";
+
+
+    if (
+        input.length < 2
+    ) {
+
+        error.innerText =
+            "Please enter at least 2 characters.";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    results.innerHTML =
+        '<div class="loading">' +
+        '🔄 Searching Indian villages...' +
+        '</div>';
+
+
+    results.style.display =
+        "block";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/india-village/search?q=" +
+                encodeURIComponent(
+                    input
+                ),
+                {
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Village search failed"
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data ||
+            !Array.isArray(
+                data.results
+            ) ||
+            data.results.length === 0
+        ) {
+
+            results.style.display =
+                "none";
+
+
+            error.innerText =
+                'No matching Indian villages found for "' +
+                input +
+                '".';
+
+
+            error.style.display =
+                "block";
+
+
+            return;
+
+        }
+
+
+        displayVillageResults(
+            data.results,
+            results,
+            input
+        );
+
+    }
+    catch (errorObject) {
+
+        console.error(
+            "Village search error:",
+            errorObject
+        );
+
+
+        results.style.display =
+            "none";
+
+
+        error.innerText =
+            "Unable to search Indian villages.";
+
+        error.style.display =
+            "block";
+
+    }
+
+}
+
+
+/* =========================
+   DISPLAY RESULTS
+========================= */
+
+function displayVillageResults(
+    items,
+    results,
+    searchText
+) {
+
+    let html =
+        '<h4>' +
+        '🔎 Village Results for "' +
+        escapeHtml(
+            searchText
+        ) +
+        '"' +
+        '</h4>';
+
+
+    items.forEach(
+        function(item) {
+
+            const code =
+                String(
+                    item.code || ""
+                ).trim();
+
+
+            const village =
+                String(
+                    item.village || ""
+                ).trim();
+
+
+            const state =
+                String(
+                    item.state || ""
+                ).trim();
+
+
+            const district =
+                String(
+                    item.district || ""
+                ).trim();
+
+
+            const subDistrict =
+                String(
+                    item.subDistrict || ""
+                ).trim();
+
+
+            if (
+                !village
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+             * The code is the unique village
+             * identifier returned by the API.
+             */
+
+            let detailUrl =
+                "";
+
+
+            if (
+                code
+            ) {
+
+                detailUrl =
+                    "/india-village/" +
+                    encodeURIComponent(
+                        code
+                    ) +
+                    "/";
+
+            }
+
+
+            html +=
+
+                '<div class="match-item">' +
+
+                    '<div class="match-title">' +
+
+                        escapeHtml(
+                            village
+                        ) +
+
+                    '</div>' +
+
+                    '<div class="match-location">' +
+
+                        (
+                            state
+                                ? '<strong>State:</strong> ' +
+                                  escapeHtml(state)
+                                : ""
+                        ) +
+
+                        (
+                            district
+                                ? '<br><strong>District:</strong> ' +
+                                  escapeHtml(district)
+                                : ""
+                        ) +
+
+                        (
+                            subDistrict
+                                ? '<br><strong>Sub-District:</strong> ' +
+                                  escapeHtml(subDistrict)
+                                : ""
+                        ) +
+
+                    '</div>' +
+
+                    (
+                        code
+                            ? '<div class="match-code">' +
+                              '<strong>Village Code:</strong> ' +
+                              escapeHtml(code) +
+                              '</div>'
+                            : ""
+                    ) +
+
+                    (
+                        detailUrl
+                            ? '<a class="details-link" href="' +
+                              detailUrl +
+                              '">' +
+                              'View Village Details →' +
+                              '</a>'
+                            : ""
+                    ) +
+
+                '</div>';
+
+        }
+    );
+
+
+    results.innerHTML =
+        html;
+
+    results.style.display =
+        "block";
+
+}
+
+
+/* =========================
+   ESCAPE HTML
+========================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =========================
+   ENTER KEY
+========================= */
+
+document
+    .getElementById(
+        "villageInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                searchVillage();
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>
