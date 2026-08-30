@@ -425,33 +425,11 @@ button.search-submit:hover {
     line-height:
         1.6;
 
-}
-
-
-/* =========================
-   CITY / STATE LINK
-========================= */
-
-.place-link {
-
     color:
         var(--dark);
 
     font-weight:
         bold;
-
-    text-decoration:
-        none;
-
-}
-
-.place-link:hover {
-
-    color:
-        var(--primary);
-
-    text-decoration:
-        underline;
 
 }
 
@@ -832,67 +810,6 @@ United States ZIP Code Finder
 
 
 /* =========================
-   STATE NAMES
-========================= */
-
-const stateNames = {
-
-    AL: "Alabama",
-    AK: "Alaska",
-    AZ: "Arizona",
-    AR: "Arkansas",
-    CA: "California",
-    CO: "Colorado",
-    CT: "Connecticut",
-    DE: "Delaware",
-    FL: "Florida",
-    GA: "Georgia",
-    HI: "Hawaii",
-    ID: "Idaho",
-    IL: "Illinois",
-    IN: "Indiana",
-    IA: "Iowa",
-    KS: "Kansas",
-    KY: "Kentucky",
-    LA: "Louisiana",
-    ME: "Maine",
-    MD: "Maryland",
-    MA: "Massachusetts",
-    MI: "Michigan",
-    MN: "Minnesota",
-    MS: "Mississippi",
-    MO: "Missouri",
-    MT: "Montana",
-    NE: "Nebraska",
-    NV: "Nevada",
-    NH: "New Hampshire",
-    NJ: "New Jersey",
-    NM: "New Mexico",
-    NY: "New York",
-    NC: "North Carolina",
-    ND: "North Dakota",
-    OH: "Ohio",
-    OK: "Oklahoma",
-    OR: "Oregon",
-    PA: "Pennsylvania",
-    RI: "Rhode Island",
-    SC: "South Carolina",
-    SD: "South Dakota",
-    TN: "Tennessee",
-    TX: "Texas",
-    UT: "Utah",
-    VT: "Vermont",
-    VA: "Virginia",
-    WA: "Washington",
-    WV: "West Virginia",
-    WI: "Wisconsin",
-    WY: "Wyoming",
-    DC: "District of Columbia"
-
-};
-
-
-/* =========================
    TAB SWITCH
 ========================= */
 
@@ -1117,7 +1034,6 @@ async function searchCity() {
 
     }
 
-
     catch (errorObject) {
 
         console.error(
@@ -1185,42 +1101,10 @@ function displayCityResults(
                 .toUpperCase();
 
 
-            /*
-             * Get full state name.
-             *
-             * First use the backend state
-             * if available. Otherwise use
-             * the local state map.
-             */
-
-            let state =
+            const state =
                 String(
                     item.state || ""
                 ).trim();
-
-
-            if (
-                state.length === 2 &&
-                stateNames[state.toUpperCase()]
-            ) {
-
-                state =
-                    stateNames[
-                        state.toUpperCase()
-                    ];
-
-            }
-
-
-            if (
-                !state &&
-                stateNames[stateCode]
-            ) {
-
-                state =
-                    stateNames[stateCode];
-
-            }
 
 
             if (
@@ -1242,18 +1126,46 @@ function displayCityResults(
 
 
             /*
-             * City + State filtered search URL.
+             * City and state are plain text.
+             *
+             * They are NOT clickable.
+             *
+             * Only the ZIP Details link
+             * below is clickable.
              */
 
-            const cityStateUrl =
-                "/usa-zip/zip-search?state=" +
-                encodeURIComponent(
-                    stateCode
-                ) +
-                "&city=" +
-                encodeURIComponent(
-                    place.toLowerCase()
+
+            let locationText =
+                escapeHtml(
+                    place
                 );
+
+
+            if (
+                state
+            ) {
+
+                locationText +=
+                    ", " +
+                    escapeHtml(
+                        state
+                    );
+
+            }
+
+
+            if (
+                stateCode
+            ) {
+
+                locationText +=
+                    " (" +
+                    escapeHtml(
+                        stateCode
+                    ) +
+                    ")";
+
+            }
 
 
             html +=
@@ -1274,36 +1186,7 @@ function displayCityResults(
 
                     '<div class="match-name">' +
 
-                        '<a ' +
-                        'class="place-link" ' +
-                        'href="' +
-                        cityStateUrl +
-                        '">' +
-
-                            escapeHtml(
-                                place
-                            ) +
-
-                            (
-                                state
-                                    ? ', ' +
-                                      escapeHtml(
-                                          state
-                                      )
-                                    : ""
-                            ) +
-
-                            (
-                                stateCode
-                                    ? ' (' +
-                                      escapeHtml(
-                                          stateCode
-                                      ) +
-                                      ')'
-                                    : ""
-                            ) +
-
-                        '</a>' +
+                        locationText +
 
                     '</div>' +
 
@@ -1384,7 +1267,7 @@ function escapeHtml(
 
 
 /* =========================
-   ENTER - ZIP
+   ENTER KEY - ZIP
 ========================= */
 
 document
@@ -1408,7 +1291,7 @@ document
 
 
 /* =========================
-   ENTER - CITY
+   ENTER KEY - CITY
 ========================= */
 
 document
