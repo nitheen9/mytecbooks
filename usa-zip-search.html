@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<meta name="google-site-verification"
+      content="dDDf6n61Y6wtILH1Z-cim30ml4yMKMiZu5wJht9j-ko">
+
+<meta name="robots"
+      content="index, follow">
+
+<meta name="description"
+      content="Search U.S. ZIP Codes by ZIP Code, city or state. Find ZIP Code locations, cities, states, latitude and longitude.">
+
+<link rel="icon"
+      type="image/png"
+      href="/favicon.png">
+
+<title>
+U.S. ZIP Code Search - ZIP Code Finder
+</title>
+
+<meta property="og:description"
+      content="Free U.S. ZIP Code Finder. Search ZIP Codes by ZIP Code, city and state.">
+
+
+<!-- Google Analytics -->
+
+<script async
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
+</script>
+
+<script>
+
+window.dataLayer =
+    window.dataLayer || [];
+
+function gtag() {
+
+    dataLayer.push(arguments);
+
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-BP9YJW8LB9');
+
+</script>
+
+
+<style>
+
+:root {
+
+    --primary: #f48120;
+    --dark: #1e1e24;
+    --light: #f9f9fb;
+    --border: #e0e0e6;
+    --white: #ffffff;
+
+}
+
+* {
+
+    box-sizing: border-box;
+
+}
+
+body {
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background:
+        var(--light);
+
+    color:
+        var(--dark);
+
+    margin:
+        0;
+
+    padding:
+        20px;
+
+}
+
+.container {
+
+    max-width:
+        850px;
+
+    margin:
+        0 auto;
+
+}
+
+h1 {
+
+    text-align:
+        center;
+
+    color:
+        var(--dark);
+
+    margin:
+        10px 0 30px;
+
+    font-size:
+        30px;
+
+}
+
+.intro {
+
+    text-align:
+        center;
+
+    color:
+        #666;
+
+    margin-top:
+        -15px;
+
+    margin-bottom:
+        25px;
+
+    line-height:
+        1.6;
+
+}
+
+
+/* =========================
+   TABS
+========================= */
+
+.tabs {
+
+    display:
+        flex;
+
+    gap:
+        10px;
+
+    margin-bottom:
+        20px;
+
+    justify-content:
+        center;
+
+}
+
+.tab-btn {
+
+    padding:
+        12px 24px;
+
+    font-weight:
+        bold;
+
+    border:
+        none;
+
+    background:
+        #e0e0e6;
+
+    color:
+        #333;
+
+    cursor:
+        pointer;
+
+    border-radius:
+        6px;
+
+    font-size:
+        15px;
+
+    transition:
+        0.2s;
+
+}
+
+.tab-btn:hover {
+
+    background:
+        #d3d3d9;
+
+}
+
+.tab-btn.active {
+
+    background:
+        var(--primary);
+
+    color:
+        white;
+
+}
+
+
+/* =========================
+   SEARCH CARD
+========================= */
+
+.search-card {
+
+    background:
+        white;
+
+    padding:
+        25px;
+
+    border-radius:
+        12px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,0.05);
+
+    margin-bottom:
+        25px;
+
+}
+
+.search-card h2,
+.search-card h3 {
+
+    margin-top:
+        0;
+
+}
+
+.search-card p {
+
+    color:
+        #666;
+
+    line-height:
+        1.6;
+
+}
+
+
+/* =========================
+   SEARCH BOX
+========================= */
+
+.search-box {
+
+    display:
+        flex;
+
+    gap:
+        10px;
+
+    margin-top:
+        15px;
+
+}
+
+input,
+select {
+
+    flex:
+        1;
+
+    padding:
+        14px;
+
+    border:
+        2px solid
+        var(--border);
+
+    border-radius:
+        8px;
+
+    font-size:
+        16px;
+
+    outline:
+        none;
+
+    min-width:
+        0;
+
+    background:
+        white;
+
+}
+
+input:focus,
+select:focus {
+
+    border-color:
+        var(--primary);
+
+}
+
+button.search-submit {
+
+    padding:
+        14px 28px;
+
+    background:
+        var(--dark);
+
+    color:
+        white;
+
+    border:
+        none;
+
+    border-radius:
+        8px;
+
+    font-weight:
+        bold;
+
+    cursor:
+        pointer;
+
+    font-size:
+        16px;
+
+}
+
+button.search-submit:hover {
+
+    background:
+        #333;
+
+}
+
+
+/* =========================
+   PANELS
+========================= */
+
+.panel {
+
+    display:
+        none;
+
+}
+
+.panel.active {
+
+    display:
+        block;
+
+}
+
+
+/* =========================
+   RESULTS
+========================= */
+
+.results {
+
+    margin-top:
+        20px;
+
+    padding:
+        20px;
+
+    border-radius:
+        8px;
+
+    background:
+        #f1f1f6;
+
+    display:
+        none;
+
+    border-left:
+        5px solid
+        var(--primary);
+
+}
+
+.results h4 {
+
+    margin-top:
+        0;
+
+    margin-bottom:
+        20px;
+
+    font-size:
+        18px;
+
+}
+
+
+/* =========================
+   MATCH ITEMS
+========================= */
+
+.match-item {
+
+    background:
+        white;
+
+    padding:
+        15px;
+
+    margin-bottom:
+        10px;
+
+    border-radius:
+        7px;
+
+    border:
+        1px solid
+        var(--border);
+
+}
+
+.match-item:last-child {
+
+    margin-bottom:
+        0;
+
+}
+
+.match-code {
+
+    font-weight:
+        bold;
+
+    color:
+        var(--primary);
+
+    font-size:
+        17px;
+
+}
+
+.match-name {
+
+    margin-top:
+        5px;
+
+    line-height:
+        1.6;
+
+}
+
+.match-item a {
+
+    display:
+        inline-block;
+
+    margin-top:
+        8px;
+
+    color:
+        var(--dark);
+
+    font-weight:
+        bold;
+
+    text-decoration:
+        none;
+
+}
+
+.match-item a:hover {
+
+    text-decoration:
+        underline;
+
+}
+
+
+/* =========================
+   ERROR
+========================= */
+
+.error {
+
+    color:
+        #d9383a;
+
+    font-weight:
+        bold;
+
+    background:
+        #fde8e8;
+
+    padding:
+        15px;
+
+    border-radius:
+        6px;
+
+    display:
+        none;
+
+    margin-top:
+        20px;
+
+}
+
+
+/* =========================
+   LOADING
+========================= */
+
+.loading {
+
+    color:
+        #555;
+
+    font-weight:
+        bold;
+
+}
+
+
+/* =========================
+   INFO
+========================= */
+
+.info {
+
+    margin-top:
+        15px;
+
+    padding:
+        12px 15px;
+
+    background:
+        #fff8ef;
+
+    border-left:
+        4px solid
+        var(--primary);
+
+    border-radius:
+        6px;
+
+    color:
+        #666;
+
+    font-size:
+        14px;
+
+    line-height:
+        1.6;
+
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+
+    text-align:
+        center;
+
+    color:
+        #777;
+
+    font-size:
+        13px;
+
+    margin:
+        30px 0 10px;
+
+    line-height:
+        1.6;
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding:
+            12px;
+
+    }
+
+    h1 {
+
+        font-size:
+            24px;
+
+    }
+
+    .tabs {
+
+        flex-direction:
+            column;
+
+    }
+
+    .tab-btn {
+
+        width:
+            100%;
+
+    }
+
+    .search-box {
+
+        flex-direction:
+            column;
+
+    }
+
+    button.search-submit {
+
+        width:
+            100%;
+
+    }
+
+    .search-card {
+
+        padding:
+            18px;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+<h1>
+🇺🇸 U.S. ZIP Code Finder
+</h1>
+
+
+<p class="intro">
+
+Search United States ZIP Codes by ZIP Code,
+city or state.
+
+</p>
+
+
+<!-- =========================
+     TABS
+========================= -->
+
+<div class="tabs">
+
+    <button
+        class="tab-btn active"
+        onclick="switchTab('zip', this)">
+
+        🔢 ZIP Code Lookup
+
+    </button>
+
+
+    <button
+        class="tab-btn"
+        onclick="switchTab('city', this)">
+
+        🔎 City / State Search
+
+    </button>
+
+</div>
+
+
+<!-- =========================
+     ZIP CODE
+========================= -->
+
+<div
+    id="zip-panel"
+    class="panel active search-card">
+
+
+    <h3>
+        Search U.S. ZIP Code
+    </h3>
+
+
+    <p>
+
+        Enter a 5-digit U.S. ZIP Code
+        to view location information.
+
+    </p>
+
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="zipInput"
+            placeholder="Enter ZIP Code e.g. 10001"
+            maxlength="5"
+            inputmode="numeric"
+            autocomplete="off">
+
+
+        <button
+            class="search-submit"
+            onclick="searchZipCode()">
+
+            Search
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="zip-error"
+        class="error">
+    </div>
+
+
+    <div
+        id="zip-results"
+        class="results">
+    </div>
+
+
+</div>
+
+
+<!-- =========================
+     CITY SEARCH
+========================= -->
+
+<div
+    id="city-panel"
+    class="panel search-card">
+
+
+    <h3>
+        Search U.S. ZIP Codes by City
+    </h3>
+
+
+    <p>
+
+        Enter a U.S. state abbreviation
+        and city name to find matching ZIP Codes.
+
+    </p>
+
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="stateInput"
+            placeholder="State e.g. NY"
+            maxlength="2"
+            autocomplete="off">
+
+
+        <input
+            type="text"
+            id="cityInput"
+            placeholder="City e.g. New York"
+            autocomplete="off">
+
+
+        <button
+            class="search-submit"
+            onclick="searchCity()">
+
+            Search
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="city-error"
+        class="error">
+    </div>
+
+
+    <div
+        id="city-results"
+        class="results">
+    </div>
+
+
+</div>
+
+
+<div class="info">
+
+<strong>ZIP Code information:</strong>
+
+Results are retrieved from the Zippopotam.us
+postal code API. ZIP Codes may have multiple
+associated places.
+
+</div>
+
+
+<footer>
+
+U.S. ZIP Code Search<br>
+
+United States ZIP Code Finder
+
+<br><br>
+
+Data source:
+Zippopotam.us / GeoNames
+
+</footer>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================
+   TAB SWITCH
+========================= */
+
+function switchTab(
+    tabName,
+    button
+) {
+
+    document
+        .querySelectorAll(".panel")
+        .forEach(
+            function(panel) {
+
+                panel.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(".tab-btn")
+        .forEach(
+            function(btn) {
+
+                btn.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+    document
+        .getElementById(
+            tabName + "-panel"
+        )
+        .classList.add(
+            "active"
+        );
+
+
+    button.classList.add(
+        "active"
+    );
+
+}
+
+
+/* =========================
+   ZIP CODE SEARCH
+========================= */
+
+async function searchZipCode() {
+
+    const input =
+        document
+        .getElementById(
+            "zipInput"
+        )
+        .value
+        .trim();
+
+
+    const error =
+        document
+        .getElementById(
+            "zip-error"
+        );
+
+
+    const results =
+        document
+        .getElementById(
+            "zip-results"
+        );
+
+
+    error.style.display =
+        "none";
+
+    results.style.display =
+        "none";
+
+
+    if (
+        !/^\d{5}$/.test(input)
+    ) {
+
+        error.innerText =
+            "Please enter a valid 5-digit U.S. ZIP Code.";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    results.innerHTML =
+        '<div class="loading">🔄 Searching U.S. ZIP Code...</div>';
+
+    results.style.display =
+        "block";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/usa-zip/" +
+                encodeURIComponent(input) +
+                "/",
+                {
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "ZIP Code not found"
+            );
+
+        }
+
+
+        window.location.href =
+            "/usa-zip/" +
+            encodeURIComponent(input) +
+            "/";
+
+    }
+
+    catch (errorObject) {
+
+        console.error(
+            "ZIP Code search error:",
+            errorObject
+        );
+
+
+        results.style.display =
+            "none";
+
+
+        error.innerText =
+            "U.S. ZIP Code " +
+            input +
+            " was not found.";
+
+        error.style.display =
+            "block";
+
+    }
+
+}
+
+
+/* =========================
+   CITY SEARCH
+========================= */
+
+async function searchCity() {
+
+    const state =
+        document
+        .getElementById(
+            "stateInput"
+        )
+        .value
+        .trim()
+        .toUpperCase();
+
+
+    const city =
+        document
+        .getElementById(
+            "cityInput"
+        )
+        .value
+        .trim();
+
+
+    const error =
+        document
+        .getElementById(
+            "city-error"
+        );
+
+
+    const results =
+        document
+        .getElementById(
+            "city-results"
+        );
+
+
+    error.style.display =
+        "none";
+
+
+    results.style.display =
+        "none";
+
+
+    if (
+        !/^[A-Z]{2}$/.test(state)
+    ) {
+
+        error.innerText =
+            "Please enter a valid 2-letter U.S. state abbreviation.";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    if (
+        city.length < 2
+    ) {
+
+        error.innerText =
+            "Please enter a city name.";
+
+        error.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    results.innerHTML =
+        '<div class="loading">🔄 Searching ZIP Codes...</div>';
+
+
+    results.style.display =
+        "block";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/usa-zip/zip-search?state=" +
+                encodeURIComponent(state) +
+                "&city=" +
+                encodeURIComponent(city),
+                {
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "City search failed"
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data ||
+            !Array.isArray(
+                data.results
+            ) ||
+            data.results.length === 0
+        ) {
+
+            results.style.display =
+                "none";
+
+
+            error.innerText =
+                "No U.S. ZIP Codes found for " +
+                city +
+                ", " +
+                state +
+                ".";
+
+
+            error.style.display =
+                "block";
+
+
+            return;
+
+        }
+
+
+        displayCityResults(
+            data.results,
+            results,
+            city,
+            state
+        );
+
+    }
+
+    catch (errorObject) {
+
+        console.error(
+            "City ZIP search error:",
+            errorObject
+        );
+
+
+        results.style.display =
+            "none";
+
+
+        error.innerText =
+            "Unable to search U.S. ZIP Codes.";
+
+        error.style.display =
+            "block";
+
+    }
+
+}
+
+
+/* =========================
+   DISPLAY CITY RESULTS
+========================= */
+
+function displayCityResults(
+    items,
+    results,
+    city,
+    state
+) {
+
+    let html =
+        "";
+
+
+    html +=
+        '<h4>' +
+        '🔎 ZIP Codes for ' +
+        escapeHtml(city) +
+        ', ' +
+        escapeHtml(state) +
+        '</h4>';
+
+
+    items.forEach(
+        function(item) {
+
+            const code =
+                item.code ||
+                "";
+
+
+            const place =
+                item.place ||
+                item["place name"] ||
+                "";
+
+
+            if (
+                !/^\d{5}$/.test(
+                    String(code)
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            html +=
+
+                '<div class="match-item">' +
+
+                    '<div class="match-code">' +
+
+                        'U.S. ZIP Code ' +
+
+                        escapeHtml(code) +
+
+                    '</div>' +
+
+                    '<div class="match-name">' +
+
+                        escapeHtml(
+                            place ||
+                            city
+                        ) +
+
+                        ', ' +
+
+                        escapeHtml(
+                            item.state ||
+                            state
+                        ) +
+
+                    '</div>' +
+
+                    '<a href="/usa-zip/' +
+
+                        encodeURIComponent(
+                            code
+                        ) +
+
+                        '/">' +
+
+                        'View ZIP ' +
+
+                        escapeHtml(
+                            code
+                        ) +
+
+                        ' Details →' +
+
+                    '</a>' +
+
+                '</div>';
+
+        }
+    );
+
+
+    results.innerHTML =
+        html;
+
+
+    results.style.display =
+        "block";
+
+}
+
+
+/* =========================
+   HTML ESCAPE
+========================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =========================
+   ENTER KEY - ZIP
+========================= */
+
+document
+    .getElementById(
+        "zipInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                searchZipCode();
+
+            }
+
+        }
+    );
+
+
+/* =========================
+   ENTER KEY - STATE
+========================= */
+
+document
+    .getElementById(
+        "stateInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                searchCity();
+
+            }
+
+        }
+    );
+
+
+/* =========================
+   ENTER KEY - CITY
+========================= */
+
+document
+    .getElementById(
+        "cityInput"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                searchCity();
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>
