@@ -1,4 +1,67 @@
-export async function onRequest(context) {
+const RESOURCE_ID =
+    "c967fe8f-69c4-42df-8afc-8a2c98057437";
+
+
+/*
+ * States / UTs used by LGD.
+ *
+ * The API page exposes stateNameEnglish
+ * as a filter, so we search state-by-state.
+ */
+
+const STATES = [
+
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry"
+
+];
+
+
+const STATE_BATCH_SIZE =
+    10000;
+
+
+const MAX_RESULTS =
+    100;
+
+
+export async function onRequest(
+    context
+) {
 
     const requestUrl =
         new URL(
@@ -12,8 +75,7 @@ export async function onRequest(context) {
                 "q"
             ) ||
             ""
-        )
-        .trim();
+        ).trim();
 
 
     if (
@@ -46,7 +108,7 @@ export async function onRequest(context) {
     ) {
 
         console.error(
-            "DATA_GOV_IN_API_KEY is missing."
+            "DATA_GOV_IN_API_KEY missing."
         );
 
 
@@ -61,280 +123,308 @@ export async function onRequest(context) {
     }
 
 
-    /*
-     * Government of India OGD
-     *
-     * Catalog:
-     *
-     * fd5ac8e1-32cd-4f74-b95e-fd55b76d53e0
-     */
+    const search =
+        query.toLowerCase();
 
-    const apiUrl =
-        "https://api.data.gov.in" +
-        "/catalog/fd5ac8e1-32cd-4f74-b95e-fd55b76d53e0" +
-        "?api-key=" +
-        encodeURIComponent(
-            apiKey
-        ) +
-        "&format=json" +
-        "&limit=100" +
-        "&offset=0" +
-        "&filters[area_name]=" +
-        encodeURIComponent(
-            query
-        );
+
+    const results = [];
+
+    const seen =
+        new Set();
 
 
     try {
 
-        const response =
-            await fetch(
-                apiUrl,
-                {
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
-            );
-
-
-        if (
-            !response.ok
-        ) {
-
-            const errorText =
-                await response.text();
-
-
-            console.error(
-                "data.gov.in status:",
-                response.status,
-                errorText
-            );
-
-
-            return jsonResponse(
-                {
-                    query:
-                        query,
-
-                    count:
-                        0,
-
-                    results:
-                        []
-                },
-                response.status === 403
-                    ? 403
-                    : 500
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
         /*
-         * Different OGD responses can expose
-         * records using different property names.
+         * Search state-by-state.
+         *
+         * We first get a large batch for each
+         * state and then perform the actual
+         * text filter against villageNameEnglish.
          */
 
-        const records =
-            getRecords(
-                data
-            );
+        for (
+            const state of STATES
+        ) {
 
+            if (
+                results.length >=
+                MAX_RESULTS
+            ) {
 
-        const results = [];
-
-        const seen =
-            new Set();
-
-
-        records.forEach(
-            function(record) {
-
-                const village =
-                    getField(
-                        record,
-                        [
-                            "area_name",
-                            "AREA NAME",
-                            "Village Name",
-                            "VILLAGE NAME",
-                            "village_name",
-                            "village",
-                            "VILLAGE",
-                            "Town/Village Name",
-                            "Town Village Name"
-                        ]
-                    );
-
-
-                const state =
-                    getField(
-                        record,
-                        [
-                            "state_name",
-                            "STATE NAME",
-                            "State Name",
-                            "state"
-                        ]
-                    );
-
-
-                const district =
-                    getField(
-                        record,
-                        [
-                            "district_name",
-                            "DISTRICT NAME",
-                            "District Name",
-                            "district"
-                        ]
-                    );
-
-
-                const subDistrict =
-                    getField(
-                        record,
-                        [
-                            "sub_district_name",
-                            "SUB-DISTRICT NAME",
-                            "Sub-District Name",
-                            "sub_district",
-                            "SUB DISTRICT NAME"
-                        ]
-                    );
-
-
-                const code =
-                    getField(
-                        record,
-                        [
-                            "mdds_plcn",
-                            "MDDS PLCN",
-                            "village_code",
-                            "VILLAGE CODE",
-                            "Village Code",
-                            "town_village_code",
-                            "Town Village Code"
-                        ]
-                    );
-
-
-                const documentId =
-                    getField(
-                        record,
-                        [
-                            "document_id",
-                            "DOCUMENT ID",
-                            "Document ID"
-                        ]
-                    );
-
-
-                if (
-                    !village
-                ) {
-
-                    return;
-
-                }
-
-
-                /*
-                 * The search is text based on
-                 * Area Name / village name.
-                 */
-
-                if (
-                    !village
-                        .toLowerCase()
-                        .includes(
-                            query.toLowerCase()
-                        )
-                ) {
-
-                    return;
-
-                }
-
-
-                /*
-                 * Prefer the village/location code
-                 * as the unique identifier.
-                 */
-
-                const uniqueId =
-                    String(
-                        code ||
-                        documentId ||
-                        (
-                            village +
-                            "|" +
-                            state +
-                            "|" +
-                            district +
-                            "|" +
-                            subDistrict
-                        )
-                    ).trim();
-
-
-                const key =
-                    uniqueId;
-
-
-                if (
-                    seen.has(key)
-                ) {
-
-                    return;
-
-                }
-
-
-                seen.add(
-                    key
-                );
-
-
-                results.push({
-
-                    code:
-                        uniqueId,
-
-                    village:
-                        village,
-
-                    state:
-                        state,
-
-                    district:
-                        district,
-
-                    subDistrict:
-                        subDistrict
-
-                });
+                break;
 
             }
-        );
+
+
+            let offset =
+                0;
+
+
+            while (
+                results.length <
+                    MAX_RESULTS
+                &&
+                offset <
+                    STATE_BATCH_SIZE
+            ) {
+
+                const apiUrl =
+                    buildApiUrl(
+                        apiKey,
+                        state,
+                        offset
+                    );
+
+
+                const response =
+                    await fetch(
+                        apiUrl,
+                        {
+                            headers: {
+                                "Accept":
+                                    "application/json"
+                            }
+                        }
+                    );
+
+
+                if (
+                    !response.ok
+                ) {
+
+                    const text =
+                        await response.text();
+
+
+                    console.error(
+                        "LGD API:",
+                        response.status,
+                        state,
+                        text
+                    );
+
+
+                    /*
+                     * Skip a state if the API
+                     * rejects it, but continue
+                     * searching the others.
+                     */
+
+                    break;
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                const records =
+                    Array.isArray(
+                        data.records
+                    )
+                        ? data.records
+                        : [];
+
+
+                if (
+                    records.length === 0
+                ) {
+
+                    break;
+
+                }
+
+
+                for (
+                    const record of records
+                ) {
+
+                    const village =
+                        String(
+                            record[
+                                "villageNameEnglish"
+                            ] ||
+                            ""
+                        ).trim();
+
+
+                    if (
+                        !village
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    /*
+                     * ACTUAL TEXT FILTER
+                     */
+
+                    if (
+                        !village
+                            .toLowerCase()
+                            .includes(
+                                search
+                            )
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    const code =
+                        String(
+                            record[
+                                "villageCode"
+                            ] ??
+                            ""
+                        ).trim();
+
+
+                    const stateName =
+                        String(
+                            record[
+                                "stateNameEnglish"
+                            ] ||
+                            state
+                        ).trim();
+
+
+                    const district =
+                        String(
+                            record[
+                                "districtNameEnglish"
+                            ] ||
+                            ""
+                        ).trim();
+
+
+                    const subDistrict =
+                        String(
+                            record[
+                                "subDistrictNameEnglish"
+                            ] ||
+                            ""
+                        ).trim();
+
+
+                    if (
+                        !code
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    if (
+                        seen.has(code)
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    seen.add(
+                        code
+                    );
+
+
+                    results.push({
+
+                        code:
+                            code,
+
+                        village:
+                            village,
+
+                        state:
+                            stateName,
+
+                        district:
+                            district,
+
+                        subDistrict:
+                            subDistrict
+
+                    });
+
+
+                    if (
+                        results.length >=
+                        MAX_RESULTS
+                    ) {
+
+                        break;
+
+                    }
+
+                }
+
+
+                /*
+                 * The API response includes
+                 * "count". Stop when this state
+                 * has been fully paged.
+                 */
+
+                const total =
+                    Number(
+                        data.count ||
+                        0
+                    );
+
+
+                if (
+                    total <=
+                    offset +
+                    records.length
+                ) {
+
+                    break;
+
+                }
+
+
+                offset +=
+                    records.length;
+
+            }
+
+        }
 
 
         results.sort(
             function(a, b) {
 
-                return String(
-                    a.village
-                ).localeCompare(
-                    String(
-                        b.village
-                    ),
+                const villageCompare =
+                    a.village.localeCompare(
+                        b.village,
+                        "en",
+                        {
+                            sensitivity:
+                                "base"
+                        }
+                    );
+
+
+                if (
+                    villageCompare !==
+                    0
+                ) {
+
+                    return villageCompare;
+
+                }
+
+
+                return a.state.localeCompare(
+                    b.state,
                     "en",
                     {
                         sensitivity:
@@ -355,19 +445,15 @@ export async function onRequest(context) {
                 results.length,
 
             results:
-                results.slice(
-                    0,
-                    100
-                )
+                results
 
         });
-
 
     }
     catch (error) {
 
         console.error(
-            "India village API error:",
+            "LGD village search error:",
             error
         );
 
@@ -392,177 +478,50 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   GET RECORDS
+   BUILD API URL
 ========================================= */
 
-function getRecords(
-    data
+function buildApiUrl(
+    apiKey,
+    state,
+    offset
 ) {
 
-    if (
-        Array.isArray(data)
-    ) {
+    return (
 
-        return data;
+        "https://api.data.gov.in/resource/" +
 
-    }
+        RESOURCE_ID +
 
+        "?api-key=" +
 
-    if (
-        data &&
-        Array.isArray(
-            data.records
+        encodeURIComponent(
+            apiKey
+        ) +
+
+        "&format=json" +
+
+        "&limit=" +
+
+        STATE_BATCH_SIZE +
+
+        "&offset=" +
+
+        offset +
+
+        "&filters[stateNameEnglish]=" +
+
+        encodeURIComponent(
+            state
         )
-    ) {
 
-        return data.records;
-
-    }
-
-
-    if (
-        data &&
-        Array.isArray(
-            data.data
-        )
-    ) {
-
-        return data.data;
-
-    }
-
-
-    if (
-        data &&
-        Array.isArray(
-            data.results
-        )
-    ) {
-
-        return data.results;
-
-    }
-
-
-    return [];
+    );
 
 }
 
 
 /* =========================================
-   GET FIELD
-========================================= */
-
-function getField(
-    record,
-    names
-) {
-
-    if (
-        !record ||
-        typeof record !== "object"
-    ) {
-
-        return "";
-
-    }
-
-
-    /*
-     * Exact field names first.
-     */
-
-    for (
-        const name of names
-    ) {
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                record,
-                name
-            )
-        ) {
-
-            const value =
-                record[name];
-
-
-            if (
-                value !== null &&
-                value !== undefined &&
-                String(value).trim() !== ""
-            ) {
-
-                return String(
-                    value
-                ).trim();
-
-            }
-
-        }
-
-    }
-
-
-    /*
-     * Case-insensitive fallback.
-     */
-
-    const keys =
-        Object.keys(
-            record
-        );
-
-
-    for (
-        const wanted of names
-    ) {
-
-        const found =
-            keys.find(
-                function(key) {
-
-                    return (
-                        key.toLowerCase() ===
-                        wanted.toLowerCase()
-                    );
-
-                }
-            );
-
-
-        if (
-            found
-        ) {
-
-            const value =
-                record[found];
-
-
-            if (
-                value !== null &&
-                value !== undefined &&
-                String(value).trim() !== ""
-            ) {
-
-                return String(
-                    value
-                ).trim();
-
-            }
-
-        }
-
-    }
-
-
-    return "";
-
-}
-
-
-/* =========================================
-   JSON
+   JSON RESPONSE
 ========================================= */
 
 function jsonResponse(
@@ -587,7 +546,7 @@ function jsonResponse(
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400",
+                    "public, max-age=300, s-maxage=3600",
 
                 "Access-Control-Allow-Origin":
                     "*"
