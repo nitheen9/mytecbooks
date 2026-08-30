@@ -6,11 +6,6 @@ export async function onRequest(context) {
         ).trim();
 
 
-    /*
-     * U.S. ZIP Code:
-     * exactly 5 digits.
-     */
-
     if (
         !/^\d{5}$/.test(zipcode)
     ) {
@@ -34,10 +29,8 @@ export async function onRequest(context) {
                 apiUrl,
                 {
                     headers: {
-
                         "Accept":
                             "application/json"
-
                     }
                 }
             );
@@ -114,16 +107,23 @@ export async function onRequest(context) {
 
 
         return new Response(
+
             "Unable to load U.S. ZIP Code information.",
+
             {
+
                 status:
                     500,
 
                 headers: {
+
                     "Content-Type":
                         "text/plain; charset=UTF-8"
+
                 }
+
             }
+
         );
 
     }
@@ -164,8 +164,19 @@ function createPage(
 
     const stateCode =
         String(
-            first["state abbreviation"] ||
+            first[
+                "state abbreviation"
+            ] ||
             ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+    const country =
+        String(
+            data.country ||
+            "United States"
         ).trim();
 
 
@@ -184,7 +195,7 @@ function createPage(
         city +
         ", " +
         state +
-        ". View city, state, latitude and longitude information.";
+        ". View ZIP Code, city, state, country, latitude and longitude information.";
 
 
     let placesHtml =
@@ -196,7 +207,9 @@ function createPage(
 
             const placeName =
                 String(
-                    place["place name"] ||
+                    place[
+                        "place name"
+                    ] ||
                     ""
                 ).trim();
 
@@ -210,9 +223,13 @@ function createPage(
 
             const placeStateCode =
                 String(
-                    place["state abbreviation"] ||
+                    place[
+                        "state abbreviation"
+                    ] ||
                     ""
-                ).trim();
+                )
+                .trim()
+                .toUpperCase();
 
 
             const latitude =
@@ -240,11 +257,21 @@ function createPage(
                         ) +
 
                         (
-                            placeStateCode
+                            placeState
                                 ? ', ' +
                                   escapeHtml(
-                                      placeStateCode
+                                      placeState
                                   )
+                                : ""
+                        ) +
+
+                        (
+                            placeStateCode
+                                ? ' (' +
+                                  escapeHtml(
+                                      placeStateCode
+                                  ) +
+                                  ')'
                                 : ""
                         ) +
 
@@ -255,7 +282,8 @@ function createPage(
                         '<strong>Latitude:</strong> ' +
 
                         escapeHtml(
-                            latitude
+                            latitude ||
+                            "Not available"
                         ) +
 
                     '</div>' +
@@ -265,7 +293,8 @@ function createPage(
                         '<strong>Longitude:</strong> ' +
 
                         escapeHtml(
-                            longitude
+                            longitude ||
+                            "Not available"
                         ) +
 
                     '</div>' +
@@ -313,12 +342,15 @@ ${escapeHtml(title)}
 }
 
 * {
+
     box-sizing:border-box;
+
 }
 
 body {
 
     margin:0;
+
     padding:20px;
 
     font-family:
@@ -329,14 +361,19 @@ body {
         Arial,
         sans-serif;
 
-    background:var(--light);
-    color:var(--dark);
+    background:
+        var(--light);
+
+    color:
+        var(--dark);
 
 }
 
 .container {
 
-    max-width:850px;
+    max-width:
+        850px;
+
     margin:0 auto;
 
 }
@@ -344,7 +381,9 @@ body {
 h1 {
 
     text-align:center;
+
     margin:10px 0 12px;
+
     font-size:30px;
 
 }
@@ -352,8 +391,11 @@ h1 {
 .subtitle {
 
     text-align:center;
+
     color:#666;
+
     line-height:1.6;
+
     margin-bottom:25px;
 
 }
@@ -377,8 +419,11 @@ h1 {
 
 .card h2 {
 
-    color:#333;
     margin-top:0;
+
+    color:#333;
+
+    line-height:1.4;
 
 }
 
@@ -429,7 +474,7 @@ h1 {
 
 .place-list {
 
-    margin-top:20px;
+    margin-top:22px;
 
 }
 
@@ -455,6 +500,8 @@ h1 {
     color:#333;
 
     margin-bottom:8px;
+
+    line-height:1.5;
 
 }
 
@@ -544,6 +591,7 @@ ${stateCode
 📍 ZIP Code ${escapeHtml(zipcode)}
 </h2>
 
+
 <div class="data-row">
 
 <span class="label">
@@ -555,6 +603,7 @@ ${escapeHtml(zipcode)}
 </span>
 
 </div>
+
 
 <div class="data-row">
 
@@ -569,6 +618,7 @@ ${escapeHtml(
 
 </div>
 
+
 <div class="data-row">
 
 <span class="label">
@@ -581,10 +631,26 @@ ${escapeHtml(
 )}
 
 ${stateCode
-    ? " (" + escapeHtml(stateCode) + ")"
+    ? " (" +
+      escapeHtml(stateCode) +
+      ")"
     : ""}
 
 </div>
+
+
+<div class="data-row">
+
+<span class="label">
+Country
+</span>
+
+${escapeHtml(
+    country
+)}
+
+</div>
+
 
 <div class="place-list">
 
@@ -596,6 +662,7 @@ ${placesHtml}
 
 </div>
 
+
 <a
 class="back"
 href="/usa-zip-search.html">
@@ -605,6 +672,7 @@ href="/usa-zip-search.html">
 </a>
 
 </div>
+
 
 <footer>
 
@@ -652,56 +720,76 @@ U.S. ZIP Code Not Found
 
 body {
 
-    font-family:Arial,sans-serif;
+    font-family:
+        Arial,
+        sans-serif;
 
-    background:#f9f9fb;
+    background:
+        #f9f9fb;
 
-    padding:40px 20px;
+    padding:
+        40px 20px;
 
-    text-align:center;
+    text-align:
+        center;
 
 }
 
 .box {
 
-    max-width:650px;
+    max-width:
+        650px;
 
-    margin:auto;
+    margin:
+        auto;
 
-    background:white;
+    background:
+        white;
 
-    padding:30px;
+    padding:
+        30px;
 
-    border-radius:12px;
+    border-radius:
+        12px;
 
     box-shadow:
-        0 4px 18px rgba(0,0,0,.08);
+        0 4px 18px
+        rgba(0,0,0,.08);
 
 }
 
 h1 {
 
-    color:#1e1e24;
+    color:
+        #1e1e24;
 
 }
 
 a {
 
-    display:inline-block;
+    display:
+        inline-block;
 
-    margin-top:20px;
+    margin-top:
+        20px;
 
-    padding:12px 18px;
+    padding:
+        12px 18px;
 
-    background:#f48120;
+    background:
+        #f48120;
 
-    color:white;
+    color:
+        white;
 
-    text-decoration:none;
+    text-decoration:
+        none;
 
-    border-radius:7px;
+    border-radius:
+        7px;
 
-    font-weight:bold;
+    font-weight:
+        bold;
 
 }
 
@@ -722,7 +810,9 @@ ${escapeHtml(message)}
 </p>
 
 <a href="/usa-zip-search.html">
+
 ← U.S. ZIP Code Search
+
 </a>
 
 </div>
@@ -746,6 +836,7 @@ ${escapeHtml(message)}
         }
 
     );
+
 }
 
 
