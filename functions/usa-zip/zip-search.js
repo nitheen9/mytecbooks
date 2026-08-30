@@ -1,36 +1,107 @@
 const STATES = [
-    "al","ak","az","ar","ca","co","ct","de","fl","ga",
-    "hi","id","il","in","ia","ks","ky","la","me","md",
-    "ma","mi","mn","ms","mo","mt","ne","nv","nh","nj",
-    "nm","ny","nc","nd","oh","ok","or","pa","ri","sc",
-    "sd","tn","tx","ut","vt","va","wa","wv","wi","wy",
+
+    "al",
+    "ak",
+    "az",
+    "ar",
+    "ca",
+    "co",
+    "ct",
+    "de",
+    "fl",
+    "ga",
+    "hi",
+    "id",
+    "il",
+    "in",
+    "ia",
+    "ks",
+    "ky",
+    "la",
+    "me",
+    "md",
+    "ma",
+    "mi",
+    "mn",
+    "ms",
+    "mo",
+    "mt",
+    "ne",
+    "nv",
+    "nh",
+    "nj",
+    "nm",
+    "ny",
+    "nc",
+    "nd",
+    "oh",
+    "ok",
+    "or",
+    "pa",
+    "ri",
+    "sc",
+    "sd",
+    "tn",
+    "tx",
+    "ut",
+    "vt",
+    "va",
+    "wa",
+    "wv",
+    "wi",
+    "wy",
     "dc"
+
 ];
 
-export async function onRequest(context) {
 
-    const url =
-        new URL(context.request.url);
+export async function onRequest(
+    context
+) {
 
-    const city =
+    const requestUrl =
+        new URL(
+            context.request.url
+        );
+
+
+    const query =
         (
-            url.searchParams.get("q") || ""
-        ).trim();
+            requestUrl.searchParams.get(
+                "q"
+            ) ||
+            ""
+        )
+        .trim();
 
-    if (city.length < 2) {
+
+    if (
+        query.length < 2
+    ) {
 
         return jsonResponse(
             {
-                query: city,
-                count: 0,
-                results: []
+                query:
+                    query,
+
+                count:
+                    0,
+
+                results:
+                    []
             },
             400
         );
 
     }
 
+
     try {
+
+        /*
+         * Search all U.S. states because
+         * the user enters only the city/area.
+         */
 
         const requests =
             STATES.map(
@@ -40,7 +111,10 @@ export async function onRequest(context) {
                         "https://api.zippopotam.us/us/" +
                         state +
                         "/" +
-                        encodeURIComponent(city);
+                        encodeURIComponent(
+                            query
+                        );
+
 
                     try {
 
@@ -55,12 +129,19 @@ export async function onRequest(context) {
                                 }
                             );
 
-                        if (!response.ok) {
+
+                        if (
+                            !response.ok
+                        ) {
+
                             return [];
+
                         }
+
 
                         const data =
                             await response.json();
+
 
                         if (
                             !data ||
@@ -68,8 +149,11 @@ export async function onRequest(context) {
                                 data.places
                             )
                         ) {
+
                             return [];
+
                         }
+
 
                         return data.places.map(
                             function(place) {
@@ -80,14 +164,16 @@ export async function onRequest(context) {
                                         String(
                                             place[
                                                 "post code"
-                                            ] || ""
+                                            ] ||
+                                            ""
                                         ).trim(),
 
                                     place:
                                         String(
                                             place[
                                                 "place name"
-                                            ] || ""
+                                            ] ||
+                                            ""
                                         ).trim(),
 
                                     state:
@@ -154,36 +240,64 @@ export async function onRequest(context) {
                         item.code
                     )
                 ) {
+
                     return;
+
                 }
 
+
+                if (
+                    !item.place
+                ) {
+
+                    return;
+
+                }
+
+
                 /*
-                 * Make sure the returned place
-                 * actually matches the user's
-                 * city/area search.
+                 * Text filter.
+                 *
+                 * The returned place must contain
+                 * the user's search text.
                  */
 
                 if (
                     !item.place
                         .toLowerCase()
                         .includes(
-                            city.toLowerCase()
+                            query.toLowerCase()
                         )
                 ) {
+
                     return;
+
                 }
 
+
+                /*
+                 * Remove duplicate ZIPs.
+                 */
+
                 if (
-                    seen.has(item.code)
+                    seen.has(
+                        item.code
+                    )
                 ) {
+
                     return;
+
                 }
+
 
                 seen.add(
                     item.code
                 );
 
-                results.push(item);
+
+                results.push(
+                    item
+                );
 
             }
         );
@@ -204,13 +318,16 @@ export async function onRequest(context) {
         return jsonResponse({
 
             query:
-                city,
+                query,
 
             count:
                 results.length,
 
             results:
-                results
+                results.slice(
+                    0,
+                    100
+                )
 
         });
 
@@ -222,11 +339,17 @@ export async function onRequest(context) {
             error
         );
 
+
         return jsonResponse(
             {
-                query: city,
-                count: 0,
-                results: []
+                query:
+                    query,
+
+                count:
+                    0,
+
+                results:
+                    []
             },
             500
         );
@@ -236,17 +359,26 @@ export async function onRequest(context) {
 }
 
 
+/* =========================================
+   JSON RESPONSE
+========================================= */
+
 function jsonResponse(
     data,
     status = 200
 ) {
 
     return new Response(
+
         JSON.stringify(data),
+
         {
-            status: status,
+
+            status:
+                status,
 
             headers: {
+
                 "Content-Type":
                     "application/json; charset=UTF-8",
 
@@ -255,7 +387,11 @@ function jsonResponse(
 
                 "Access-Control-Allow-Origin":
                     "*"
+
             }
+
         }
+
     );
+
 }
