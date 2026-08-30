@@ -29,7 +29,37 @@ U.S. ZIP Code Search - ZIP Code Finder
       content="Free U.S. ZIP Code Finder. Search U.S. ZIP Codes by ZIP Code or city and area name.">
 
 
+<!-- =========================
+     GOOGLE ANALYTICS
+========================= -->
+
+<script async
+src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
+</script>
+
+<script>
+
+window.dataLayer =
+    window.dataLayer || [];
+
+function gtag() {
+
+    dataLayer.push(arguments);
+
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-BP9YJW8LB9');
+
+</script>
+
+
 <style>
+
+/* =========================
+   ROOT
+========================= */
 
 :root {
 
@@ -41,9 +71,22 @@ U.S. ZIP Code Search - ZIP Code Finder
 
 }
 
+
+/* =========================
+   RESET
+========================= */
+
 * {
-    box-sizing: border-box;
+
+    box-sizing:
+        border-box;
+
 }
+
+
+/* =========================
+   BODY
+========================= */
 
 body {
 
@@ -69,6 +112,11 @@ body {
 
 }
 
+
+/* =========================
+   CONTAINER
+========================= */
+
 .container {
 
     max-width:
@@ -78,6 +126,11 @@ body {
         0 auto;
 
 }
+
+
+/* =========================
+   HEADING
+========================= */
 
 h1 {
 
@@ -94,6 +147,11 @@ h1 {
         30px;
 
 }
+
+
+/* =========================
+   INTRO
+========================= */
 
 .intro {
 
@@ -135,6 +193,7 @@ h1 {
 
 }
 
+
 .tab-btn {
 
     padding:
@@ -166,12 +225,14 @@ h1 {
 
 }
 
+
 .tab-btn:hover {
 
     background:
         #d3d3d9;
 
 }
+
 
 .tab-btn.active {
 
@@ -194,6 +255,7 @@ h1 {
         none;
 
 }
+
 
 .panel.active {
 
@@ -227,12 +289,15 @@ h1 {
 
 }
 
+
+.search-card h2,
 .search-card h3 {
 
     margin-top:
         0;
 
 }
+
 
 .search-card p {
 
@@ -262,6 +327,7 @@ h1 {
 
 }
 
+
 input {
 
     flex:
@@ -288,12 +354,14 @@ input {
 
 }
 
+
 input:focus {
 
     border-color:
         var(--primary);
 
 }
+
 
 button.search-submit {
 
@@ -322,6 +390,7 @@ button.search-submit {
         16px;
 
 }
+
 
 button.search-submit:hover {
 
@@ -358,6 +427,7 @@ button.search-submit:hover {
 
 }
 
+
 .results h4 {
 
     margin-top:
@@ -373,7 +443,7 @@ button.search-submit:hover {
 
 
 /* =========================
-   MATCH ITEMS
+   MATCH ITEM
 ========================= */
 
 .match-item {
@@ -396,12 +466,14 @@ button.search-submit:hover {
 
 }
 
+
 .match-item:last-child {
 
     margin-bottom:
         0;
 
 }
+
 
 .match-code {
 
@@ -416,6 +488,7 @@ button.search-submit:hover {
 
 }
 
+
 .match-name {
 
     margin-top:
@@ -423,6 +496,12 @@ button.search-submit:hover {
 
     line-height:
         1.6;
+
+    color:
+        var(--dark);
+
+    font-weight:
+        bold;
 
 }
 
@@ -449,6 +528,7 @@ button.search-submit:hover {
         none;
 
 }
+
 
 .details-link:hover {
 
@@ -574,12 +654,14 @@ footer {
 
     }
 
+
     h1 {
 
         font-size:
             24px;
 
     }
+
 
     .tabs {
 
@@ -588,12 +670,14 @@ footer {
 
     }
 
+
     .tab-btn {
 
         width:
             100%;
 
     }
+
 
     .search-box {
 
@@ -602,12 +686,14 @@ footer {
 
     }
 
+
     button.search-submit {
 
         width:
             100%;
 
     }
+
 
     .search-card {
 
@@ -625,8 +711,13 @@ footer {
 
 <body>
 
+
 <div class="container">
 
+
+<!-- =========================
+     TITLE
+========================= -->
 
 <h1>
 🇺🇸 U.S. ZIP Code Finder
@@ -647,6 +738,7 @@ or city and area name.
 
 <div class="tabs">
 
+
     <button
         class="tab-btn active"
         onclick="switchTab('zip', this)">
@@ -663,6 +755,7 @@ or city and area name.
         🔎 City / Area Search
 
     </button>
+
 
 </div>
 
@@ -691,6 +784,7 @@ or city and area name.
 
     <div class="search-box">
 
+
         <input
             type="text"
             id="zipInput"
@@ -707,6 +801,7 @@ or city and area name.
             Search
 
         </button>
+
 
     </div>
 
@@ -744,10 +839,11 @@ or city and area name.
 
     <div class="search-box">
 
+
         <input
             type="text"
             id="cityInput"
-            placeholder="Enter city or area e.g. Wishon"
+            placeholder="Enter city or area e.g. Jersey"
             autocomplete="off">
 
 
@@ -758,6 +854,7 @@ or city and area name.
             Search
 
         </button>
+
 
     </div>
 
@@ -777,14 +874,23 @@ or city and area name.
 </div>
 
 
+<!-- =========================
+     INFO
+========================= -->
+
 <div class="info">
 
 <strong>U.S. ZIP Code Finder:</strong>
 
-Search by ZIP Code or by city / area name.
+Search a ZIP Code directly or search
+for ZIP Codes by city or area name.
 
 </div>
 
+
+<!-- =========================
+     FOOTER
+========================= -->
 
 <footer>
 
@@ -802,6 +908,67 @@ United States ZIP Code Finder
 
 
 /* =========================
+   STATE NAMES
+========================= */
+
+const stateNames = {
+
+    AL: "Alabama",
+    AK: "Alaska",
+    AZ: "Arizona",
+    AR: "Arkansas",
+    CA: "California",
+    CO: "Colorado",
+    CT: "Connecticut",
+    DE: "Delaware",
+    FL: "Florida",
+    GA: "Georgia",
+    HI: "Hawaii",
+    ID: "Idaho",
+    IL: "Illinois",
+    IN: "Indiana",
+    IA: "Iowa",
+    KS: "Kansas",
+    KY: "Kentucky",
+    LA: "Louisiana",
+    ME: "Maine",
+    MD: "Maryland",
+    MA: "Massachusetts",
+    MI: "Michigan",
+    MN: "Minnesota",
+    MS: "Mississippi",
+    MO: "Missouri",
+    MT: "Montana",
+    NE: "Nebraska",
+    NV: "Nevada",
+    NH: "New Hampshire",
+    NJ: "New Jersey",
+    NM: "New Mexico",
+    NY: "New York",
+    NC: "North Carolina",
+    ND: "North Dakota",
+    OH: "Ohio",
+    OK: "Oklahoma",
+    OR: "Oregon",
+    PA: "Pennsylvania",
+    RI: "Rhode Island",
+    SC: "South Carolina",
+    SD: "South Dakota",
+    TN: "Tennessee",
+    TX: "Texas",
+    UT: "Utah",
+    VT: "Vermont",
+    VA: "Virginia",
+    WA: "Washington",
+    WV: "West Virginia",
+    WI: "Wisconsin",
+    WY: "Wyoming",
+    DC: "District of Columbia"
+
+};
+
+
+/* =========================
    TAB SWITCH
 ========================= */
 
@@ -809,6 +976,7 @@ function switchTab(
     tabName,
     button
 ) {
+
 
     document
         .querySelectorAll(".panel")
@@ -853,10 +1021,11 @@ function switchTab(
 
 
 /* =========================
-   ZIP CODE SEARCH
+   ZIP CODE LOOKUP
 ========================= */
 
 function searchZipCode() {
+
 
     const input =
         document
@@ -882,11 +1051,14 @@ function searchZipCode() {
         !/^\d{5}$/.test(input)
     ) {
 
+
         error.innerText =
             "Please enter a valid 5-digit U.S. ZIP Code.";
 
+
         error.style.display =
             "block";
+
 
         return;
 
@@ -906,6 +1078,7 @@ function searchZipCode() {
 ========================= */
 
 async function searchCity() {
+
 
     const input =
         document
@@ -942,11 +1115,14 @@ async function searchCity() {
         input.length < 2
     ) {
 
+
         error.innerText =
             "Please enter at least 2 characters.";
 
+
         error.style.display =
             "block";
+
 
         return;
 
@@ -965,12 +1141,11 @@ async function searchCity() {
 
     try {
 
+
         const response =
             await fetch(
                 "/usa-zip/zip-search?q=" +
-                encodeURIComponent(
-                    input
-                ),
+                encodeURIComponent(input),
                 {
                     cache:
                         "no-store"
@@ -1001,6 +1176,7 @@ async function searchCity() {
             data.results.length === 0
         ) {
 
+
             results.style.display =
                 "none";
 
@@ -1026,9 +1202,10 @@ async function searchCity() {
             input
         );
 
-    }
 
+    }
     catch (errorObject) {
+
 
         console.error(
             "ZIP city search error:",
@@ -1042,6 +1219,7 @@ async function searchCity() {
 
         error.innerText =
             "Unable to search U.S. ZIP Codes.";
+
 
         error.style.display =
             "block";
@@ -1061,6 +1239,7 @@ function displayCityResults(
     searchText
 ) {
 
+
     let html =
         '<h4>' +
         '🔎 ZIP Codes for "' +
@@ -1074,22 +1253,19 @@ function displayCityResults(
     items.forEach(
         function(item) {
 
+
             const code =
                 String(
                     item.code || ""
-                ).trim();
+                )
+                .trim();
 
 
             const place =
                 String(
                     item.place || ""
-                ).trim();
-
-
-            const state =
-                String(
-                    item.state || ""
-                ).trim();
+                )
+                .trim();
 
 
             const stateCode =
@@ -1100,8 +1276,57 @@ function displayCityResults(
                 .toUpperCase();
 
 
+            let state =
+                String(
+                    item.state || ""
+                )
+                .trim();
+
+
+            /*
+             * Convert 2-letter state code
+             * to the full state name.
+             */
+
             if (
-                !/^\d{5}$/.test(code)
+                state.length === 2 &&
+                stateNames[
+                    state.toUpperCase()
+                ]
+            ) {
+
+                state =
+                    stateNames[
+                        state.toUpperCase()
+                    ];
+
+            }
+
+
+            /*
+             * If backend returned only
+             * state code, use the map.
+             */
+
+            if (
+                !state &&
+                stateNames[stateCode]
+            ) {
+
+                state =
+                    stateNames[stateCode];
+
+            }
+
+
+            /*
+             * Required ZIP format.
+             */
+
+            if (
+                !/^\d{5}$/.test(
+                    code
+                )
             ) {
 
                 return;
@@ -1118,7 +1343,16 @@ function displayCityResults(
             }
 
 
-            let location =
+            /*
+             * Location text:
+             *
+             * Jersey City, New Jersey (NJ)
+             *
+             * This is plain text.
+             * It is NOT a link.
+             */
+
+            let locationText =
                 escapeHtml(
                     place
                 );
@@ -1128,7 +1362,7 @@ function displayCityResults(
                 state
             ) {
 
-                location +=
+                locationText +=
                     ", " +
                     escapeHtml(
                         state
@@ -1141,7 +1375,7 @@ function displayCityResults(
                 stateCode
             ) {
 
-                location +=
+                locationText +=
                     " (" +
                     escapeHtml(
                         stateCode
@@ -1155,6 +1389,7 @@ function displayCityResults(
 
                 '<div class="match-item">' +
 
+
                     '<div class="match-code">' +
 
                         'U.S. ZIP Code ' +
@@ -1165,11 +1400,17 @@ function displayCityResults(
 
                     '</div>' +
 
+
                     '<div class="match-name">' +
 
-                        location +
+                        locationText +
 
                     '</div>' +
+
+
+                    /*
+                     * ONLY THIS IS CLICKABLE.
+                     */
 
                     '<a ' +
                     'class="details-link" ' +
@@ -1188,6 +1429,7 @@ function displayCityResults(
                         ' Details →' +
 
                     '</a>' +
+
 
                 '</div>';
 
@@ -1246,7 +1488,7 @@ function escapeHtml(
 
 
 /* =========================
-   ENTER - ZIP
+   ENTER KEY - ZIP
 ========================= */
 
 document
@@ -1270,7 +1512,7 @@ document
 
 
 /* =========================
-   ENTER - CITY
+   ENTER KEY - CITY
 ========================= */
 
 document
