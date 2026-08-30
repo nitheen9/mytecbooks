@@ -428,7 +428,9 @@ button.search-submit:hover {
 }
 
 
-/* City + State clickable link */
+/* =========================
+   CITY / STATE LINK
+========================= */
 
 .place-link {
 
@@ -453,7 +455,12 @@ button.search-submit:hover {
 
 }
 
-.match-item .details-link {
+
+/* =========================
+   DETAILS LINK
+========================= */
+
+.details-link {
 
     display:
         inline-block;
@@ -472,7 +479,7 @@ button.search-submit:hover {
 
 }
 
-.match-item .details-link:hover {
+.details-link:hover {
 
     text-decoration:
         underline;
@@ -690,7 +697,7 @@ or city and area name.
 
 
 <!-- =========================
-     ZIP CODE SEARCH
+     ZIP CODE LOOKUP
 ========================= -->
 
 <div
@@ -822,6 +829,67 @@ United States ZIP Code Finder
 
 
 <script>
+
+
+/* =========================
+   STATE NAMES
+========================= */
+
+const stateNames = {
+
+    AL: "Alabama",
+    AK: "Alaska",
+    AZ: "Arizona",
+    AR: "Arkansas",
+    CA: "California",
+    CO: "Colorado",
+    CT: "Connecticut",
+    DE: "Delaware",
+    FL: "Florida",
+    GA: "Georgia",
+    HI: "Hawaii",
+    ID: "Idaho",
+    IL: "Illinois",
+    IN: "Indiana",
+    IA: "Iowa",
+    KS: "Kansas",
+    KY: "Kentucky",
+    LA: "Louisiana",
+    ME: "Maine",
+    MD: "Maryland",
+    MA: "Massachusetts",
+    MI: "Michigan",
+    MN: "Minnesota",
+    MS: "Mississippi",
+    MO: "Missouri",
+    MT: "Montana",
+    NE: "Nebraska",
+    NV: "Nevada",
+    NH: "New Hampshire",
+    NJ: "New Jersey",
+    NM: "New Mexico",
+    NY: "New York",
+    NC: "North Carolina",
+    ND: "North Dakota",
+    OH: "Ohio",
+    OK: "Oklahoma",
+    OR: "Oregon",
+    PA: "Pennsylvania",
+    RI: "Rhode Island",
+    SC: "South Carolina",
+    SD: "South Dakota",
+    TN: "Tennessee",
+    TX: "Texas",
+    UT: "Utah",
+    VT: "Vermont",
+    VA: "Virginia",
+    WA: "Washington",
+    WV: "West Virginia",
+    WI: "Wisconsin",
+    WY: "Wyoming",
+    DC: "District of Columbia"
+
+};
 
 
 /* =========================
@@ -1049,6 +1117,7 @@ async function searchCity() {
 
     }
 
+
     catch (errorObject) {
 
         console.error(
@@ -1099,18 +1168,12 @@ function displayCityResults(
             const code =
                 String(
                     item.code || ""
-                );
+                ).trim();
 
 
             const place =
                 String(
                     item.place || ""
-                ).trim();
-
-
-            const state =
-                String(
-                    item.state || ""
                 ).trim();
 
 
@@ -1120,6 +1183,44 @@ function displayCityResults(
                 )
                 .trim()
                 .toUpperCase();
+
+
+            /*
+             * Get full state name.
+             *
+             * First use the backend state
+             * if available. Otherwise use
+             * the local state map.
+             */
+
+            let state =
+                String(
+                    item.state || ""
+                ).trim();
+
+
+            if (
+                state.length === 2 &&
+                stateNames[state.toUpperCase()]
+            ) {
+
+                state =
+                    stateNames[
+                        state.toUpperCase()
+                    ];
+
+            }
+
+
+            if (
+                !state &&
+                stateNames[stateCode]
+            ) {
+
+                state =
+                    stateNames[stateCode];
+
+            }
 
 
             if (
@@ -1141,7 +1242,7 @@ function displayCityResults(
 
 
             /*
-             * City + State link
+             * City + State filtered search URL.
              */
 
             const cityStateUrl =
@@ -1174,13 +1275,9 @@ function displayCityResults(
                     '<div class="match-name">' +
 
                         '<a ' +
-
                         'class="place-link" ' +
-
                         'href="' +
-
                         cityStateUrl +
-
                         '">' +
 
                             escapeHtml(
@@ -1212,15 +1309,11 @@ function displayCityResults(
 
 
                     '<a ' +
-
                     'class="details-link" ' +
-
                     'href="/usa-zip/' +
-
                     encodeURIComponent(
                         code
                     ) +
-
                     '/">' +
 
                         'View ZIP ' +
