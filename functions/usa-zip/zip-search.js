@@ -1,26 +1,32 @@
 export async function onRequest(context) {
 
-    const url =
+    const requestUrl =
         new URL(
             context.request.url
         );
 
+
     const query =
         (
-            url.searchParams.get("q") ||
+            requestUrl.searchParams.get(
+                "q"
+            ) ||
             ""
         )
         .trim();
 
 
     if (
-        !/^\d{1,5}$/.test(query)
+        query.length < 2
     ) {
 
         return jsonResponse(
             {
-                query:query,
-                results:[]
+                query:
+                    query,
+
+                results:
+                    []
             },
             400
         );
@@ -28,25 +34,19 @@ export async function onRequest(context) {
     }
 
 
-    const where =
-        query.length === 5
-            ? "ZCTA5='" + query + "'"
-            : "ZCTA5 LIKE '" + query + "%'";
-
+    /*
+     * USGS public geocoder.
+     *
+     * Use the postal location type
+     * only.
+     */
 
     const apiUrl =
-        "https://tigerweb.geo.census.gov/arcgis/rest/services/" +
-        "TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/1/query" +
-        "?where=" +
-        encodeURIComponent(where) +
-        "&outFields=" +
-        encodeURIComponent(
-            "ZCTA5,GEOID,BASENAME,NAME,INTPTLAT,INTPTLON"
-        ) +
-        "&orderByFields=ZCTA5" +
-        "&returnGeometry=false" +
-        "&resultRecordCount=100" +
-        "&f=json";
+        "https://dashboard.waterdata.usgs.gov/" +
+        "service/geocoder/get/location/1.0" +
+        "?term=" +
+        encodeURIComponent(query) +
+        "&include=postal";
 
 
     try {
@@ -55,9 +55,11 @@ export async function onRequest(context) {
             await fetch(
                 apiUrl,
                 {
-                    headers:{
+                    headers: {
+
                         "Accept":
                             "application/json"
+
                     }
                 }
             );
@@ -67,10 +69,19 @@ export async function onRequest(context) {
             !response.ok
         ) {
 
+            console.error(
+                "USGS search HTTP:",
+                response.status
+            );
+
+
             return jsonResponse(
                 {
-                    query:query,
-                    results:[]
+                    query:
+                        query,
+
+                    results:
+                        []
                 },
                 500
             );
@@ -82,61 +93,132 @@ export async function onRequest(context) {
             await response.json();
 
 
-        const features =
-            Array.isArray(
-                data.features
-            )
-                ? data.features
-                : [];
+        if (
+            !Array.isArray(data)
+        ) {
+
+            return jsonResponse({
+
+                query:
+                    query,
+
+                results:
+                    []
+
+            });
+
+        }
 
 
-        const results =
-            features.map(
-                function(feature) {
+        /*
+         * Keep postal results only.
+         */
 
-                    const a =
-                        feature.attributes ||
-                        {};
-
-                    return {
-
-                        code:
-                            String(
-                                a.ZCTA5 ||
-                                ""
-                            ),
-
-                        name:
-                            String(
-                                a.NAME ||
-                                ""
-                            ),
-
-                        latitude:
-                            String(
-                                a.INTPTLAT ||
-                                ""
-                            ),
-
-                        longitude:
-                            String(
-                                a.INTPTLON ||
-                                ""
-                            )
-
-                    };
-
-                }
-            )
-            .filter(
+        const postalResults =
+            data.filter(
                 function(item) {
 
-                    return /^\d{5}$/.test(
-                        item.code
+                    return (
+                        item &&
+                        item.Source === "postal" &&
+                        /^\d{5}$/.test(
+                            String(
+                                extractZip(item.Name)
+                            )
+                        )
                     );
 
                 }
             );
+
+
+        const results = [];
+
+        const seen =
+            new Set();
+
+
+        postalResults.forEach(
+            function(item) {
+
+                const code =
+                    extractZip(
+                        item.Name
+                    );
+
+
+                if (
+                    !code ||
+                    seen.has(code)
+                ) {
+
+                    return;
+
+                }
+
+
+                seen.add(code);
+
+
+                const city =
+                    extractCity(
+                        item.Name,
+                        code
+                    );
+
+
+                results.push({
+
+                    code:
+                        code,
+
+                    name:
+                        city,
+
+                    county:
+                        String(
+                            item.County ||
+                            ""
+                        ),
+
+                    state:
+                        getStateName(
+                            String(
+                                item.State ||
+                                ""
+                            ).toUpperCase()
+                        ),
+
+                    stateCode:
+                        String(
+                            item.State ||
+                            ""
+                        ).toUpperCase(),
+
+                    latitude:
+                        item.Latitude ??
+                        "",
+
+                    longitude:
+                        item.Longitude ??
+                        ""
+
+                });
+
+            }
+        );
+
+
+        results.sort(
+            function(a, b) {
+
+                return (
+                    Number(a.code) -
+                    Number(b.code)
+                );
+
+            }
+        );
 
 
         return jsonResponse({
@@ -148,7 +230,10 @@ export async function onRequest(context) {
                 results.length,
 
             results:
-                results
+                results.slice(
+                    0,
+                    100
+                )
 
         });
 
@@ -157,7 +242,7 @@ export async function onRequest(context) {
     catch (error) {
 
         console.error(
-            "TIGERweb ZIP search error:",
+            "USGS city search error:",
             error
         );
 
@@ -182,6 +267,156 @@ export async function onRequest(context) {
 
 
 /* =========================================
+   EXTRACT ZIP
+========================================= */
+
+function extractZip(
+    name
+) {
+
+    const value =
+        String(
+            name || ""
+        ).trim();
+
+
+    const match =
+        value.match(
+            /^\s*(\d{5})\b/
+        );
+
+
+    return match
+        ? match[1]
+        : "";
+
+}
+
+
+/* =========================================
+   EXTRACT CITY
+========================================= */
+
+function extractCity(
+    name,
+    zipcode
+) {
+
+    let value =
+        String(
+            name || ""
+        ).trim();
+
+
+    value =
+        value.replace(
+            new RegExp(
+                "^" +
+                escapeRegex(zipcode) +
+                "\\s*",
+                "i"
+            ),
+            ""
+        );
+
+
+    return value.trim();
+
+}
+
+
+/* =========================================
+   STATE NAME
+========================================= */
+
+function getStateName(
+    code
+) {
+
+    const states = {
+
+        AL:"Alabama",
+        AK:"Alaska",
+        AZ:"Arizona",
+        AR:"Arkansas",
+        CA:"California",
+        CO:"Colorado",
+        CT:"Connecticut",
+        DE:"Delaware",
+        FL:"Florida",
+        GA:"Georgia",
+        HI:"Hawaii",
+        ID:"Idaho",
+        IL:"Illinois",
+        IN:"Indiana",
+        IA:"Iowa",
+        KS:"Kansas",
+        KY:"Kentucky",
+        LA:"Louisiana",
+        ME:"Maine",
+        MD:"Maryland",
+        MA:"Massachusetts",
+        MI:"Michigan",
+        MN:"Minnesota",
+        MS:"Mississippi",
+        MO:"Missouri",
+        MT:"Montana",
+        NE:"Nebraska",
+        NV:"Nevada",
+        NH:"New Hampshire",
+        NJ:"New Jersey",
+        NM:"New Mexico",
+        NY:"New York",
+        NC:"North Carolina",
+        ND:"North Dakota",
+        OH:"Ohio",
+        OK:"Oklahoma",
+        OR:"Oregon",
+        PA:"Pennsylvania",
+        RI:"Rhode Island",
+        SC:"South Carolina",
+        SD:"South Dakota",
+        TN:"Tennessee",
+        TX:"Texas",
+        UT:"Utah",
+        VT:"Vermont",
+        VA:"Virginia",
+        WA:"Washington",
+        WV:"West Virginia",
+        WI:"Wisconsin",
+        WY:"Wyoming",
+        DC:"District of Columbia"
+
+    };
+
+
+    return (
+        states[code] ||
+        code
+    );
+
+}
+
+
+/* =========================================
+   ESCAPE REGEX
+========================================= */
+
+function escapeRegex(
+    value
+) {
+
+    return String(value)
+
+        .replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+        );
+
+}
+
+
+/* =========================================
    JSON RESPONSE
 ========================================= */
 
@@ -199,7 +434,7 @@ function jsonResponse(
             status:
                 status,
 
-            headers:{
+            headers: {
 
                 "Content-Type":
                     "application/json; charset=UTF-8",
