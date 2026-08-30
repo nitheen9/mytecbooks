@@ -5,8 +5,10 @@ export async function onRequest(context) {
             context.params.code || ""
         ).trim();
 
+
     /*
-     * U.S. NAICS codes are 2 to 6 digits.
+     * 2022 U.S. NAICS:
+     * valid hierarchy levels are 2-6 digits.
      */
 
     if (
@@ -16,14 +18,20 @@ export async function onRequest(context) {
         return notFound(
             "Invalid U.S. NAICS code."
         );
+
     }
 
+
     /*
-     * 2022 is currently the latest
-     * released U.S. NAICS classification.
+     * IMPORTANT:
+     *
+     * Only 2022 is used.
+     *
+     * 2027 is not the current adopted
+     * classification.
      */
 
-    const url =
+    const censusUrl =
         "https://www.census.gov/naics/" +
         "?details=" +
         encodeURIComponent(code) +
@@ -31,11 +39,12 @@ export async function onRequest(context) {
         encodeURIComponent(code) +
         "&year=2022";
 
+
     try {
 
         const response =
             await fetch(
-                url,
+                censusUrl,
                 {
                     headers: {
                         "User-Agent":
@@ -46,32 +55,32 @@ export async function onRequest(context) {
                 }
             );
 
+
         if (!response.ok) {
 
             return notFound(
                 "U.S. NAICS code " +
                 code +
-                " was not found in the latest released 2022 NAICS classification."
+                " was not found in the 2022 classification."
             );
+
         }
+
 
         const html =
             await response.text();
 
+
+        const text =
+            htmlToText(html);
+
+
         const data =
             parseNAICS(
-                html,
+                text,
                 code
             );
 
-        /*
-         * Census may return a valid page
-         * for a parent code as well.
-         *
-         * If we cannot find the requested
-         * code in the result text, do not
-         * manufacture a result.
-         */
 
         if (
             !data ||
@@ -81,13 +90,18 @@ export async function onRequest(context) {
             return notFound(
                 "U.S. NAICS code " +
                 code +
-                " was not found in the latest released 2022 NAICS classification."
+                " was not found in the 2022 classification."
             );
+
         }
 
+
         return new Response(
+
             createPage(data),
+
             {
+
                 status: 200,
 
                 headers: {
@@ -99,8 +113,11 @@ export async function onRequest(context) {
                         "public, max-age=86400, s-maxage=604800"
 
                 }
+
             }
+
         );
+
     }
 
     catch (error) {
@@ -110,217 +127,204 @@ export async function onRequest(context) {
             error
         );
 
+
         return new Response(
+
             "Unable to load U.S. NAICS information.",
+
             {
+
                 status: 500,
 
                 headers: {
+
                     "Content-Type":
                         "text/plain; charset=UTF-8"
+
                 }
+
             }
+
         );
+
     }
+
 }
 
 
-/*
- * =========================================
- * PARSE CENSUS PAGE
- * =========================================
- */
+/* =========================================
+   PARSE 2022 CENSUS PAGE
+========================================= */
 
-function parseNAICS(
-    html,
-    requestedCode
-) {
+function parseNAICS(text, code) {
 
-    const text =
-        htmlToText(
-            html
-        );
+    let description =
+        "";
+
+    let details =
+        "";
+
+    let sector =
+        "Not available";
+
+    let industryGroup =
+        "Not available";
+
 
     /*
-     * Look for the exact Census button:
+     * Main Census result:
      *
-     * [Button: 513210] Software Publishers:
-     *
+     * Button: 513140
+     * Directory and Mailing List Publishers:
+     * This industry comprises ...
      */
 
-    const buttonRegex =
+    const mainRegex =
         new RegExp(
-            "\\[Button:\\s*" +
-            escapeRegex(requestedCode) +
-            "\\]\\s*([^[]+?)(?=\\s*\\[Button:|\\s*2022 NAICS Definition|\\s*NAICS Definition|$)",
+            "(?:\\[?\\s*)?Button:\\s*" +
+            escapeRegex(code) +
+            "\\s*\\]?\\s+" +
+            "([^:]+?)" +
+            "\\s*:\\s*" +
+            "(?:This\\s+(?:U\\.S\\.\\s+)?industry|See\\s+industry\\s+description)",
             "i"
         );
 
-    const buttonMatch =
-        text.match(
-            buttonRegex
-        );
 
-    let description = "";
+    const mainMatch =
+        text.match(mainRegex);
+
 
     if (
-        buttonMatch
+        mainMatch
     ) {
 
         description =
-            cleanDescription(
-                buttonMatch[1]
+            cleanText(
+                mainMatch[1]
             );
+
     }
 
 
     /*
-     * Alternative format:
+     * Fallback:
      *
-     * 513210 Software Publishers
-     *
+     * code followed directly by title.
      */
 
     if (
         !description
     ) {
 
-        const simpleRegex =
+        const fallbackRegex =
             new RegExp(
                 "(?:^|\\s)" +
-                escapeRegex(requestedCode) +
-                "\\s+([A-Za-z][A-Za-z0-9 ,&()'\\-/\\.]+?)(?=\\s+This industry comprises|\\s+See industry description|\\s+Cross-References|\\s+2022 NAICS Definition|$)",
+                escapeRegex(code) +
+                "\\s+([A-Z][A-Za-z0-9 ,&()'./\\-]+?)" +
+                "(?=\\s+This\\s+(?:U\\.S\\.\\s+)?industry|\\s+See\\s+industry\\s+description|\\s*$)",
                 "i"
             );
 
-        const simpleMatch =
-            text.match(
-                simpleRegex
-            );
+
+        const fallbackMatch =
+            text.match(fallbackRegex);
+
 
         if (
-            simpleMatch
+            fallbackMatch
         ) {
 
             description =
-                cleanDescription(
-                    simpleMatch[1]
+                cleanText(
+                    fallbackMatch[1]
                 );
+
         }
+
     }
 
 
     /*
-     * Another Census format:
+     * Some Census pages have:
      *
-     * Button: 513210
+     * Button: 513210 Software Publishers
      *
+     * without punctuation immediately
+     * after the title.
      */
 
     if (
         !description
     ) {
 
-        const buttonTextRegex =
+        const buttonOnlyRegex =
             new RegExp(
                 "Button:\\s*" +
-                escapeRegex(requestedCode) +
-                "\\s+([^\\[]+?)(?=\\s+Button:|\\s+2022 NAICS Definition|$)",
+                escapeRegex(code) +
+                "\\s+([A-Za-z][A-Za-z0-9 ,&()'./\\-]+?)(?=\\s+This\\s+(?:U\\.S\\.\\s+)?industry|\\s+See\\s+industry\\s+description)",
                 "i"
             );
 
-        const match =
-            text.match(
-                buttonTextRegex
-            );
+
+        const buttonOnlyMatch =
+            text.match(buttonOnlyRegex);
+
 
         if (
-            match
+            buttonOnlyMatch
         ) {
 
             description =
-                cleanDescription(
-                    match[1]
+                cleanText(
+                    buttonOnlyMatch[1]
                 );
+
         }
+
     }
 
 
     /*
-     * Find the complete industry
-     * description.
+     * Industry description.
      */
 
-    let details = "";
-
     const detailsRegex =
-        new RegExp(
-            escapeRegex(requestedCode) +
-            "[\\s\\S]{0,5000}?This industry comprises\\s+(.+?)(?=\\s+Cross-References|\\s+Illustrative Examples|\\s+Table displays|\\s+2022 NAICS Manual|$)",
-            "i"
-        );
+        /This\s+(?:U\.S\.\s+)?industry\s+comprises\s+(.+?)(?=\s+Cross-References|\s+Illustrative Examples|\s+Table displays|\s+2022 NAICS Manual|$)/i;
+
 
     const detailsMatch =
-        text.match(
-            detailsRegex
-        );
+        text.match(detailsRegex);
+
 
     if (
         detailsMatch
     ) {
 
         details =
+            "This industry comprises " +
             cleanText(
-                "This industry comprises " +
                 detailsMatch[1]
             );
-    }
 
-
-    /*
-     * Search more generally if the
-     * first method did not find details.
-     */
-
-    if (
-        !details
-    ) {
-
-        const genericDetailsRegex =
-            /This industry comprises\s+(.+?)(?=\s+Cross-References|\s+Illustrative Examples|\s+Table displays|\s+2022 NAICS Manual|$)/i;
-
-        const genericMatch =
-            text.match(
-                genericDetailsRegex
-            );
-
-        if (
-            genericMatch
-        ) {
-
-            details =
-                cleanText(
-                    "This industry comprises " +
-                    genericMatch[1]
-                );
-        }
     }
 
 
     /*
      * Sector.
+     *
+     * Example:
+     *
+     * Sector 51--Information
      */
 
-    let sector =
-        "Not available";
-
     const sectorRegex =
-        /Sector\s+(\d{2})\s*[-—]\s*([A-Za-z][^|]+?)(?=\s+The Sector|\s+\d{2,6}\s|$)/i;
+        /Sector\s+(\d{2})\s*[-—]+\s*([^]+?)(?=\s+\d{2,6}\s|$)/i;
+
 
     const sectorMatch =
-        text.match(
-            sectorRegex
-        );
+        text.match(sectorRegex);
+
 
     if (
         sectorMatch
@@ -332,54 +336,75 @@ function parseNAICS(
                 " — " +
                 sectorMatch[2]
             );
+
+    }
+
+
+    /*
+     * Better sector extraction from known
+     * Census structure.
+     */
+
+    const sectorShortRegex =
+        /Sector\s+(\d{2})[-—]+\s*([A-Za-z][A-Za-z ,&()'./\-]+?)(?=\s+T\s|T\s|Sector|$)/i;
+
+
+    const sectorShortMatch =
+        text.match(
+            sectorShortRegex
+        );
+
+
+    if (
+        sectorShortMatch
+    ) {
+
+        sector =
+            cleanText(
+                sectorShortMatch[1] +
+                " — " +
+                sectorShortMatch[2]
+            );
     }
 
 
     /*
      * Industry group.
      *
-     * For 513210 this will normally
-     * identify 51321 Software Publishers.
+     * For example:
+     *
+     * 5131 Newspaper, Periodical, Book,
+     * and Directory Publishers
+     *
+     * We deliberately do NOT use the
+     * requested 6-digit code as group.
      */
 
-    let industryGroup =
-        "Not available";
-
     const groupRegex =
-        /(\d{3,5})\s+([A-Z][A-Za-z0-9 ,&()'\/\-]+?)(?=\s+See industry description|\s+This industry comprises|\s+\d{4,6}\s|$)/g;
+        /(?:^|\s)(\d{3,5})\s+([A-Z][A-Za-z0-9 ,&()'./\-]+?)(?=\s+(?:This\s+(?:U\.S\.\s+)?industry|See\s+industry\s+description)|\s+\d{4,6}\s|$)/;
 
-    let groupMatch;
 
-    while (
-        (groupMatch = groupRegex.exec(text)) !== null
+    const groupMatch =
+        text.match(groupRegex);
+
+
+    if (
+        groupMatch &&
+        groupMatch[1] !== code
     ) {
 
-        const groupCode =
-            groupMatch[1];
-
-        const groupName =
+        industryGroup =
             cleanText(
+                groupMatch[1] +
+                " — " +
                 groupMatch[2]
             );
 
-        if (
-            groupCode !== requestedCode &&
-            groupCode.length < requestedCode.length &&
-            groupName.length > 2
-        ) {
-
-            industryGroup =
-                groupCode +
-                " — " +
-                groupName;
-
-            break;
-        }
     }
 
 
     /*
-     * Remove accidental trailing text.
+     * Remove accidental trailing punctuation.
      */
 
     description =
@@ -387,18 +412,11 @@ function parseNAICS(
             description
         );
 
-    /*
-     * If Census gives:
-     *
-     * 513210 Software Publishers:
-     *
-     * cleanDescription removes the colon.
-     */
 
     return {
 
         code:
-            requestedCode,
+            code,
 
         description:
             description,
@@ -414,18 +432,15 @@ function parseNAICS(
             "See the official U.S. Census Bureau 2022 NAICS classification for the complete industry description."
 
     };
+
 }
 
 
-/*
- * =========================================
- * HTML TO TEXT
- * =========================================
- */
+/* =========================================
+   HTML TO TEXT
+========================================= */
 
-function htmlToText(
-    html
-) {
+function htmlToText(html) {
 
     return String(html || "")
 
@@ -441,6 +456,11 @@ function htmlToText(
 
         .replace(
             /<noscript[\s\S]*?<\/noscript>/gi,
+            " "
+        )
+
+        .replace(
+            /<svg[\s\S]*?<\/svg>/gi,
             " "
         )
 
@@ -490,71 +510,40 @@ function htmlToText(
         )
 
         .trim();
+
 }
 
 
-/*
- * =========================================
- * CLEAN DESCRIPTION
- * =========================================
- */
+/* =========================================
+   CLEAN DESCRIPTION
+========================================= */
 
-function cleanDescription(
-    value
-) {
+function cleanDescription(value) {
 
-    let result =
-        cleanText(
-            value
-        );
+    return cleanText(value)
 
-    result =
-        result.replace(
+        .replace(
             /\s+T\s*$/i,
             ""
-        );
+        )
 
-    result =
-        result.replace(
-            /\s+See industry description.*$/i,
+        .replace(
+            /\s+See\s+industry\s+description\.?\s*$/i,
             ""
-        );
+        )
 
-    result =
-        result.replace(
-            /\s+This industry comprises.*$/i,
-            ""
-        );
+        .trim();
 
-    result =
-        result.replace(
-            /:\s*$/g,
-            ""
-        );
-
-    result =
-        result.replace(
-            /[†‡*]+\s*$/g,
-            ""
-        );
-
-    return result.trim();
 }
 
 
-/*
- * =========================================
- * CLEAN TEXT
- * =========================================
- */
+/* =========================================
+   CLEAN TEXT
+========================================= */
 
-function cleanText(
-    value
-) {
+function cleanText(value) {
 
-    return String(
-        value || ""
-    )
+    return String(value || "")
 
         .replace(
             /\s+/g,
@@ -567,43 +556,31 @@ function cleanText(
         )
 
         .trim();
+
 }
 
 
-/*
- * =========================================
- * CREATE PAGE
- * =========================================
- */
+/* =========================================
+   CREATE PAGE
+========================================= */
 
-function createPage(
-    data
-) {
+function createPage(data) {
 
     const code =
-        escapeHtml(
-            data.code
-        );
+        escapeHtml(data.code);
 
     const description =
-        escapeHtml(
-            data.description
-        );
+        escapeHtml(data.description);
 
     const sector =
-        escapeHtml(
-            data.sector
-        );
+        escapeHtml(data.sector);
 
     const industryGroup =
-        escapeHtml(
-            data.industryGroup
-        );
+        escapeHtml(data.industryGroup);
 
     const details =
-        escapeHtml(
-            data.details
-        );
+        escapeHtml(data.details);
+
 
     const title =
         data.code +
@@ -611,600 +588,370 @@ function createPage(
         data.description +
         " | U.S. NAICS Code";
 
+
     const metaDescription =
         "U.S. NAICS Code " +
         data.code +
         ": " +
         data.description +
-        ". Latest released 2022 U.S. NAICS industry classification and details.";
+        ". 2022 U.S. NAICS industry classification and details.";
 
 
-    return `<!DOCTYPE html>
-<html lang="en">
+    const censusLink =
+        "https://www.census.gov/naics/" +
+        "?details=" +
+        encodeURIComponent(data.code) +
+        "&input=" +
+        encodeURIComponent(data.code) +
+        "&year=2022";
 
-<head>
 
-<meta charset="UTF-8">
+    return (
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+'<!DOCTYPE html>' +
 
-<meta name="robots"
-      content="index, follow">
+'<html lang="en">' +
 
-<meta name="description"
-      content="${escapeHtml(metaDescription)}">
+'<head>' +
 
-<link rel="icon"
-      type="image/png"
-      href="/favicon.png">
+'<meta charset="UTF-8">' +
 
-<title>${escapeHtml(title)}</title>
+'<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
 
-<style>
+'<meta name="robots" content="index, follow">' +
 
-:root {
+'<meta name="description" content="' +
+escapeHtml(metaDescription) +
+'">' +
 
-    --primary: #f48120;
+'<link rel="icon" type="image/png" href="/favicon.png">' +
 
-    --dark: #1e1e24;
+'<title>' +
+escapeHtml(title) +
+'</title>' +
 
-    --light: #f9f9fb;
 
-    --border: #e0e0e6;
+'<style>' +
+
+':root{' +
+'--primary:#f48120;' +
+'--dark:#1e1e24;' +
+'--light:#f9f9fb;' +
+'--border:#e0e0e6;' +
+'}' +
+
+'*{box-sizing:border-box;}' +
+
+'body{' +
+'margin:0;' +
+'padding:20px;' +
+'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;' +
+'background:var(--light);' +
+'color:var(--dark);' +
+'}' +
+
+'.container{' +
+'max-width:850px;' +
+'margin:0 auto;' +
+'}' +
+
+'h1{' +
+'text-align:center;' +
+'margin:10px 0 12px;' +
+'font-size:30px;' +
+'}' +
+
+'.subtitle{' +
+'text-align:center;' +
+'color:#666;' +
+'line-height:1.6;' +
+'margin-bottom:25px;' +
+'}' +
+
+'.card{' +
+'background:#fff;' +
+'padding:28px;' +
+'border-radius:12px;' +
+'box-shadow:0 4px 18px rgba(0,0,0,.06);' +
+'border-top:5px solid var(--primary);' +
+'}' +
+
+'.card h2{' +
+'color:#333;' +
+'margin-top:0;' +
+'}' +
+
+'.data-row{' +
+'padding:15px 0;' +
+'border-bottom:1px solid var(--border);' +
+'line-height:1.7;' +
+'}' +
+
+'.data-row:last-child{' +
+'border-bottom:none;' +
+'}' +
+
+'.label{' +
+'font-weight:700;' +
+'display:block;' +
+'margin-bottom:4px;' +
+'}' +
+
+'.code{' +
+'display:inline-block;' +
+'background:var(--dark);' +
+'color:#fff;' +
+'padding:7px 12px;' +
+'border-radius:6px;' +
+'font-weight:700;' +
+'letter-spacing:1px;' +
+'}' +
+
+'.section{' +
+'margin-top:25px;' +
+'padding:20px;' +
+'background:#f5f5f8;' +
+'border-left:5px solid var(--primary);' +
+'border-radius:8px;' +
+'}' +
+
+'.source{' +
+'margin-top:25px;' +
+'padding:15px;' +
+'background:#fff8ef;' +
+'border-radius:8px;' +
+'line-height:1.6;' +
+'font-size:14px;' +
+'}' +
+
+'.source a{' +
+'color:#b85c00;' +
+'font-weight:700;' +
+'}' +
+
+'.back{' +
+'display:inline-block;' +
+'margin-top:25px;' +
+'padding:12px 18px;' +
+'background:var(--dark);' +
+'color:#fff;' +
+'text-decoration:none;' +
+'border-radius:7px;' +
+'font-weight:700;' +
+'}' +
+
+'footer{' +
+'text-align:center;' +
+'color:#777;' +
+'font-size:13px;' +
+'margin:30px 0 10px;' +
+'line-height:1.6;' +
+'}' +
+
+'@media(max-width:600px){' +
+'body{padding:12px;}' +
+'h1{font-size:24px;}' +
+'.card{padding:18px;}' +
+'}' +
+
+'</style>' +
+
+'</head>' +
+
+'<body>' +
+
+'<div class="container">' +
+
+'<h1>🇺🇸 U.S. NAICS Code ' +
+code +
+'</h1>' +
+
+'<p class="subtitle">' +
+'2022 North American Industry Classification System: ' +
+'<strong>' +
+description +
+'</strong>' +
+'</p>' +
+
+'<div class="card">' +
+
+'<h2>🏭 NAICS ' +
+code +
+' — ' +
+description +
+'</h2>' +
+
+'<div class="data-row">' +
+
+'<span class="label">NAICS Code</span>' +
+
+'<span class="code">' +
+code +
+'</span>' +
+
+'</div>' +
+
+'<div class="data-row">' +
+
+'<span class="label">Industry Description</span>' +
+
+description +
+
+'</div>' +
+
+'<div class="data-row">' +
+
+'<span class="label">Sector</span>' +
+
+sector +
+
+'</div>' +
+
+'<div class="data-row">' +
+
+'<span class="label">Industry Group</span>' +
+
+industryGroup +
+
+'</div>' +
+
+'<div class="data-row">' +
+
+'<span class="label">Industry Details</span>' +
+
+details +
+
+'</div>' +
+
+'<div class="source">' +
+
+'<strong>Official Source:</strong><br>' +
+
+'U.S. Census Bureau — 2022 North American Industry Classification System.' +
+
+'<br><br>' +
+
+'<a href="' +
+escapeHtml(censusLink) +
+'" target="_blank" rel="noopener noreferrer">' +
+
+'View NAICS ' +
+code +
+' on U.S. Census Bureau →' +
+
+'</a>' +
+
+'</div>' +
+
+'<a class="back" href="/usa-naics-search.html">' +
+
+'← U.S. NAICS Code Search' +
+
+'</a>' +
+
+'</div>' +
+
+'<footer>' +
+
+'U.S. NAICS Code Search<br>' +
+
+'Classification information is based on the 2022 U.S. Census Bureau NAICS classification.' +
+
+'</footer>' +
+
+'</div>' +
+
+'</body>' +
+
+'</html>'
+
+    );
 
 }
 
-* {
 
-    box-sizing: border-box;
+/* =========================================
+   NOT FOUND
+========================================= */
 
-}
-
-body {
-
-    margin: 0;
-
-    padding: 20px;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Arial,
-        sans-serif;
-
-    background:
-        var(--light);
-
-    color:
-        var(--dark);
-
-}
-
-.container {
-
-    max-width:
-        850px;
-
-    margin:
-        0 auto;
-
-}
-
-h1 {
-
-    text-align:
-        center;
-
-    margin:
-        10px 0 12px;
-
-    font-size:
-        30px;
-
-}
-
-.subtitle {
-
-    text-align:
-        center;
-
-    color:
-        #666;
-
-    line-height:
-        1.6;
-
-    margin-bottom:
-        25px;
-
-}
-
-.card {
-
-    background:
-        white;
-
-    padding:
-        28px;
-
-    border-radius:
-        12px;
-
-    box-shadow:
-        0 4px 18px
-        rgba(0,0,0,.06);
-
-    border-top:
-        5px solid
-        var(--primary);
-
-}
-
-.card h2 {
-
-    color:
-        #333;
-
-    margin-top:
-        0;
-
-}
-
-.data-row {
-
-    padding:
-        15px 0;
-
-    border-bottom:
-        1px solid
-        var(--border);
-
-    line-height:
-        1.7;
-
-}
-
-.data-row:last-child {
-
-    border-bottom:
-        none;
-
-}
-
-.label {
-
-    font-weight:
-        700;
-
-    display:
-        block;
-
-    margin-bottom:
-        4px;
-
-}
-
-.code {
-
-    display:
-        inline-block;
-
-    background:
-        var(--dark);
-
-    color:
-        white;
-
-    padding:
-        7px 12px;
-
-    border-radius:
-        6px;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        1px;
-
-}
-
-.section {
-
-    margin-top:
-        25px;
-
-    padding:
-        20px;
-
-    background:
-        #f5f5f8;
-
-    border-left:
-        5px solid
-        var(--primary);
-
-    border-radius:
-        8px;
-
-}
-
-.section h2 {
-
-    margin-top:
-        0;
-
-}
-
-.source {
-
-    margin-top:
-        25px;
-
-    padding:
-        15px;
-
-    background:
-        #fff8ef;
-
-    border-radius:
-        8px;
-
-    line-height:
-        1.6;
-
-    font-size:
-        14px;
-
-}
-
-.source a {
-
-    color:
-        #b85c00;
-
-    font-weight:
-        700;
-
-}
-
-.back {
-
-    display:
-        inline-block;
-
-    margin-top:
-        25px;
-
-    padding:
-        12px 18px;
-
-    background:
-        var(--dark);
-
-    color:
-        white;
-
-    text-decoration:
-        none;
-
-    border-radius:
-        7px;
-
-    font-weight:
-        700;
-
-}
-
-footer {
-
-    text-align:
-        center;
-
-    color:
-        #777;
-
-    font-size:
-        13px;
-
-    margin:
-        30px 0 10px;
-
-    line-height:
-        1.6;
-
-}
-
-@media(max-width:600px) {
-
-    body {
-
-        padding:
-            12px;
-
-    }
-
-    h1 {
-
-        font-size:
-            24px;
-
-    }
-
-    .card {
-
-        padding:
-            18px;
-
-    }
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="container">
-
-<h1>
-🇺🇸 U.S. NAICS Code ${code}
-</h1>
-
-<p class="subtitle">
-
-Latest released U.S. classification:
-2022 NAICS —
-<strong>${description}</strong>
-
-</p>
-
-<div class="card">
-
-<h2>
-🏭 NAICS ${code} — ${description}
-</h2>
-
-<div class="data-row">
-
-<span class="label">
-NAICS Code
-</span>
-
-<span class="code">
-${code}
-</span>
-
-</div>
-
-<div class="data-row">
-
-<span class="label">
-Industry Description
-</span>
-
-${description}
-
-</div>
-
-<div class="data-row">
-
-<span class="label">
-Sector
-</span>
-
-${sector}
-
-</div>
-
-<div class="data-row">
-
-<span class="label">
-Industry Group
-</span>
-
-${industryGroup}
-
-</div>
-
-<div class="data-row">
-
-<span class="label">
-Industry Details
-</span>
-
-${details}
-
-</div>
-
-<div class="source">
-
-<strong>
-Official Source:
-</strong>
-
-<br>
-
-U.S. Census Bureau —
-2022 North American Industry Classification System.
-
-<br><br>
-
-<a
-href="https://www.census.gov/naics/?details=${encodeURIComponent(data.code)}&input=${encodeURIComponent(data.code)}&year=2022"
-target="_blank"
-rel="noopener noreferrer">
-
-View NAICS ${code} on U.S. Census Bureau →
-
-</a>
-
-</div>
-
-<a
-class="back"
-href="/usa-naics-search.html">
-
-← U.S. NAICS Code Search
-
-</a>
-
-</div>
-
-<footer>
-
-U.S. NAICS Code Search<br>
-
-Latest released classification: 2022 U.S. NAICS
-
-</footer>
-
-</div>
-
-</body>
-
-</html>`;
-}
-
-
-/*
- * =========================================
- * NOT FOUND
- * =========================================
- */
-
-function notFound(
-    message
-) {
+function notFound(message) {
 
     return new Response(
 
-        `<!DOCTYPE html>
-<html lang="en">
+'<!DOCTYPE html>' +
 
-<head>
+'<html lang="en">' +
 
-<meta charset="UTF-8">
+'<head>' +
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+'<meta charset="UTF-8">' +
 
-<meta name="robots"
-      content="noindex, follow">
+'<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
 
-<title>U.S. NAICS Code Not Found</title>
+'<meta name="robots" content="noindex, follow">' +
 
-<style>
+'<title>U.S. NAICS Code Not Found</title>' +
 
-body {
+'<style>' +
 
-    font-family:
-        Arial,
-        sans-serif;
+'body{' +
+'font-family:Arial,sans-serif;' +
+'background:#f9f9fb;' +
+'padding:40px 20px;' +
+'text-align:center;' +
+'}' +
 
-    background:
-        #f9f9fb;
+'.box{' +
+'max-width:650px;' +
+'margin:auto;' +
+'background:white;' +
+'padding:30px;' +
+'border-radius:12px;' +
+'box-shadow:0 4px 18px rgba(0,0,0,.08);' +
+'}' +
 
-    padding:
-        40px 20px;
+'h1{color:#1e1e24;}' +
 
-    text-align:
-        center;
+'a{' +
+'display:inline-block;' +
+'margin-top:20px;' +
+'padding:12px 18px;' +
+'background:#f48120;' +
+'color:white;' +
+'text-decoration:none;' +
+'border-radius:7px;' +
+'font-weight:bold;' +
+'}' +
 
-}
+'</style>' +
 
-.box {
+'</head>' +
 
-    max-width:
-        650px;
+'<body>' +
 
-    margin:
-        auto;
+'<div class="box">' +
 
-    background:
-        white;
+'<h1>🇺🇸 U.S. NAICS Code Not Found</h1>' +
 
-    padding:
-        30px;
+'<p>' +
+escapeHtml(message) +
+'</p>' +
 
-    border-radius:
-        12px;
+'<a href="/usa-naics-search.html">' +
 
-    box-shadow:
-        0 4px 18px
-        rgba(0,0,0,.08);
+'← U.S. NAICS Code Search' +
 
-}
+'</a>' +
 
-h1 {
+'</div>' +
 
-    color:
-        #1e1e24;
+'</body>' +
 
-}
-
-a {
-
-    display:
-        inline-block;
-
-    margin-top:
-        20px;
-
-    padding:
-        12px 18px;
-
-    background:
-        #f48120;
-
-    color:
-        white;
-
-    text-decoration:
-        none;
-
-    border-radius:
-        7px;
-
-    font-weight:
-        bold;
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="box">
-
-<h1>
-🇺🇸 U.S. NAICS Code Not Found
-</h1>
-
-<p>
-${escapeHtml(message)}
-</p>
-
-<a href="/usa-naics-search.html">
-← U.S. NAICS Code Search
-</a>
-
-</div>
-
-</body>
-
-</html>`,
+'</html>',
 
         {
 
-            status:
-                404,
+            status: 404,
 
             headers: {
 
@@ -1214,37 +961,33 @@ ${escapeHtml(message)}
             }
 
         }
+
     );
+
 }
 
 
-/*
- * =========================================
- * ESCAPE REGEX
- * =========================================
- */
+/* =========================================
+   ESCAPE REGEX
+========================================= */
 
-function escapeRegex(
-    value
-) {
+function escapeRegex(value) {
 
     return String(value)
+
         .replace(
             /[.*+?^${}()|[\]\\]/g,
             "\\$&"
         );
+
 }
 
 
-/*
- * =========================================
- * HTML ESCAPE
- * =========================================
- */
+/* =========================================
+   HTML ESCAPE
+========================================= */
 
-function escapeHtml(
-    value
-) {
+function escapeHtml(value) {
 
     return String(
         value ?? ""
@@ -1274,4 +1017,5 @@ function escapeHtml(
             /'/g,
             "&#039;"
         );
+
 }
