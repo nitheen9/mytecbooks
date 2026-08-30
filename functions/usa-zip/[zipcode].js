@@ -5,26 +5,30 @@ export async function onRequest(context) {
             context.params.zipcode || ""
         ).trim();
 
-    if (!/^\d{5}$/.test(zipcode)) {
+
+    /*
+     * U.S. ZIP Code
+     * exactly 5 digits.
+     */
+
+    if (
+        !/^\d{5}$/.test(zipcode)
+    ) {
 
         return notFound(
             "Please enter a valid 5-digit U.S. ZIP Code."
         );
+
     }
 
+
     const apiUrl =
-        "https://tigerweb.geo.census.gov/arcgis/rest/services/" +
-        "TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/1/query" +
-        "?where=" +
-        encodeURIComponent(
-            "ZCTA5='" + zipcode + "'"
-        ) +
-        "&outFields=" +
-        encodeURIComponent(
-            "ZCTA5,GEOID,BASENAME,NAME,INTPTLAT,INTPTLON"
-        ) +
-        "&returnGeometry=false" +
-        "&f=json";
+        "https://dashboard.waterdata.usgs.gov/" +
+        "service/geocoder/get/location/1.0" +
+        "?term=" +
+        encodeURIComponent(zipcode) +
+        "&include=postal";
+
 
     try {
 
@@ -33,59 +37,94 @@ export async function onRequest(context) {
                 apiUrl,
                 {
                     headers: {
+
                         "Accept":
                             "application/json"
+
                     }
                 }
             );
 
-        if (!response.ok) {
+
+        if (
+            !response.ok
+        ) {
 
             console.error(
-                "TIGERweb HTTP:",
+                "USGS HTTP status:",
                 response.status
             );
 
+
             return notFound(
-                "U.S. ZIP Code area " +
+                "U.S. ZIP Code " +
                 zipcode +
                 " was not found."
             );
+
         }
+
 
         const data =
             await response.json();
 
-        const features =
-            Array.isArray(
-                data.features
-            )
-                ? data.features
-                : [];
 
         if (
-            features.length === 0
+            !Array.isArray(data) ||
+            data.length === 0
         ) {
 
             return notFound(
-                "U.S. ZIP Code area " +
+                "U.S. ZIP Code " +
                 zipcode +
                 " was not found."
             );
+
         }
 
-        const attributes =
-            features[0].attributes || {};
+
+        /*
+         * Find a postal result.
+         */
+
+        const result =
+            data.find(
+                function(item) {
+
+                    return (
+                        item &&
+                        item.Source === "postal"
+                    );
+
+                }
+            ) ||
+            data[0];
+
+
+        if (
+            !result
+        ) {
+
+            return notFound(
+                "U.S. ZIP Code " +
+                zipcode +
+                " was not found."
+            );
+
+        }
+
 
         return new Response(
 
             createPage(
                 zipcode,
-                attributes
+                result
             ),
 
             {
-                status: 200,
+
+                status:
+                    200,
 
                 headers: {
 
@@ -98,28 +137,40 @@ export async function onRequest(context) {
                 }
 
             }
+
         );
 
     }
     catch (error) {
 
         console.error(
-            "TIGERweb ZIP error:",
+            "USGS ZIP error:",
             error
         );
 
+
         return new Response(
+
             "Unable to load U.S. ZIP Code information.",
+
             {
-                status: 500,
+
+                status:
+                    500,
 
                 headers: {
+
                     "Content-Type":
                         "text/plain; charset=UTF-8"
+
                 }
+
             }
+
         );
+
     }
+
 }
 
 
@@ -132,53 +183,158 @@ function createPage(
     data
 ) {
 
-    const code =
+    /*
+     * USGS returns:
+     *
+     * Name:
+     * 93669 Wishon
+     *
+     * We remove the ZIP prefix
+     * so the visitor sees:
+     *
+     * Wishon
+     */
+
+    let rawName =
         String(
-            data.ZCTA5 ||
+            data.Name || ""
+        ).trim();
+
+
+    let city =
+        rawName;
+
+
+    const zipPrefix =
+        zipcode + " ";
+
+
+    if (
+        city.startsWith(
+            zipPrefix
+        )
+    ) {
+
+        city =
+            city.substring(
+                zipPrefix.length
+            ).trim();
+
+    }
+
+
+    /*
+     * Some records could have a
+     * different formatting.
+     */
+
+    city =
+        city
+        .replace(
+            new RegExp(
+                "^" +
+                escapeRegex(zipcode) +
+                "\\s*",
+                "i"
+            ),
+            ""
+        )
+        .trim();
+
+
+    /*
+     * State name.
+     *
+     * USGS returns the state
+     * abbreviation, e.g. CA.
+     *
+     * Convert common abbreviations
+     * to full state names.
+     */
+
+    const stateCode =
+        String(
+            data.State || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+    const stateName =
+        getStateName(
+            stateCode
+        );
+
+
+    const safeZip =
+        escapeHtml(
             zipcode
         );
 
-    const geoid =
-        String(
-            data.GEOID ||
-            code
+
+    const safeCity =
+        escapeHtml(
+            city ||
+            "Not available"
         );
 
-    const basename =
-        String(
-            data.BASENAME ||
-            code
+
+    const safeCounty =
+        escapeHtml(
+            data.County ||
+            "Not available"
         );
 
-    const name =
-        String(
-            data.NAME ||
+
+    const safeState =
+        escapeHtml(
+            stateName ||
+            stateCode ||
+            "Not available"
+        );
+
+
+    const safeStateCode =
+        escapeHtml(
+            stateCode
+        );
+
+
+    const safeLatitude =
+        escapeHtml(
+            data.Latitude ??
             ""
         );
 
-    const latitude =
-        String(
-            data.INTPTLAT ||
+
+    const safeLongitude =
+        escapeHtml(
+            data.Longitude ??
             ""
         );
 
-    const longitude =
-        String(
-            data.INTPTLON ||
-            ""
-        );
 
     const title =
         "U.S. ZIP Code " +
-        code +
-        " ZCTA | Census Geographic Information";
+        zipcode +
+        " - " +
+        city +
+        ", " +
+        stateCode;
 
-    const description =
-        "U.S. Census Bureau ZIP Code Tabulation Area " +
-        code +
-        " with geographic identifier and interior point coordinates.";
+
+    const metaDescription =
+        "U.S. ZIP Code " +
+        zipcode +
+        " for " +
+        city +
+        ", " +
+        stateName +
+        ". View county, state, latitude and longitude.";
+
 
     return `<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -186,19 +342,22 @@ function createPage(
 <meta charset="UTF-8">
 
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+content="width=device-width, initial-scale=1.0">
 
 <meta name="robots"
-      content="index, follow">
+content="index, follow">
 
 <meta name="description"
-      content="${escapeHtml(description)}">
+content="${escapeHtml(metaDescription)}">
 
 <link rel="icon"
-      type="image/png"
-      href="/favicon.png">
+type="image/png"
+href="/favicon.png">
 
-<title>${escapeHtml(title)}</title>
+<title>
+${escapeHtml(title)}
+</title>
+
 
 <style>
 
@@ -212,12 +371,15 @@ function createPage(
 }
 
 * {
+
     box-sizing:border-box;
+
 }
 
 body {
 
     margin:0;
+
     padding:20px;
 
     font-family:
@@ -228,14 +390,18 @@ body {
         Arial,
         sans-serif;
 
-    background:var(--light);
-    color:var(--dark);
+    background:
+        var(--light);
+
+    color:
+        var(--dark);
 
 }
 
 .container {
 
     max-width:850px;
+
     margin:0 auto;
 
 }
@@ -243,7 +409,9 @@ body {
 h1 {
 
     text-align:center;
+
     margin:10px 0 12px;
+
     font-size:30px;
 
 }
@@ -251,8 +419,11 @@ h1 {
 .subtitle {
 
     text-align:center;
+
     color:#666;
+
     line-height:1.6;
+
     margin-bottom:25px;
 
 }
@@ -260,7 +431,9 @@ h1 {
 .card {
 
     background:#fff;
+
     padding:28px;
+
     border-radius:12px;
 
     box-shadow:
@@ -275,8 +448,11 @@ h1 {
 
 .card h2 {
 
-    margin-top:0;
     color:#333;
+
+    margin-top:0;
+
+    line-height:1.4;
 
 }
 
@@ -301,7 +477,9 @@ h1 {
 .label {
 
     display:block;
+
     font-weight:700;
+
     margin-bottom:4px;
 
 }
@@ -310,7 +488,9 @@ h1 {
 
     display:inline-block;
 
-    background:var(--dark);
+    background:
+        var(--dark);
+
     color:#fff;
 
     padding:7px 12px;
@@ -323,40 +503,6 @@ h1 {
 
 }
 
-.note {
-
-    margin-top:20px;
-
-    padding:15px;
-
-    background:#fff8ef;
-
-    border-left:
-        4px solid
-        var(--primary);
-
-    border-radius:7px;
-
-    line-height:1.6;
-
-    color:#555;
-
-    font-size:14px;
-
-}
-
-.source {
-
-    margin-top:20px;
-
-    color:#777;
-
-    font-size:13px;
-
-    line-height:1.6;
-
-}
-
 .back {
 
     display:inline-block;
@@ -365,7 +511,8 @@ h1 {
 
     padding:12px 18px;
 
-    background:var(--dark);
+    background:
+        var(--dark);
 
     color:#fff;
 
@@ -380,7 +527,9 @@ h1 {
 footer {
 
     text-align:center;
+
     color:#777;
+
     font-size:13px;
 
     margin:30px 0 10px;
@@ -392,15 +541,21 @@ footer {
 @media(max-width:600px) {
 
     body {
+
         padding:12px;
+
     }
 
     h1 {
+
         font-size:24px;
+
     }
 
     .card {
+
         padding:18px;
+
     }
 
 }
@@ -409,107 +564,107 @@ footer {
 
 </head>
 
+
 <body>
 
 <div class="container">
 
+
 <h1>
-🇺🇸 U.S. ZIP Code Area ${escapeHtml(code)}
+🇺🇸 U.S. ZIP Code ${safeZip}
 </h1>
+
 
 <p class="subtitle">
 
-2020 Census ZIP Code Tabulation Area:
-<strong>${escapeHtml(name || code)}</strong>
+${safeCity}
+
+${safeStateCode
+    ? ", " + safeStateCode
+    : ""}
 
 </p>
 
+
 <div class="card">
 
+
 <h2>
-📍 ZIP Code Area ${escapeHtml(code)}
+📍 ZIP Code ${safeZip}
 </h2>
+
 
 <div class="data-row">
 
 <span class="label">
-ZCTA5
+ZIP Code
 </span>
 
 <span class="code">
-${escapeHtml(code)}
+${safeZip}
 </span>
 
 </div>
+
 
 <div class="data-row">
 
 <span class="label">
-GEOID
+City / Area
 </span>
 
-${escapeHtml(geoid)}
+${safeCity}
 
 </div>
+
 
 <div class="data-row">
 
 <span class="label">
-Base Name
+County
 </span>
 
-${escapeHtml(basename)}
+${safeCounty}
 
 </div>
+
 
 <div class="data-row">
 
 <span class="label">
-Name
+State
 </span>
 
-${escapeHtml(name || "Not available")}
+${safeState}
+
+${safeStateCode
+    ? " (" + safeStateCode + ")"
+    : ""}
 
 </div>
+
 
 <div class="data-row">
 
 <span class="label">
-Interior Point Latitude
+Latitude
 </span>
 
-${escapeHtml(latitude || "Not available")}
+${safeLatitude || "Not available"}
 
 </div>
+
 
 <div class="data-row">
 
 <span class="label">
-Interior Point Longitude
+Longitude
 </span>
 
-${escapeHtml(longitude || "Not available")}
+${safeLongitude || "Not available"}
 
 </div>
 
-<div class="note">
-
-<strong>About this data:</strong>
-
-This page uses the U.S. Census Bureau's
-2020 Census ZIP Code Tabulation Area (ZCTA)
-geographic data. A ZCTA is a Census geographic
-representation and is not the same thing as an
-official USPS mailing ZIP Code.
-
-</div>
-
-<div class="source">
-
-<strong>Source:</strong>
-U.S. Census Bureau TIGERweb
-
-</div>
 
 <a
 class="back"
@@ -519,15 +674,16 @@ href="/usa-zip-search.html">
 
 </a>
 
+
 </div>
+
 
 <footer>
 
-U.S. ZIP Code Finder<br>
-
-U.S. Census Bureau TIGERweb — 2020 ZCTA
+U.S. ZIP Code Finder
 
 </footer>
+
 
 </div>
 
@@ -538,69 +694,91 @@ U.S. Census Bureau TIGERweb — 2020 ZCTA
 
 
 /* =========================================
-   NOT FOUND
+   STATE NAME
 ========================================= */
 
-function notFound(
-    message
+function getStateName(
+    code
 ) {
 
-    return new Response(
+    const states = {
 
-        `<!DOCTYPE html>
-<html lang="en">
+        AL:"Alabama",
+        AK:"Alaska",
+        AZ:"Arizona",
+        AR:"Arkansas",
+        CA:"California",
+        CO:"Colorado",
+        CT:"Connecticut",
+        DE:"Delaware",
+        FL:"Florida",
+        GA:"Georgia",
+        HI:"Hawaii",
+        ID:"Idaho",
+        IL:"Illinois",
+        IN:"Indiana",
+        IA:"Iowa",
+        KS:"Kansas",
+        KY:"Kentucky",
+        LA:"Louisiana",
+        ME:"Maine",
+        MD:"Maryland",
+        MA:"Massachusetts",
+        MI:"Michigan",
+        MN:"Minnesota",
+        MS:"Mississippi",
+        MO:"Missouri",
+        MT:"Montana",
+        NE:"Nebraska",
+        NV:"Nevada",
+        NH:"New Hampshire",
+        NJ:"New Jersey",
+        NM:"New Mexico",
+        NY:"New York",
+        NC:"North Carolina",
+        ND:"North Dakota",
+        OH:"Ohio",
+        OK:"Oklahoma",
+        OR:"Oregon",
+        PA:"Pennsylvania",
+        RI:"Rhode Island",
+        SC:"South Carolina",
+        SD:"South Dakota",
+        TN:"Tennessee",
+        TX:"Texas",
+        UT:"Utah",
+        VT:"Vermont",
+        VA:"Virginia",
+        WA:"Washington",
+        WV:"West Virginia",
+        WI:"Wisconsin",
+        WY:"Wyoming",
+        DC:"District of Columbia"
 
-<head>
+    };
 
-<meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<meta name="robots"
-content="noindex, follow">
-
-<title>
-U.S. ZIP Code Area Not Found
-</title>
-
-</head>
-
-<body style="
-font-family:Arial,sans-serif;
-background:#f9f9fb;
-padding:40px 20px;
-text-align:center;
-">
-
-<h1>
-🇺🇸 U.S. ZIP Code Area Not Found
-</h1>
-
-<p>
-${escapeHtml(message)}
-</p>
-
-<a href="/usa-zip-search.html">
-← U.S. ZIP Code Search
-</a>
-
-</body>
-
-</html>`,
-
-        {
-
-            status:404,
-
-            headers:{
-                "Content-Type":
-                    "text/html; charset=UTF-8"
-            }
-
-        }
-
+    return (
+        states[code] ||
+        code
     );
+
+}
+
+
+/* =========================================
+   ESCAPE REGEX
+========================================= */
+
+function escapeRegex(
+    value
+) {
+
+    return String(value)
+        .replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+        );
+
 }
 
 
@@ -608,15 +786,37 @@ ${escapeHtml(message)}
    HTML ESCAPE
 ========================================= */
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
     return String(
         value ?? ""
     )
 
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
