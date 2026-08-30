@@ -21,7 +21,9 @@
       type="image/png"
       href="/favicon.png">
 
-<title>U.S. NAICS Code Search - Industry Classification Finder</title>
+<title>
+U.S. NAICS Code Search - Industry Classification Finder
+</title>
 
 <meta property="og:description"
       content="Free U.S. NAICS Code Search. Search 2022 NAICS codes by industry name, description or code.">
@@ -34,15 +36,22 @@ src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
 
 <script>
 
-window.dataLayer = window.dataLayer || [];
+window.dataLayer =
+    window.dataLayer || [];
 
-function gtag(){
+function gtag() {
     dataLayer.push(arguments);
 }
 
-gtag('js', new Date());
+gtag(
+    "js",
+    new Date()
+);
 
-gtag('config', 'G-BP9YJW8LB9');
+gtag(
+    "config",
+    "G-BP9YJW8LB9"
+);
 
 </script>
 
@@ -73,9 +82,11 @@ body {
         Arial,
         sans-serif;
 
-    background: var(--light);
+    background:
+        var(--light);
 
-    color: var(--dark);
+    color:
+        var(--dark);
 
     margin: 0;
 
@@ -117,11 +128,6 @@ h1 {
 
 }
 
-
-/* =========================================
-   CARD 
-========================================= */
-
 .search-card {
 
     background: white;
@@ -154,11 +160,6 @@ h1 {
     line-height: 1.6;
 
 }
-
-
-/* =========================================
-   SEARCH BOX
-========================================= */
 
 .search-box {
 
@@ -200,7 +201,8 @@ button.search-submit {
 
     padding: 14px 28px;
 
-    background: var(--dark);
+    background:
+        var(--dark);
 
     color: white;
 
@@ -221,11 +223,6 @@ button.search-submit:hover {
     background: #333;
 
 }
-
-
-/* =========================================
-   RESULTS
-========================================= */
 
 .results {
 
@@ -253,11 +250,6 @@ button.search-submit:hover {
     font-size: 18px;
 
 }
-
-
-/* =========================================
-   RESULT ITEM
-========================================= */
 
 .match-item {
 
@@ -316,11 +308,6 @@ button.search-submit:hover {
 
 }
 
-
-/* =========================================
-   ERROR
-========================================= */
-
 .error {
 
     color: #d9383a;
@@ -339,11 +326,6 @@ button.search-submit:hover {
 
 }
 
-
-/* =========================================
-   LOADING
-========================================= */
-
 .loading {
 
     color: #555;
@@ -351,61 +333,6 @@ button.search-submit:hover {
     font-weight: bold;
 
 }
-
-
-/* =========================================
-   CODE RESULT
-========================================= */
-
-.data-row {
-
-    margin-bottom: 12px;
-
-    padding-bottom: 12px;
-
-    border-bottom:
-        1px solid var(--border);
-
-    line-height: 1.6;
-
-    word-break: break-word;
-
-}
-
-.data-row:last-child {
-
-    border: none;
-
-    margin: 0;
-
-    padding: 0;
-
-}
-
-.badge {
-
-    background: #333;
-
-    color: white;
-
-    padding: 3px 8px;
-
-    border-radius: 4px;
-
-    font-size: 12px;
-
-    font-weight: bold;
-
-    display: inline-block;
-
-    margin-left: 5px;
-
-}
-
-
-/* =========================================
-   FOOTER
-========================================= */
 
 footer {
 
@@ -421,41 +348,26 @@ footer {
 
 }
 
-
-/* =========================================
-   MOBILE
-========================================= */
-
 @media (max-width: 600px) {
 
     body {
-
         padding: 12px;
-
     }
 
     h1 {
-
         font-size: 24px;
-
     }
 
     .search-box {
-
         flex-direction: column;
-
     }
 
     button.search-submit {
-
         width: 100%;
-
     }
 
     .search-card {
-
         padding: 18px;
-
     }
 
 }
@@ -469,11 +381,9 @@ footer {
 
 <div class="container">
 
-
 <h1>
 🇺🇸 U.S. NAICS Code Search
 </h1>
-
 
 <p class="intro">
 
@@ -501,7 +411,6 @@ its 2022 industry classification details.
 
 </p>
 
-
 <div class="search-box">
 
 <input
@@ -511,7 +420,6 @@ its 2022 industry classification details.
     maxlength="6"
     inputmode="numeric"
     autocomplete="off">
-
 
 <button
     class="search-submit"
@@ -523,12 +431,10 @@ Search
 
 </div>
 
-
 <div
     id="code-error"
     class="error">
 </div>
-
 
 <div
     id="code-results"
@@ -555,7 +461,6 @@ matching U.S. NAICS codes.
 
 </p>
 
-
 <div class="search-box">
 
 <input
@@ -563,7 +468,6 @@ matching U.S. NAICS codes.
     id="descriptionInput"
     placeholder="Enter industry description e.g. software"
     autocomplete="off">
-
 
 <button
     class="search-submit"
@@ -575,12 +479,10 @@ Search
 
 </div>
 
-
 <div
     id="description-error"
     class="error">
 </div>
-
 
 <div
     id="description-results"
@@ -602,18 +504,16 @@ Source: U.S. Census Bureau
 
 </footer>
 
-
 </div>
 
 
 <script>
 
-
 /* =========================================
-   SEARCH NAICS CODE
+   SEARCH BY CODE
 ========================================= */
 
-async function searchNAICSCode() {
+function searchNAICSCode() {
 
     const input =
         document
@@ -621,23 +521,23 @@ async function searchNAICSCode() {
         .value
         .trim();
 
-
     const results =
         document
         .getElementById("code-results");
-
 
     const error =
         document
         .getElementById("code-error");
 
+    results.style.display =
+        "none";
 
-    results.style.display = "none";
+    error.style.display =
+        "none";
 
-    error.style.display = "none";
-
-
-    if (!/^\d{2,6}$/.test(input)) {
+    if (
+        !/^\d{2,6}$/.test(input)
+    ) {
 
         error.innerText =
             "Please enter a valid 2 to 6 digit U.S. NAICS code.";
@@ -646,70 +546,26 @@ async function searchNAICSCode() {
             "block";
 
         return;
-
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT fetch the HTML page first.
+     *
+     * Cloudflare Pages function handles
+     * validation and Census lookup.
+     */
 
-    results.innerHTML =
-        '<div class="loading">🔄 Searching U.S. NAICS code...</div>';
-
-    results.style.display =
-        "block";
-
-
-    try {
-
-        const response =
-            await fetch(
-                "/usa-naics/" +
-                encodeURIComponent(input) +
-                "/"
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "NAICS code not found"
-            );
-
-        }
-
-
-        /*
-         * The detail page is returned directly.
-         * Redirect the browser to the dynamic page.
-         */
-
-        window.location.href =
-            "/usa-naics/" +
-            encodeURIComponent(input) +
-            "/";
-
-    }
-
-    catch (err) {
-
-        console.error(err);
-
-        results.style.display =
-            "none";
-
-        error.innerText =
-            "Unable to find U.S. NAICS code " +
-            input +
-            ".";
-
-        error.style.display =
-            "block";
-
-    }
-
+    window.location.href =
+        "/usa-naics/" +
+        encodeURIComponent(input) +
+        "/";
 }
 
 
 /* =========================================
-   SEARCH DESCRIPTION
+   SEARCH BY INDUSTRY
 ========================================= */
 
 async function searchDescription() {
@@ -720,16 +576,13 @@ async function searchDescription() {
         .value
         .trim();
 
-
     const results =
         document
         .getElementById("description-results");
 
-
     const error =
         document
         .getElementById("description-error");
-
 
     results.style.display =
         "none";
@@ -737,8 +590,9 @@ async function searchDescription() {
     error.style.display =
         "none";
 
-
-    if (input.length < 2) {
+    if (
+        input.length < 2
+    ) {
 
         error.innerText =
             "Please enter at least 2 characters.";
@@ -747,9 +601,7 @@ async function searchDescription() {
             "block";
 
         return;
-
     }
-
 
     results.innerHTML =
         '<div class="loading">🔄 Searching U.S. NAICS industries...</div>';
@@ -757,32 +609,39 @@ async function searchDescription() {
     results.style.display =
         "block";
 
-
     try {
 
         const response =
             await fetch(
-                "/usa-naics/naics-search?q=" +
+                "/usa-naics/naics-search.js?q=" +
                 encodeURIComponent(input)
             );
 
+        /*
+         * The Pages Function route is:
+         *
+         * /usa-naics/naics-search
+         *
+         * not /naics-search.js
+         */
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
                 "Search failed"
             );
-
         }
-
 
         const data =
             await response.json();
 
-
         if (
             !data ||
-            !Array.isArray(data.results) ||
+            !Array.isArray(
+                data.results
+            ) ||
             data.results.length === 0
         ) {
 
@@ -790,15 +649,13 @@ async function searchDescription() {
                 "none";
 
             error.innerText =
-                'No matching U.S. NAICS industries found.';
+                "No matching U.S. NAICS industries found.";
 
             error.style.display =
                 "block";
 
             return;
-
         }
-
 
         displayDescriptionResults(
             data.results,
@@ -807,7 +664,6 @@ async function searchDescription() {
         );
 
     }
-
     catch (err) {
 
         console.error(err);
@@ -820,14 +676,12 @@ async function searchDescription() {
 
         error.style.display =
             "block";
-
     }
-
 }
 
 
 /* =========================================
-   DISPLAY SEARCH RESULTS
+   DISPLAY RESULTS
 ========================================= */
 
 function displayDescriptionResults(
@@ -838,64 +692,56 @@ function displayDescriptionResults(
 
     let html = "";
 
-
     html +=
         '<h4>🔎 U.S. NAICS Results for "' +
         escapeHtml(searchText) +
         '"</h4>';
 
+    items.forEach(
+        function(item) {
 
-    items.forEach(function(item) {
+            const code =
+                item.code ||
+                "N/A";
 
-        const code =
-            item.code ||
-            item.naics ||
-            "N/A";
+            const title =
+                item.title ||
+                item.description ||
+                "N/A";
 
+            html +=
+                '<div class="match-item">';
 
-        const title =
-            item.title ||
-            item.description ||
-            "N/A";
+            html +=
+                '<div class="match-code">' +
+                'U.S. NAICS ' +
+                escapeHtml(code) +
+                '</div>';
 
+            html +=
+                '<div class="match-name">' +
+                escapeHtml(title) +
+                '</div>';
 
-        html += `
+            html +=
+                '<a href="/usa-naics/' +
+                encodeURIComponent(code) +
+                '/">' +
+                'View NAICS ' +
+                escapeHtml(code) +
+                ' Details →' +
+                '</a>';
 
-            <div class="match-item">
-
-                <div class="match-code">
-
-                    U.S. NAICS ${escapeHtml(code)}
-
-                </div>
-
-                <div class="match-name">
-
-                    ${escapeHtml(title)}
-
-                </div>
-
-                <a
-                    href="/usa-naics/${encodeURIComponent(code)}/">
-
-                    View NAICS ${escapeHtml(code)} Details →
-
-                </a>
-
-            </div>
-
-        `;
-
-    });
-
+            html +=
+                '</div>';
+        }
+    );
 
     results.innerHTML =
         html;
 
-
     results.style.display =
         "block";
-
 }
 
 
@@ -905,18 +751,34 @@ function displayDescriptionResults(
 
 function escapeHtml(value) {
 
-    return String(value ?? "")
+    return String(
+        value ?? ""
+    )
 
-        .replace(/&/g, "&amp;")
+        .replace(
+            /&/g,
+            "&amp;"
+        )
 
-        .replace(/</g, "&lt;")
+        .replace(
+            /</g,
+            "&lt;"
+        )
 
-        .replace(/>/g, "&gt;")
+        .replace(
+            />/g,
+            "&gt;"
+        )
 
-        .replace(/"/g, "&quot;")
+        .replace(
+            /"/g,
+            "&quot;"
+        )
 
-        .replace(/'/g, "&#039;");
-
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
 
 
@@ -930,7 +792,9 @@ document
     "keydown",
     function(event) {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             searchNAICSCode();
 
@@ -950,7 +814,9 @@ document
     "keydown",
     function(event) {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             searchDescription();
 
