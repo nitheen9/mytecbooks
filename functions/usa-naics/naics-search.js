@@ -10,26 +10,48 @@ export async function onRequest(context) {
         )
         .trim();
 
+
     if (query.length < 2) {
 
         return jsonResponse({
+
             query: query,
+
             results: []
+
         });
 
     }
 
-    try {
 
-        const censusUrl =
-            "https://www.census.gov/naics/" +
-            "?input=" +
-            encodeURIComponent(query) +
-            "&year=2022";
+    /*
+     * IMPORTANT
+     *
+     * Do NOT send:
+     *
+     * details=software
+     *
+     * because Census interprets "details"
+     * as a NAICS code/detail selection.
+     *
+     * For text searches we use ONLY:
+     *
+     * input=query
+     * year=2022
+     */
+
+    const searchUrl =
+        "https://www.census.gov/naics/" +
+        "?input=" +
+        encodeURIComponent(query) +
+        "&year=2022";
+
+
+    try {
 
         const response =
             await fetch(
-                censusUrl,
+                searchUrl,
                 {
                     headers: {
 
@@ -38,51 +60,80 @@ export async function onRequest(context) {
 
                         "Accept":
                             "text/html,application/xhtml+xml,text/html"
+
                     }
                 }
             );
 
+
         if (!response.ok) {
 
             console.error(
-                "Census HTTP:",
+                "Census HTTP status:",
                 response.status
             );
 
+
             return jsonResponse({
+
                 query: query,
+
                 results: []
+
             });
 
         }
 
+
         const html =
             await response.text();
 
+
         const results =
-            parseResults(
+            parseCensusResults(
                 html
             );
+
+
+        /*
+         * Remove anything that isn't
+         * a real 2-6 digit NAICS code.
+         */
+
+        const filtered =
+            results.filter(
+                function(item) {
+
+                    return (
+                        /^\d{2,6}$/.test(
+                            item.code
+                        ) &&
+                        item.title &&
+                        item.title.length >= 2
+                    );
+
+                }
+            );
+
 
         return jsonResponse({
 
             query: query,
 
             results:
-                results.slice(
-                    0,
-                    50
-                )
+                filtered.slice(0, 50)
 
         });
 
     }
+
     catch (error) {
 
         console.error(
             "NAICS search error:",
             error
         );
+
 
         return jsonResponse({
 
@@ -98,31 +149,49 @@ export async function onRequest(context) {
 
 
 /* =========================================
-   PARSE CENSUS RESULTS
+   PARSE CENSUS SEARCH RESULTS
 ========================================= */
 
-function parseResults(html) {
+function parseCensusResults(html) {
 
     const results = [];
 
-    const seen =
-        new Set();
+    const seen = new Set();
+
 
     /*
-     * Census search result format:
+     * Census search result buttons
+     * look like:
      *
-     * Button: 513140
-     * Directory and Mailing List Publishers
+     * Button: 513210
+     *
+     * followed by:
+     *
+     * Software Publishers
+     *
+     * We extract actual 2-6 digit
+     * codes only.
+     */
+
+
+    /*
+     * METHOD 1
+     *
+     * Look for:
+     *
+     * Button: 513210
+     * Software Publishers
      */
 
     const buttonRegex =
-        /Button:\s*(\d{2,6})\s+([^<\n]+?)(?=\s+This industry comprises|\s+See industry description|\s+Button:|\s+2022 NAICS Definition|$)/gi;
+        /Button:\s*(\d{2,6})\s+([^:]{2,180}?)(?::\s*(?:This industry comprises|See industry description)|\s+(?:This industry comprises|See industry description))/gi;
+
 
     let match;
 
+
     while (
-        (match =
-            buttonRegex.exec(html)) !== null
+        (match = buttonRegex.exec(html)) !== null
     ) {
 
         const code =
@@ -131,22 +200,18 @@ function parseResults(html) {
         let title =
             match[2];
 
+
         title =
-            decodeHtml(
-                stripHtml(title)
-            );
+            stripHtml(title);
+
+
+        title =
+            decodeHtml(title);
+
 
         title =
             cleanTitle(title);
 
-        if (
-            !isValidResult(
-                code,
-                title
-            )
-        ) {
-            continue;
-        }
 
         addResult(
             results,
@@ -159,52 +224,66 @@ function parseResults(html) {
 
 
     /*
-     * Parse HTML anchors as a second method.
+     * METHOD 2
+     *
+     * Find Census links containing:
+     *
+     * details=513210
+     *
      */
 
-    const anchorRegex =
-        /<a\b[^>]*>([\s\S]*?)<\/a>/gi;
+    const linkRegex =
+        /href=["'][^"']*?[?&]details=(\d{2,6})[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+
 
     while (
-        (match =
-            anchorRegex.exec(html)) !== null
+        (match = linkRegex.exec(html)) !== null
     ) {
 
-        const content =
-            decodeHtml(
-                stripHtml(
-                    match[1]
-                )
-            );
-
-        const resultRegex =
-            /^\s*(\d{2,6})\s+(.+)$/;
-
-        const resultMatch =
-            content.match(
-                resultRegex
-            );
-
-        if (!resultMatch) {
-            continue;
-        }
-
         const code =
-            resultMatch[1];
+            match[1];
 
-        const title =
-            cleanTitle(
-                resultMatch[2]
-            );
+        let title =
+            match[2];
+
+
+        title =
+            stripHtml(title);
+
+
+        title =
+            decodeHtml(title);
+
+
+        title =
+            cleanTitle(title);
+
+
+        /*
+         * Ignore generic navigation.
+         */
 
         if (
-            !isValidResult(
-                code,
-                title
-            )
+            !title ||
+            /^(main|home|search|menu|next|previous|history|concordances|downloadable files)$/i
+                .test(title)
         ) {
+
             continue;
+
         }
+
+
+        /*
+         * Remove "Button:" if it survived.
+         */
+
+        title =
+            title.replace(
+                /^Button:\s*\d{2,6}\s*/i,
+                ""
+            );
+
 
         addResult(
             results,
@@ -217,125 +296,53 @@ function parseResults(html) {
 
 
     /*
-     * If Census gives no structured
-     * links, use rendered text.
+     * METHOD 3
+     *
+     * Census sometimes represents
+     * the result as:
+     *
+     * [Button: 513210] Software Publishers
+     *
      */
 
-    if (
-        results.length === 0
+    const bracketRegex =
+        /\[Button:\s*(\d{2,6})\]\s*([^.;]{2,180})/gi;
+
+
+    while (
+        (match = bracketRegex.exec(html)) !== null
     ) {
 
-        parseText(
-            html,
+        const code =
+            match[1];
+
+        let title =
+            match[2];
+
+
+        title =
+            stripHtml(title);
+
+
+        title =
+            decodeHtml(title);
+
+
+        title =
+            cleanTitle(title);
+
+
+        addResult(
             results,
-            seen
+            seen,
+            code,
+            title
         );
 
     }
 
 
     return results;
-
-}
-
-
-/* =========================================
-   TEXT FALLBACK
-========================================= */
-
-function parseText(
-    html,
-    results,
-    seen
-) {
-
-    const text =
-        cleanText(
-            decodeHtml(
-                stripHtml(html)
-            )
-        );
-
-    /*
-     * Census search results generally
-     * have "Button: CODE Title".
-     */
-
-    const regex =
-        /Button:\s*(\d{2,6})\s+(.+?)(?=\s+This industry comprises|\s+See industry description|\s+Button:|\s+2022 NAICS Definition|$)/gi;
-
-    let match;
-
-    while (
-        (match =
-            regex.exec(text)) !== null
-    ) {
-
-        const code =
-            match[1];
-
-        const title =
-            cleanTitle(
-                match[2]
-            );
-
-        if (
-            !isValidResult(
-                code,
-                title
-            )
-        ) {
-            continue;
-        }
-
-        addResult(
-            results,
-            seen,
-            code,
-            title
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   VALID RESULT
-========================================= */
-
-function isValidResult(
-    code,
-    title
-) {
-
-    if (
-        !/^\d{2,6}$/.test(code)
-    ) {
-        return false;
-    }
-
-    if (
-        !title ||
-        title.length < 2
-    ) {
-        return false;
-    }
-
-    if (
-        title.length > 250
-    ) {
-        return false;
-    }
-
-    if (
-        /^(home|menu|search|go|next|previous|back)$/i
-        .test(title)
-    ) {
-        return false;
-    }
-
-    return true;
 
 }
 
@@ -351,18 +358,89 @@ function addResult(
     title
 ) {
 
+    if (
+        !/^\d{2,6}$/.test(code)
+    ) {
+
+        return;
+
+    }
+
+
+    if (!title) {
+
+        return;
+
+    }
+
+
+    /*
+     * Remove Census footnote marker.
+     */
+
+    title =
+        title
+        .replace(
+            /[†‡*]+$/g,
+            ""
+        )
+        .trim();
+
+
+    /*
+     * Remove leading punctuation.
+     */
+
+    title =
+        title
+        .replace(
+            /^[\s:–—-]+/,
+            ""
+        )
+        .trim();
+
+
+    /*
+     * Don't allow navigation
+     * words to become results.
+     */
+
+    if (
+        /^(NAICS|search results|search|home|main|menu|history|concordances|downloadable files|reference files|announcements)$/i
+            .test(title)
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        title.length < 2
+    ) {
+
+        return;
+
+    }
+
+
     const key =
         code +
         "|" +
-        title;
+        title.toLowerCase();
+
 
     if (
         seen.has(key)
     ) {
+
         return;
+
     }
 
+
     seen.add(key);
+
 
     results.push({
 
@@ -370,37 +448,9 @@ function addResult(
             code,
 
         title:
-            title,
-
-        url:
-            "/usa-naics/" +
-            encodeURIComponent(code) +
-            "/"
+            title
 
     });
-
-}
-
-
-/* =========================================
-   CLEAN TITLE
-========================================= */
-
-function cleanTitle(value) {
-
-    return String(value || "")
-
-        .replace(
-            /[†‡*]+$/g,
-            ""
-        )
-
-        .replace(
-            /\s+/g,
-            " "
-        )
-
-        .trim();
 
 }
 
@@ -485,10 +535,10 @@ function decodeHtml(value) {
 
 
 /* =========================================
-   CLEAN TEXT
+   CLEAN TITLE
 ========================================= */
 
-function cleanText(value) {
+function cleanTitle(value) {
 
     return String(value || "")
 
@@ -500,6 +550,11 @@ function cleanText(value) {
         .replace(
             /\s+([,.])/g,
             "$1"
+        )
+
+        .replace(
+            /\s*T\s*$/i,
+            ""
         )
 
         .trim();
@@ -518,6 +573,7 @@ function jsonResponse(data) {
         JSON.stringify(data),
 
         {
+
             status: 200,
 
             headers: {
