@@ -5,27 +5,26 @@ export async function onRequest(context) {
             context.params.zipcode || ""
         ).trim();
 
-
-    /*
-     * U.S. ZIP Codes:
-     * exactly 5 digits
-     */
-
-    if (
-        !/^\d{5}$/.test(zipcode)
-    ) {
+    if (!/^\d{5}$/.test(zipcode)) {
 
         return notFound(
             "Please enter a valid 5-digit U.S. ZIP Code."
         );
-
     }
 
-
     const apiUrl =
-        "https://api.zippopotam.us/us/" +
-        encodeURIComponent(zipcode);
-
+        "https://tigerweb.geo.census.gov/arcgis/rest/services/" +
+        "TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/1/query" +
+        "?where=" +
+        encodeURIComponent(
+            "ZCTA5='" + zipcode + "'"
+        ) +
+        "&outFields=" +
+        encodeURIComponent(
+            "ZCTA5,GEOID,BASENAME,NAME,INTPTLAT,INTPTLON"
+        ) +
+        "&returnGeometry=false" +
+        "&f=json";
 
     try {
 
@@ -35,60 +34,58 @@ export async function onRequest(context) {
                 {
                     headers: {
                         "Accept":
-                            "application/json",
-
-                        "User-Agent":
-                            "MyTecBooks U.S. ZIP Code Finder"
+                            "application/json"
                     }
                 }
             );
 
+        if (!response.ok) {
 
-        if (
-            !response.ok
-        ) {
+            console.error(
+                "TIGERweb HTTP:",
+                response.status
+            );
 
             return notFound(
-                "U.S. ZIP Code " +
+                "U.S. ZIP Code area " +
                 zipcode +
                 " was not found."
             );
-
         }
-
 
         const data =
             await response.json();
 
+        const features =
+            Array.isArray(
+                data.features
+            )
+                ? data.features
+                : [];
 
         if (
-            !data ||
-            !Array.isArray(
-                data.places
-            ) ||
-            data.places.length === 0
+            features.length === 0
         ) {
 
             return notFound(
-                "U.S. ZIP Code " +
+                "U.S. ZIP Code area " +
                 zipcode +
                 " was not found."
             );
-
         }
 
+        const attributes =
+            features[0].attributes || {};
 
         return new Response(
 
             createPage(
                 zipcode,
-                data
+                attributes
             ),
 
             {
-
-                status:
-                    200,
+                status: 200,
 
                 headers: {
 
@@ -101,40 +98,28 @@ export async function onRequest(context) {
                 }
 
             }
-
         );
 
     }
     catch (error) {
 
         console.error(
-            "ZIP Code error:",
+            "TIGERweb ZIP error:",
             error
         );
 
-
         return new Response(
-
             "Unable to load U.S. ZIP Code information.",
-
             {
-
-                status:
-                    500,
+                status: 500,
 
                 headers: {
-
                     "Content-Type":
                         "text/plain; charset=UTF-8"
-
                 }
-
             }
-
         );
-
     }
-
 }
 
 
@@ -147,155 +132,53 @@ function createPage(
     data
 ) {
 
-    const safeZip =
-        escapeHtml(
+    const code =
+        String(
+            data.ZCTA5 ||
             zipcode
         );
 
-
-    const country =
-        escapeHtml(
-            data.country ||
-            "United States"
+    const geoid =
+        String(
+            data.GEOID ||
+            code
         );
 
+    const basename =
+        String(
+            data.BASENAME ||
+            code
+        );
 
-    const places =
-        data.places ||
-        [];
-
-
-    const first =
-        places[0] ||
-        {};
-
-
-    const firstCity =
-        escapeHtml(
-            first["place name"] ||
+    const name =
+        String(
+            data.NAME ||
             ""
         );
 
-
-    const firstState =
-        escapeHtml(
-            first.state ||
+    const latitude =
+        String(
+            data.INTPTLAT ||
             ""
         );
 
-
-    const firstStateCode =
-        escapeHtml(
-            first["state abbreviation"] ||
+    const longitude =
+        String(
+            data.INTPTLON ||
             ""
         );
 
-
-    const pageTitle =
-        zipcode +
-        " ZIP Code - " +
-        (first["place name"] || "") +
-        ", " +
-        (first["state abbreviation"] || "") +
-        " | U.S. ZIP Code";
-
-
-    const metaDescription =
+    const title =
         "U.S. ZIP Code " +
-        zipcode +
-        " location information including " +
-        (first["place name"] || "city") +
-        ", " +
-        (first.state || "state") +
-        ", latitude and longitude.";
+        code +
+        " ZCTA | Census Geographic Information";
 
-
-    let placeHtml =
-        "";
-
-
-    places.forEach(
-        function(place) {
-
-            const city =
-                escapeHtml(
-                    place["place name"] ||
-                    ""
-                );
-
-
-            const state =
-                escapeHtml(
-                    place.state ||
-                    ""
-                );
-
-
-            const abbreviation =
-                escapeHtml(
-                    place["state abbreviation"] ||
-                    ""
-                );
-
-
-            const latitude =
-                escapeHtml(
-                    place.latitude ||
-                    ""
-                );
-
-
-            const longitude =
-                escapeHtml(
-                    place.longitude ||
-                    ""
-                );
-
-
-            placeHtml +=
-
-                '<div class="place">' +
-
-                    '<h3>' +
-
-                        city +
-
-                        ', ' +
-
-                        state +
-
-                        ' (' +
-
-                        abbreviation +
-
-                        ')' +
-
-                    '</h3>' +
-
-                    '<div class="detail">' +
-
-                        '<strong>Latitude:</strong> ' +
-
-                        latitude +
-
-                    '</div>' +
-
-                    '<div class="detail">' +
-
-                        '<strong>Longitude:</strong> ' +
-
-                        longitude +
-
-                    '</div>' +
-
-                '</div>';
-
-        }
-    );
-
+    const description =
+        "U.S. Census Bureau ZIP Code Tabulation Area " +
+        code +
+        " with geographic identifier and interior point coordinates.";
 
     return `<!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -303,22 +186,19 @@ function createPage(
 <meta charset="UTF-8">
 
 <meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+      content="width=device-width, initial-scale=1.0">
 
 <meta name="robots"
-content="index, follow">
+      content="index, follow">
 
 <meta name="description"
-content="${escapeHtml(metaDescription)}">
+      content="${escapeHtml(description)}">
 
 <link rel="icon"
-type="image/png"
-href="/favicon.png">
+      type="image/png"
+      href="/favicon.png">
 
-<title>
-${escapeHtml(pageTitle)}
-</title>
-
+<title>${escapeHtml(title)}</title>
 
 <style>
 
@@ -332,15 +212,12 @@ ${escapeHtml(pageTitle)}
 }
 
 * {
-
     box-sizing:border-box;
-
 }
 
 body {
 
     margin:0;
-
     padding:20px;
 
     font-family:
@@ -352,7 +229,6 @@ body {
         sans-serif;
 
     background:var(--light);
-
     color:var(--dark);
 
 }
@@ -360,7 +236,6 @@ body {
 .container {
 
     max-width:850px;
-
     margin:0 auto;
 
 }
@@ -368,9 +243,7 @@ body {
 h1 {
 
     text-align:center;
-
     margin:10px 0 12px;
-
     font-size:30px;
 
 }
@@ -378,11 +251,8 @@ h1 {
 .subtitle {
 
     text-align:center;
-
     color:#666;
-
     line-height:1.6;
-
     margin-bottom:25px;
 
 }
@@ -390,9 +260,7 @@ h1 {
 .card {
 
     background:#fff;
-
     padding:28px;
-
     border-radius:12px;
 
     box-shadow:
@@ -408,10 +276,7 @@ h1 {
 .card h2 {
 
     margin-top:0;
-
     color:#333;
-
-    line-height:1.4;
 
 }
 
@@ -420,7 +285,8 @@ h1 {
     padding:15px 0;
 
     border-bottom:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     line-height:1.7;
 
@@ -435,9 +301,7 @@ h1 {
 .label {
 
     display:block;
-
     font-weight:700;
-
     margin-bottom:4px;
 
 }
@@ -447,7 +311,6 @@ h1 {
     display:inline-block;
 
     background:var(--dark);
-
     color:#fff;
 
     padding:7px 12px;
@@ -460,70 +323,37 @@ h1 {
 
 }
 
-.place-list {
+.note {
 
     margin-top:20px;
-
-}
-
-.place {
-
-    padding:15px;
-
-    background:#f5f5f8;
-
-    border-radius:8px;
-
-    margin-bottom:12px;
-
-    border:
-        1px solid var(--border);
-
-}
-
-.place:last-child {
-
-    margin-bottom:0;
-
-}
-
-.place h3 {
-
-    margin-top:0;
-
-    color:#333;
-
-}
-
-.detail {
-
-    margin-top:6px;
-
-    line-height:1.6;
-
-}
-
-.source {
-
-    margin-top:25px;
 
     padding:15px;
 
     background:#fff8ef;
 
-    border-radius:8px;
+    border-left:
+        4px solid
+        var(--primary);
+
+    border-radius:7px;
 
     line-height:1.6;
+
+    color:#555;
 
     font-size:14px;
 
 }
 
-.source a {
+.source {
 
-    color:#b85c00;
+    margin-top:20px;
 
-    font-weight:700;
+    color:#777;
+
+    font-size:13px;
+
+    line-height:1.6;
 
 }
 
@@ -550,9 +380,7 @@ h1 {
 footer {
 
     text-align:center;
-
     color:#777;
-
     font-size:13px;
 
     margin:30px 0 10px;
@@ -586,32 +414,30 @@ footer {
 <div class="container">
 
 <h1>
-🇺🇸 U.S. ZIP Code ${safeZip}
+🇺🇸 U.S. ZIP Code Area ${escapeHtml(code)}
 </h1>
 
 <p class="subtitle">
 
-United States ZIP Code:
-<strong>
-${firstCity}${firstStateCode ? ", " + firstStateCode : ""}
-</strong>
+2020 Census ZIP Code Tabulation Area:
+<strong>${escapeHtml(name || code)}</strong>
 
 </p>
 
 <div class="card">
 
 <h2>
-📍 ZIP Code ${safeZip}
+📍 ZIP Code Area ${escapeHtml(code)}
 </h2>
 
 <div class="data-row">
 
 <span class="label">
-ZIP Code
+ZCTA5
 </span>
 
 <span class="code">
-${safeZip}
+${escapeHtml(code)}
 </span>
 
 </div>
@@ -619,72 +445,71 @@ ${safeZip}
 <div class="data-row">
 
 <span class="label">
-Country
+GEOID
 </span>
 
-${country}
+${escapeHtml(geoid)}
 
 </div>
 
 <div class="data-row">
 
 <span class="label">
-Primary Place
+Base Name
 </span>
 
-${firstCity}
+${escapeHtml(basename)}
 
 </div>
 
 <div class="data-row">
 
 <span class="label">
-State
+Name
 </span>
 
-${firstState}
-
-${firstStateCode
-    ? " (" + firstStateCode + ")"
-    : ""}
+${escapeHtml(name || "Not available")}
 
 </div>
 
-
-<div class="place-list">
+<div class="data-row">
 
 <span class="label">
-Places associated with this ZIP Code
+Interior Point Latitude
 </span>
 
-${placeHtml}
+${escapeHtml(latitude || "Not available")}
 
 </div>
 
+<div class="data-row">
+
+<span class="label">
+Interior Point Longitude
+</span>
+
+${escapeHtml(longitude || "Not available")}
+
+</div>
+
+<div class="note">
+
+<strong>About this data:</strong>
+
+This page uses the U.S. Census Bureau's
+2020 Census ZIP Code Tabulation Area (ZCTA)
+geographic data. A ZCTA is a Census geographic
+representation and is not the same thing as an
+official USPS mailing ZIP Code.
+
+</div>
 
 <div class="source">
 
-<strong>
-Data Source:
-</strong>
-
-<br>
-
-Zippopotam.us / GeoNames
-
-<br><br>
-
-<a
-href="https://api.zippopotam.us/us/${encodeURIComponent(zipcode)}"
-target="_blank"
-rel="noopener noreferrer">
-
-View API Response →
-
-</a>
+<strong>Source:</strong>
+U.S. Census Bureau TIGERweb
 
 </div>
-
 
 <a
 class="back"
@@ -696,12 +521,11 @@ href="/usa-zip-search.html">
 
 </div>
 
-
 <footer>
 
-U.S. ZIP Code Search<br>
+U.S. ZIP Code Finder<br>
 
-Data provided through Zippopotam.us / GeoNames
+U.S. Census Bureau TIGERweb — 2020 ZCTA
 
 </footer>
 
@@ -710,7 +534,6 @@ Data provided through Zippopotam.us / GeoNames
 </body>
 
 </html>`;
-
 }
 
 
@@ -725,7 +548,6 @@ function notFound(
     return new Response(
 
         `<!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -739,76 +561,20 @@ content="width=device-width, initial-scale=1.0">
 content="noindex, follow">
 
 <title>
-U.S. ZIP Code Not Found
+U.S. ZIP Code Area Not Found
 </title>
-
-<style>
-
-body {
-
-    font-family:Arial,sans-serif;
-
-    background:#f9f9fb;
-
-    padding:40px 20px;
-
-    text-align:center;
-
-}
-
-.box {
-
-    max-width:650px;
-
-    margin:auto;
-
-    background:white;
-
-    padding:30px;
-
-    border-radius:12px;
-
-    box-shadow:
-        0 4px 18px rgba(0,0,0,.08);
-
-}
-
-h1 {
-
-    color:#1e1e24;
-
-}
-
-a {
-
-    display:inline-block;
-
-    margin-top:20px;
-
-    padding:12px 18px;
-
-    background:#f48120;
-
-    color:white;
-
-    text-decoration:none;
-
-    border-radius:7px;
-
-    font-weight:bold;
-
-}
-
-</style>
 
 </head>
 
-<body>
-
-<div class="box">
+<body style="
+font-family:Arial,sans-serif;
+background:#f9f9fb;
+padding:40px 20px;
+text-align:center;
+">
 
 <h1>
-🇺🇸 U.S. ZIP Code Not Found
+🇺🇸 U.S. ZIP Code Area Not Found
 </h1>
 
 <p>
@@ -816,12 +582,8 @@ ${escapeHtml(message)}
 </p>
 
 <a href="/usa-zip-search.html">
-
 ← U.S. ZIP Code Search
-
 </a>
-
-</div>
 
 </body>
 
@@ -829,20 +591,16 @@ ${escapeHtml(message)}
 
         {
 
-            status:
-                404,
+            status:404,
 
-            headers: {
-
+            headers:{
                 "Content-Type":
                     "text/html; charset=UTF-8"
-
             }
 
         }
 
     );
-
 }
 
 
@@ -850,37 +608,15 @@ ${escapeHtml(message)}
    HTML ESCAPE
 ========================================= */
 
-function escapeHtml(
-    value
-) {
+function escapeHtml(value) {
 
     return String(
         value ?? ""
     )
 
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 }
