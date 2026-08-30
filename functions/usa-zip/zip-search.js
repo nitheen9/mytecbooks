@@ -1,41 +1,26 @@
 export async function onRequest(context) {
 
-    const requestUrl =
+    const url =
         new URL(
             context.request.url
         );
 
-
-    const state =
+    const query =
         (
-            requestUrl.searchParams.get(
-                "state"
-            ) ||
-            ""
-        )
-        .trim()
-        .toUpperCase();
-
-
-    const city =
-        (
-            requestUrl.searchParams.get(
-                "city"
-            ) ||
+            url.searchParams.get("q") ||
             ""
         )
         .trim();
 
 
     if (
-        !/^[A-Z]{2}$/.test(state)
+        !/^\d{1,5}$/.test(query)
     ) {
 
         return jsonResponse(
             {
-                query: city,
-                state: state,
-                results: []
+                query:query,
+                results:[]
             },
             400
         );
@@ -43,33 +28,25 @@ export async function onRequest(context) {
     }
 
 
-    if (
-        city.length < 2
-    ) {
+    const where =
+        query.length === 5
+            ? "ZCTA5='" + query + "'"
+            : "ZCTA5 LIKE '" + query + "%'";
 
-        return jsonResponse(
-            {
-                query: city,
-                state: state,
-                results: []
-            },
-            400
-        );
-
-    }
-
-
-    /*
-     * Zippopotam.us place endpoint:
-     *
-     * /us/state/city
-     */
 
     const apiUrl =
-        "https://api.zippopotam.us/us/" +
-        encodeURIComponent(state) +
-        "/" +
-        encodeURIComponent(city);
+        "https://tigerweb.geo.census.gov/arcgis/rest/services/" +
+        "TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/1/query" +
+        "?where=" +
+        encodeURIComponent(where) +
+        "&outFields=" +
+        encodeURIComponent(
+            "ZCTA5,GEOID,BASENAME,NAME,INTPTLAT,INTPTLON"
+        ) +
+        "&orderByFields=ZCTA5" +
+        "&returnGeometry=false" +
+        "&resultRecordCount=100" +
+        "&f=json";
 
 
     try {
@@ -78,12 +55,9 @@ export async function onRequest(context) {
             await fetch(
                 apiUrl,
                 {
-                    headers: {
+                    headers:{
                         "Accept":
-                            "application/json",
-
-                        "User-Agent":
-                            "MyTecBooks U.S. ZIP Search"
+                            "application/json"
                     }
                 }
             );
@@ -95,10 +69,10 @@ export async function onRequest(context) {
 
             return jsonResponse(
                 {
-                    query: city,
-                    state: state,
-                    results: []
-                }
+                    query:query,
+                    results:[]
+                },
+                500
             );
 
         }
@@ -108,169 +82,99 @@ export async function onRequest(context) {
             await response.json();
 
 
-        /*
-         * The city endpoint returns
-         * places/postal-code information.
-         */
-
-        const rawPlaces =
+        const features =
             Array.isArray(
-                data.places
+                data.features
             )
-                ? data.places
+                ? data.features
                 : [];
 
 
-        const results = [];
+        const results =
+            features.map(
+                function(feature) {
 
-        const seen =
-            new Set();
+                    const a =
+                        feature.attributes ||
+                        {};
 
+                    return {
 
-        rawPlaces.forEach(
-            function(item) {
+                        code:
+                            String(
+                                a.ZCTA5 ||
+                                ""
+                            ),
 
-                const code =
-                    String(
-                        item[
-                            "post code"
-                        ] ||
-                        item[
-                            "postal code"
-                        ] ||
-                        ""
-                    ).trim();
+                        name:
+                            String(
+                                a.NAME ||
+                                ""
+                            ),
 
+                        latitude:
+                            String(
+                                a.INTPTLAT ||
+                                ""
+                            ),
 
-                const place =
-                    String(
-                        item[
-                            "place name"
-                        ] ||
-                        city
-                    ).trim();
+                        longitude:
+                            String(
+                                a.INTPTLON ||
+                                ""
+                            )
 
-
-                if (
-                    !/^\d{5}$/.test(
-                        code
-                    )
-                ) {
-
-                    return;
+                    };
 
                 }
+            )
+            .filter(
+                function(item) {
 
-
-                if (
-                    seen.has(code)
-                ) {
-
-                    return;
+                    return /^\d{5}$/.test(
+                        item.code
+                    );
 
                 }
+            );
 
-
-                seen.add(code);
-
-
-                results.push({
-
-                    code:
-                        code,
-
-                    place:
-                        place,
-
-                    state:
-                        String(
-                            item.state ||
-                            ""
-                        ),
-
-                    stateAbbreviation:
-                        String(
-                            item[
-                                "state abbreviation"
-                            ] ||
-                            state
-                        ),
-
-                    latitude:
-                        String(
-                            item.latitude ||
-                            ""
-                        ),
-
-                    longitude:
-                        String(
-                            item.longitude ||
-                            ""
-                        )
-
-                });
-
-            }
-        );
-
-
-        results.sort(
-            function(a, b) {
-
-                return Number(a.code) -
-                       Number(b.code);
-
-            }
-        );
-
-
-        /*
-         * Limit the browser response.
-         */
 
         return jsonResponse({
 
             query:
-                city,
-
-            state:
-                state,
+                query,
 
             count:
                 results.length,
 
             results:
-                results.slice(
-                    0,
-                    100
-                )
+                results
 
         });
+
 
     }
     catch (error) {
 
         console.error(
-            "ZIP city search error:",
+            "TIGERweb ZIP search error:",
             error
         );
 
 
-        return jsonResponse({
+        return jsonResponse(
+            {
+                query:
+                    query,
 
-            query:
-                city,
+                count:
+                    0,
 
-            state:
-                state,
-
-            count:
-                0,
-
-            results:
-                []
-
-        }, 500);
+                results:
+                    []
+            },
+            500
+        );
 
     }
 
@@ -295,16 +199,13 @@ function jsonResponse(
             status:
                 status,
 
-            headers: {
+            headers:{
 
                 "Content-Type":
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400",
-
-                "Access-Control-Allow-Origin":
-                    "*"
+                    "public, max-age=3600, s-maxage=86400"
 
             }
 
