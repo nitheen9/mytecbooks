@@ -1,279 +1,191 @@
+import { naics2022 } from "./naics-data.js";
+
 export async function onRequest(context) {
 
-    const requestUrl =
+    const url =
         new URL(context.request.url);
 
     const query =
-        (requestUrl.searchParams.get("q") || "")
+        (url.searchParams.get("q") || "")
             .trim()
             .toLowerCase();
+
 
     if (query.length < 2) {
 
         return jsonResponse({
             query: query,
             year: 2022,
+            count: 0,
             results: []
         });
 
     }
 
-    try {
 
-        const jsonUrl =
-            new URL(
-                "/data/naics2022_all.json",
-                requestUrl
-            );
+    /*
+     * Ensure we use ONLY
+     * 6-digit 2022 NAICS records.
+     */
 
-        const response =
-            await fetch(
-                jsonUrl,
-                {
-                    cf: {
-                        cacheTtl: 86400,
-                        cacheEverything: true
-                    }
-                }
-            );
-
-        if (!response.ok) {
-
-            console.error(
-                "NAICS JSON load failed:",
-                response.status
-            );
-
-            return jsonResponse(
-                {
-                    query: query,
-                    year: 2022,
-                    results: []
-                },
-                500
-            );
-        }
-
-        const records =
-            await response.json();
-
-        if (!Array.isArray(records)) {
-
-            console.error(
-                "naics2022_all.json is not an array"
-            );
-
-            return jsonResponse(
-                {
-                    query: query,
-                    year: 2022,
-                    results: []
-                },
-                500
-            );
-        }
-
-        /*
-         * Keep ONLY valid 6-digit codes.
-         */
-
-        const naics =
-            records.filter(
-                function (item) {
-
-                    return (
-                        item &&
-                        /^\d{6}$/.test(
-                            String(item.code || "")
-                        ) &&
-                        String(
-                            item.title || ""
-                        ).trim() !== ""
-                    );
-
-                }
-            );
-
-        let results = [];
-
-
-        /*
-         * CODE SEARCH
-         *
-         * Example:
-         * 513210
-         */
-
-        if (
-            /^\d{2,6}$/.test(query)
-        ) {
-
-            results =
-                naics.filter(
-                    function (item) {
-
-                        return String(
-                            item.code
-                        ).startsWith(
-                            query
-                        );
-
-                    }
-                );
-
-        }
-
-        /*
-         * TEXT SEARCH
-         *
-         * Example:
-         * software
-         */
-
-        else {
-
-            const words =
-                query
-                    .split(/\s+/)
-                    .filter(Boolean);
-
-
-            results =
-                naics.filter(
-                    function (item) {
-
-                        const text =
-                            (
-                                item.code +
-                                " " +
-                                item.title
-                            )
-                            .toLowerCase();
-
-                        return words.every(
-                            function (word) {
-
-                                return text.includes(
-                                    word
-                                );
-
-                            }
-                        );
-
-                    }
-                );
-
-        }
-
-
-        /*
-         * Remove duplicate codes.
-         */
-
-        const seen =
-            new Set();
-
-        results =
-            results.filter(
-                function (item) {
-
-                    const code =
-                        String(item.code);
-
-                    if (
-                        seen.has(code)
-                    ) {
-
-                        return false;
-
-                    }
-
-                    seen.add(code);
-
-                    return true;
-
-                }
-            );
-
-
-        /*
-         * Sort by NAICS code.
-         */
-
-        results.sort(
-            function (a, b) {
+    const records =
+        naics2022.filter(
+            function(item) {
 
                 return (
-                    Number(a.code) -
-                    Number(b.code)
+                    item &&
+                    /^\d{6}$/.test(
+                        String(item.code || "")
+                    ) &&
+                    String(
+                        item.title || ""
+                    ).trim() !== ""
                 );
 
             }
         );
 
 
-        /*
-         * Maximum 50 results.
-         */
+    let results;
+
+
+    /*
+     * CODE SEARCH
+     *
+     * Example:
+     * 513210
+     *
+     * A partial code such as 513
+     * also shows matching 6-digit codes.
+     */
+
+    if (
+        /^\d{1,6}$/.test(query)
+    ) {
 
         results =
-            results.slice(
-                0,
-                50
+            records.filter(
+                function(item) {
+
+                    return String(
+                        item.code
+                    ).startsWith(
+                        query
+                    );
+
+                }
             );
 
+    }
 
-        return jsonResponse({
+    else {
 
-            query: query,
+        /*
+         * INDUSTRY SEARCH
+         *
+         * Example:
+         * software
+         *
+         * Example:
+         * computer programming
+         */
 
-            year: 2022,
+        const words =
+            query
+                .split(/\s+/)
+                .filter(Boolean);
 
-            count:
-                results.length,
 
-            results:
-                results.map(
-                    function (item) {
+        results =
+            records.filter(
+                function(item) {
 
-                        return {
+                    const searchable =
+                        (
+                            item.code +
+                            " " +
+                            item.title
+                        )
+                        .toLowerCase();
 
-                            code:
-                                String(
-                                    item.code
-                                ),
 
-                            title:
-                                String(
-                                    item.title
-                                )
+                    return words.every(
+                        function(word) {
 
-                        };
+                            return searchable.includes(
+                                word
+                            );
 
-                    }
-                )
+                        }
+                    );
 
-        });
+                }
+            );
 
     }
-    catch (error) {
 
-        console.error(
-            "2022 NAICS search error:",
-            error
+
+    /*
+     * Sort numerically.
+     */
+
+    results.sort(
+        function(a, b) {
+
+            return (
+                Number(a.code) -
+                Number(b.code)
+            );
+
+        }
+    );
+
+
+    /*
+     * Return maximum 50 results.
+     */
+
+    results =
+        results.slice(
+            0,
+            50
         );
 
-        return jsonResponse(
-            {
-                query: query,
-                year: 2022,
-                count: 0,
-                results: []
-            },
-            500
-        );
 
-    }
+    return jsonResponse({
+
+        query:
+            query,
+
+        year:
+            2022,
+
+        count:
+            results.length,
+
+        results:
+            results.map(
+                function(item) {
+
+                    return {
+
+                        code:
+                            String(
+                                item.code
+                            ),
+
+                        title:
+                            String(
+                                item.title
+                            )
+
+                    };
+
+                }
+            )
+
+    });
+
 }
 
 
@@ -291,6 +203,7 @@ function jsonResponse(
         JSON.stringify(data),
 
         {
+
             status: status,
 
             headers: {
@@ -299,14 +212,12 @@ function jsonResponse(
                     "application/json; charset=UTF-8",
 
                 "Cache-Control":
-                    "public, max-age=3600, s-maxage=86400",
-
-                "Access-Control-Allow-Origin":
-                    "*"
+                    "public, max-age=3600, s-maxage=86400"
 
             }
 
         }
 
     );
+
 }
