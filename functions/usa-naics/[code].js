@@ -1,3 +1,5 @@
+import { naics2022 } from "./naics-data.js";
+
 export async function onRequest(context) {
 
     const code =
@@ -7,7 +9,7 @@ export async function onRequest(context) {
 
 
     /*
-     * ONLY 6-DIGIT NAICS CODES
+     * ONLY 6-DIGIT CODES
      */
 
     if (
@@ -21,144 +23,85 @@ export async function onRequest(context) {
     }
 
 
-    try {
+    /*
+     * Find exact 2022 code.
+     */
 
-        const jsonUrl =
-            new URL(
-                "/data/naics2022_all.json",
-                context.request.url
-            );
+    const record =
+        naics2022.find(
+            function(item) {
 
+                return (
+                    item &&
+                    String(item.code) === code
+                );
 
-        const response =
-            await fetch(
-                jsonUrl,
-                {
-                    cf: {
-                        cacheTtl: 86400,
-                        cacheEverything: true
-                    }
-                }
-            );
+            }
+        );
 
 
-        if (!response.ok) {
+    if (
+        !record
+    ) {
 
-            console.error(
-                "NAICS JSON load failed:",
-                response.status
-            );
+        return notFound(
+            "U.S. NAICS code " +
+            code +
+            " was not found in the 2022 classification."
+        );
 
-            return serverError(
-                "Unable to load the 2022 U.S. NAICS database."
-            );
-
-        }
-
-
-        const records =
-            await response.json();
+    }
 
 
-        if (!Array.isArray(records)) {
-
-            return serverError(
-                "Invalid 2022 U.S. NAICS database."
-            );
-
-        }
+    const title =
+        String(
+            record.title || ""
+        ).trim();
 
 
-        /*
-         * Find exact 6-digit code.
-         */
+    if (
+        !title
+    ) {
 
-        const record =
-            records.find(
-                function (item) {
+        return notFound(
+            "U.S. NAICS code " +
+            code +
+            " was not found in the 2022 classification."
+        );
 
-                    return (
-                        item &&
-                        String(item.code) === code
-                    );
-
-                }
-            );
+    }
 
 
-        if (!record) {
+    return new Response(
 
-            return notFound(
-                "U.S. NAICS code " +
-                code +
-                " was not found in the 2022 classification."
-            );
+        createPage(
+            code,
+            title
+        ),
 
-        }
+        {
 
+            status: 200,
 
-        const title =
-            String(
-                record.title || ""
-            ).trim();
+            headers: {
 
+                "Content-Type":
+                    "text/html; charset=UTF-8",
 
-        if (!title) {
-
-            return notFound(
-                "U.S. NAICS code " +
-                code +
-                " was not found in the 2022 classification."
-            );
-
-        }
-
-
-        return new Response(
-
-            createPage(
-                code,
-                title
-            ),
-
-            {
-
-                status: 200,
-
-                headers: {
-
-                    "Content-Type":
-                        "text/html; charset=UTF-8",
-
-                    "Cache-Control":
-                        "public, max-age=86400, s-maxage=604800"
-
-                }
+                "Cache-Control":
+                    "public, max-age=86400, s-maxage=604800"
 
             }
 
-        );
+        }
 
-    }
-    catch (error) {
-
-        console.error(
-            "NAICS detail error:",
-            error
-        );
-
-
-        return serverError(
-            "Unable to load the 2022 U.S. NAICS database."
-        );
-
-    }
+    );
 
 }
 
 
 /* =========================================
-   CREATE PAGE
+   CREATE DETAIL PAGE
 ========================================= */
 
 function createPage(
@@ -180,12 +123,12 @@ function createPage(
         " | 2022 U.S. NAICS Code";
 
 
-    const description =
+    const metaDescription =
         "2022 U.S. NAICS Code " +
         code +
         ": " +
         title +
-        ". Official 2022 U.S. NAICS industry classification.";
+        ". Official six-digit U.S. NAICS industry classification.";
 
 
     const censusUrl =
@@ -197,7 +140,6 @@ function createPage(
 
 
     return `<!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -211,15 +153,13 @@ content="width=device-width, initial-scale=1.0">
 content="index, follow">
 
 <meta name="description"
-content="${escapeHtml(description)}">
+content="${escapeHtml(metaDescription)}">
 
 <link rel="icon"
 type="image/png"
 href="/favicon.png">
 
-<title>
-${escapeHtml(pageTitle)}
-</title>
+<title>${escapeHtml(pageTitle)}</title>
 
 <style>
 
@@ -233,9 +173,7 @@ ${escapeHtml(pageTitle)}
 }
 
 * {
-
     box-sizing:border-box;
-
 }
 
 body {
@@ -301,16 +239,15 @@ h1 {
         rgba(0,0,0,.06);
 
     border-top:
-        5px solid
-        var(--primary);
+        5px solid var(--primary);
 
 }
 
 .card h2 {
 
-    color:#333;
-
     margin-top:0;
+
+    color:#333;
 
     line-height:1.4;
 
@@ -321,8 +258,7 @@ h1 {
     padding:15px 0;
 
     border-bottom:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     line-height:1.7;
 
@@ -489,7 +425,7 @@ ${safeTitle}
 Classification
 </span>
 
-2022 U.S. NAICS — 6-digit national industry
+2022 U.S. NAICS — Six-Digit National Industry
 
 </div>
 
@@ -499,7 +435,7 @@ Classification
 Industry Details
 </span>
 
-${safeTitle} is an official 6-digit industry in the
+${safeTitle} is a six-digit industry in the
 2022 U.S. NAICS classification.
 
 </div>
@@ -542,7 +478,7 @@ href="/usa-naics-search.html">
 
 U.S. NAICS Code Search<br>
 
-2022 U.S. NAICS Classification<br>
+2022 North American Industry Classification System<br>
 
 Source: U.S. Census Bureau
 
@@ -553,6 +489,7 @@ Source: U.S. Census Bureau
 </body>
 
 </html>`;
+
 }
 
 
@@ -567,7 +504,6 @@ function notFound(
     return new Response(
 
         `<!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -611,8 +547,7 @@ body {
     border-radius:12px;
 
     box-shadow:
-        0 4px 18px
-        rgba(0,0,0,.08);
+        0 4px 18px rgba(0,0,0,.08);
 
 }
 
@@ -659,9 +594,7 @@ ${escapeHtml(message)}
 </p>
 
 <a href="/usa-naics-search.html">
-
 ← U.S. NAICS Code Search
-
 </a>
 
 </div>
@@ -678,36 +611,6 @@ ${escapeHtml(message)}
 
                 "Content-Type":
                     "text/html; charset=UTF-8"
-
-            }
-
-        }
-
-    );
-
-}
-
-
-/* =========================================
-   SERVER ERROR
-========================================= */
-
-function serverError(
-    message
-) {
-
-    return new Response(
-
-        message,
-
-        {
-
-            status:500,
-
-            headers:{
-
-                "Content-Type":
-                    "text/plain; charset=UTF-8"
 
             }
 
