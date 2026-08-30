@@ -3,6 +3,12 @@ export async function onRequest(context) {
     const code =
         String(context.params.code || "").trim();
 
+
+    /*
+     * U.S. NAICS codes:
+     * 2 to 6 digits
+     */
+
     if (!/^\d{2,6}$/.test(code)) {
 
         return notFound(
@@ -11,23 +17,25 @@ export async function onRequest(context) {
 
     }
 
+
+    /*
+     * Current official U.S. NAICS
+     *
+     * Census currently provides
+     * 2022 as the latest official
+     * U.S. NAICS classification.
+     */
+
+    const censusUrl =
+        "https://www.census.gov/naics/" +
+        "?details=" +
+        encodeURIComponent(code) +
+        "&input=" +
+        encodeURIComponent(code) +
+        "&year=2022";
+
+
     try {
-
-        /*
-         * Ask the official Census NAICS
-         * search page for this exact code.
-         *
-         * Current official classification:
-         * 2022 U.S. NAICS
-         */
-
-        const censusUrl =
-            "https://www.census.gov/naics/" +
-            "?input=" +
-            encodeURIComponent(code) +
-            "&year=2022" +
-            "&details=" +
-            encodeURIComponent(code);
 
         const response =
             await fetch(
@@ -37,39 +45,54 @@ export async function onRequest(context) {
                         "User-Agent":
                             "Mozilla/5.0 (compatible; MyTecBooks NAICS)",
                         "Accept":
-                            "text/html,application/xhtml+xml,text/html"
+                            "text/html,application/xhtml+xml"
                     }
                 }
             );
 
+
         if (!response.ok) {
+
+            console.error(
+                "Census HTTP:",
+                response.status
+            );
 
             return notFound(
                 "U.S. NAICS code " +
                 code +
-                " was not found in the 2022 NAICS classification."
+                " was not found."
             );
 
         }
+
 
         const html =
             await response.text();
 
+
         const data =
-            extractNAICS(
+            parseNAICS(
                 html,
                 code
             );
 
-        if (!data) {
+
+        if (!data.description) {
+
+            console.error(
+                "NAICS parser failed:",
+                code
+            );
 
             return notFound(
                 "U.S. NAICS code " +
                 code +
-                " was not found in the 2022 NAICS classification."
+                " was not found in the current U.S. NAICS classification."
             );
 
         }
+
 
         return new Response(
             createPage(data),
@@ -77,22 +100,27 @@ export async function onRequest(context) {
                 status: 200,
 
                 headers: {
+
                     "Content-Type":
                         "text/html; charset=UTF-8",
 
                     "Cache-Control":
                         "public, max-age=86400, s-maxage=604800"
+
                 }
+
             }
         );
 
     }
+
     catch (error) {
 
         console.error(
-            "NAICS detail error:",
+            "NAICS error:",
             error
         );
+
 
         return new Response(
             "Unable to load U.S. NAICS information.",
@@ -107,194 +135,249 @@ export async function onRequest(context) {
         );
 
     }
+
 }
 
 
 /* =========================================
-   EXTRACT NAICS INFORMATION
+   PARSE CENSUS NAICS PAGE
 ========================================= */
 
-function extractNAICS(
-    html,
-    requestedCode
-) {
+function parseNAICS(html, requestedCode) {
 
     /*
-     * First verify Census explicitly says
-     * the code is invalid.
+     * Convert HTML into readable text.
+     *
+     * We deliberately keep the text
+     * structure simple because Census
+     * can change its HTML classes.
      */
 
-    const invalidRegex =
-        new RegExp(
-            escapeRegex(requestedCode) +
-            "\\s+is not a valid 2022 NAICS code",
-            "i"
-        );
+    let text = html;
 
-    if (
-        invalidRegex.test(
-            decodeHtml(
-                stripHtml(html)
-            )
-        )
-    ) {
 
-        return null;
+    text = text.replace(
+        /<script[\s\S]*?<\/script>/gi,
+        " "
+    );
 
-    }
+    text = text.replace(
+        /<style[\s\S]*?<\/style>/gi,
+        " "
+    );
+
+    text = text.replace(
+        /<noscript[\s\S]*?<\/noscript>/gi,
+        " "
+    );
+
+
+    text = decodeHtml(text);
+
+
+    text = text.replace(
+        /<[^>]+>/g,
+        " "
+    );
+
+
+    text = text.replace(
+        /\s+/g,
+        " "
+    ).trim();
 
 
     /*
-     * Census search result normally contains:
+     * Census normally contains:
      *
      * Button: 513140
-     * Directory and Mailing List Publishers
+     * Directory and Mailing List Publishers:
+     * This industry comprises ...
      *
-     * followed by:
-     *
-     * This industry comprises...
+     * Find the EXACT requested code.
      */
 
-    const buttonRegex =
-        new RegExp(
-            "(?:Button:\\s*|button\\s*[:\\-]?\\s*)" +
-            escapeRegex(requestedCode) +
-            "\\s*" +
-            "([^<\\n]{2,300})",
-            "i"
-        );
+    const codePattern =
+        escapeRegex(requestedCode);
 
-    const buttonMatch =
-        html.match(
-            buttonRegex
-        );
-
-
-    /*
-     * Alternative HTML form:
-     *
-     * <a ...>513140 ...</a>
-     */
 
     let description = "";
 
-    if (buttonMatch) {
+
+    /*
+     * Method 1:
+     *
+     * Button: 513140
+     * Directory and Mailing List Publishers
+     */
+
+    let regex1 =
+        new RegExp(
+            "Button:\\s*" +
+            codePattern +
+            "\\s+" +
+            "([^:]+?):\\s*" +
+            "This industry comprises",
+            "i"
+        );
+
+
+    let match =
+        text.match(regex1);
+
+
+    if (match) {
 
         description =
-            cleanDescription(
-                decodeHtml(
-                    stripHtml(
-                        buttonMatch[1]
-                    )
+            cleanTitle(match[1]);
+
+    }
+
+
+    /*
+     * Method 2:
+     *
+     * 513140 Directory and Mailing List Publishers
+     * This industry comprises
+     */
+
+    if (!description) {
+
+        const regex2 =
+            new RegExp(
+                "(?:^|\\s)" +
+                codePattern +
+                "\\s+" +
+                "([^|]+?)" +
+                "\\s+This industry comprises",
+                "i"
+            );
+
+
+        match =
+            text.match(regex2);
+
+
+        if (match) {
+
+            description =
+                cleanTitle(match[1]);
+
+        }
+
+    }
+
+
+    /*
+     * Method 3:
+     *
+     * Find the exact code and take
+     * the text immediately following it.
+     */
+
+    if (!description) {
+
+        const regex3 =
+            new RegExp(
+                "(?:Button:\\s*)?" +
+                codePattern +
+                "\\s+" +
+                "([A-Za-z][A-Za-z0-9,&()'./\\- ]{2,150})" +
+                "(?=\\s+(?:This industry comprises|See industry description|Cross-References|2022 NAICS Definition))",
+                "i"
+            );
+
+
+        match =
+            text.match(regex3);
+
+
+        if (match) {
+
+            description =
+                cleanTitle(match[1]);
+
+        }
+
+    }
+
+
+    /*
+     * Method 4:
+     *
+     * Census detail page normally has:
+     *
+     * 513140 Directory and Mailing List Publishers
+     *
+     * This industry comprises...
+     *
+     * Look at a larger section.
+     */
+
+    if (!description) {
+
+        const pos =
+            text.search(
+                new RegExp(
+                    "\\b" +
+                    codePattern +
+                    "\\b",
+                    "i"
                 )
             );
 
-    }
 
+        if (pos >= 0) {
 
-    /*
-     * Exact anchor search.
-     */
-
-    if (!description) {
-
-        const anchorRegex =
-            new RegExp(
-                "<a[^>]*>\\s*" +
-                escapeRegex(requestedCode) +
-                "\\s*</a>\\s*([^<]+)",
-                "i"
-            );
-
-        const anchorMatch =
-            html.match(
-                anchorRegex
-            );
-
-        if (anchorMatch) {
-
-            description =
-                cleanDescription(
-                    decodeHtml(
-                        anchorMatch[1]
+            const nearby =
+                text.substring(
+                    pos,
+                    Math.min(
+                        text.length,
+                        pos + 1200
                     )
                 );
 
-        }
 
-    }
-
-
-    /*
-     * Search the rendered text.
-     */
-
-    const text =
-        cleanText(
-            decodeHtml(
-                stripHtml(html)
-            )
-        );
-
-
-    /*
-     * Exact code followed by title.
-     */
-
-    if (!description) {
-
-        const textRegex =
-            new RegExp(
-                "(?:^|\\s)" +
-                escapeRegex(requestedCode) +
-                "\\s+" +
-                "([A-Z][A-Za-z0-9 ,&()'\\/\\.\\-]{2,250}?)" +
-                "(?=\\s+This industry comprises|" +
-                "\\s+See industry description|" +
-                "\\s+Cross-References|" +
-                "\\s+Illustrative Examples|" +
-                "\\s+2022 NAICS Definition|$)",
-                "i"
-            );
-
-        const textMatch =
-            text.match(
-                textRegex
-            );
-
-        if (textMatch) {
-
-            description =
-                cleanDescription(
-                    textMatch[1]
+            const local =
+                nearby.match(
+                    new RegExp(
+                        "\\b" +
+                        codePattern +
+                        "\\b\\s+" +
+                        "([A-Za-z][A-Za-z0-9,&()'./\\- ]{2,150})" +
+                        "(?=\\s+(?:This industry comprises|See industry description|Cross-References|2022 NAICS Definition))",
+                        "i"
+                    )
                 );
 
+
+            if (local) {
+
+                description =
+                    cleanTitle(local[1]);
+
+            }
+
         }
 
     }
 
 
-    if (!description) {
-
-        return null;
-
-    }
-
-
     /*
-     * Industry details.
+     * Industry details
      */
 
-    let details =
-        "";
+    let details = "";
+
 
     const detailsRegex =
-        /This industry comprises\s+(.+?)(?=\s+Cross-References|\s+Illustrative Examples|\s+2022 NAICS Definition|\s+2022 NAICS Manual|$)/i;
+        /This industry comprises\s+(.+?)(?=\s+(?:Cross-References|Illustrative Examples|Table displays|2022 NAICS Manual|Contact Us|Reference Files)|$)/i;
+
 
     const detailsMatch =
-        text.match(
-            detailsRegex
-        );
+        text.match(detailsRegex);
+
 
     if (detailsMatch) {
 
@@ -308,19 +391,18 @@ function extractNAICS(
 
 
     /*
-     * Sector.
+     * Sector
      */
 
     let sector =
         "Not available";
 
-    const sectorRegex =
-        /Sector\s+(\d{2})\s*[—-]\s*([A-Za-z0-9 ,&()'\/.\-]+?)(?=\s+The Sector|\s+\d{2,6}\s|$)/i;
 
     const sectorMatch =
         text.match(
-            sectorRegex
+            /Sector\s+(\d{2})\s*[—-]\s*([A-Za-z][^|]+?)(?=\s+The Sector|\s+\d{2,6}\s|$)/i
         );
+
 
     if (sectorMatch) {
 
@@ -335,31 +417,47 @@ function extractNAICS(
 
 
     /*
-     * Industry group.
+     * Industry group
      */
 
     let industryGroup =
         "Not available";
 
+
+    /*
+     * For example:
+     *
+     * 5131 Internet Publishing and Web Search Portals
+     *
+     * We only use this if it is not
+     * the requested code itself.
+     */
+
     const groupRegex =
-        /(\d{4})\s+([A-Z][A-Za-z0-9 ,&()'\/.\-]+?)(?=\s+This industry comprises|\s+See industry description|\s+\d{5,6}\s|$)/;
+        /(?:^|\s)(\d{4})\s+([A-Z][A-Za-z0-9,&()'./\- ]+?)(?=\s+(?:This industry comprises|See industry description|\d{5,6}\s|$))/g;
 
-    const groupMatch =
-        text.match(
-            groupRegex
-        );
 
-    if (
-        groupMatch &&
-        groupMatch[1] !== requestedCode
+    let groupMatch;
+
+
+    while (
+        (groupMatch = groupRegex.exec(text)) !== null
     ) {
 
-        industryGroup =
-            cleanText(
-                groupMatch[1] +
-                " — " +
-                groupMatch[2]
-            );
+        if (
+            groupMatch[1] !== requestedCode
+        ) {
+
+            industryGroup =
+                cleanText(
+                    groupMatch[1] +
+                    " — " +
+                    groupMatch[2]
+                );
+
+            break;
+
+        }
 
     }
 
@@ -388,40 +486,30 @@ function extractNAICS(
 
 
 /* =========================================
-   DESCRIPTION CLEANING
+   CLEAN TITLE
 ========================================= */
 
-function cleanDescription(value) {
+function cleanTitle(value) {
 
     let result =
         cleanText(value);
 
+
     result =
         result
         .replace(
-            /\s+This industry comprises.*$/i,
-            ""
-        )
-        .replace(
-            /\s+See industry description.*$/i,
-            ""
-        )
-        .replace(
-            /\s+Cross-References.*$/i,
-            ""
-        )
-        .replace(
-            /\s+Illustrative Examples.*$/i,
-            ""
-        )
-        .replace(
-            /\s+2022 NAICS Definition.*$/i,
-            ""
-        )
-        .replace(
-            /[†‡*]+$/g,
+            /\s*T\s*$/i,
             ""
         );
+
+
+    result =
+        result
+        .replace(
+            /\s*\^.*$/i,
+            ""
+        );
+
 
     return result.trim();
 
@@ -435,29 +523,20 @@ function cleanDescription(value) {
 function createPage(data) {
 
     const code =
-        escapeHtml(
-            data.code
-        );
+        escapeHtml(data.code);
 
     const description =
-        escapeHtml(
-            data.description
-        );
+        escapeHtml(data.description);
 
     const sector =
-        escapeHtml(
-            data.sector
-        );
+        escapeHtml(data.sector);
 
     const industryGroup =
-        escapeHtml(
-            data.industryGroup
-        );
+        escapeHtml(data.industryGroup);
 
     const details =
-        escapeHtml(
-            data.details
-        );
+        escapeHtml(data.details);
+
 
     const title =
         data.code +
@@ -465,14 +544,16 @@ function createPage(data) {
         data.description +
         " | U.S. NAICS Code";
 
+
     const metaDescription =
         "U.S. NAICS Code " +
         data.code +
         ": " +
         data.description +
-        ". 2022 U.S. NAICS industry classification and details.";
+        ". View the official 2022 U.S. NAICS industry classification and details.";
 
-    const censusUrl =
+
+    const censusLink =
         "https://www.census.gov/naics/" +
         "?details=" +
         encodeURIComponent(data.code) +
@@ -482,6 +563,7 @@ function createPage(data) {
 
 
     return `<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -503,13 +585,16 @@ function createPage(data) {
 
 <title>${escapeHtml(title)}</title>
 
+
 <style>
 
 :root {
+
     --primary: #f48120;
     --dark: #1e1e24;
     --light: #f9f9fb;
     --border: #e0e0e6;
+
 }
 
 * {
@@ -519,6 +604,7 @@ function createPage(data) {
 body {
 
     margin: 0;
+
     padding: 20px;
 
     font-family:
@@ -529,206 +615,188 @@ body {
         Arial,
         sans-serif;
 
-    background:
-        var(--light);
+    background: var(--light);
 
-    color:
-        var(--dark);
+    color: var(--dark);
+
 }
 
 .container {
 
-    max-width:
-        850px;
+    max-width: 850px;
 
-    margin:
-        0 auto;
+    margin: 0 auto;
+
 }
 
 h1 {
 
-    text-align:
-        center;
+    text-align: center;
 
-    margin:
-        10px 0 12px;
+    margin: 10px 0 12px;
 
-    font-size:
-        30px;
+    font-size: 30px;
+
 }
 
 .subtitle {
 
-    text-align:
-        center;
+    text-align: center;
 
-    color:
-        #666;
+    color: #666;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
-    margin-bottom:
-        25px;
+    margin-bottom: 25px;
+
 }
 
 .card {
 
-    background:
-        white;
+    background: white;
 
-    padding:
-        28px;
+    padding: 28px;
 
-    border-radius:
-        12px;
+    border-radius: 12px;
 
     box-shadow:
-        0 4px 18px
-        rgba(0,0,0,.06);
+        0 4px 18px rgba(0,0,0,.06);
 
     border-top:
-        5px solid
-        var(--primary);
+        5px solid var(--primary);
+
 }
 
 .card h2 {
 
-    margin-top:
-        0;
+    color: #333;
 
-    color:
-        #333;
+    margin-top: 0;
+
 }
 
 .data-row {
 
-    padding:
-        15px 0;
+    padding: 15px 0;
 
     border-bottom:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
-    line-height:
-        1.7;
+    line-height: 1.7;
+
 }
 
 .data-row:last-child {
 
-    border-bottom:
-        none;
+    border-bottom: none;
+
 }
 
 .label {
 
-    font-weight:
-        700;
+    font-weight: 700;
 
-    display:
-        block;
+    display: block;
 
-    margin-bottom:
-        4px;
+    margin-bottom: 4px;
+
 }
 
 .code {
 
-    display:
-        inline-block;
+    display: inline-block;
 
-    background:
-        var(--dark);
+    background: var(--dark);
 
-    color:
-        white;
+    color: white;
 
-    padding:
-        7px 12px;
+    padding: 7px 12px;
 
-    border-radius:
-        6px;
+    border-radius: 6px;
 
-    font-weight:
-        700;
+    font-weight: 700;
 
-    letter-spacing:
-        1px;
+    letter-spacing: 1px;
+
+}
+
+.section {
+
+    margin-top: 25px;
+
+    padding: 20px;
+
+    background: #f5f5f8;
+
+    border-left:
+        5px solid var(--primary);
+
+    border-radius: 8px;
+
+}
+
+.section h2 {
+
+    margin-top: 0;
+
 }
 
 .source {
 
-    margin-top:
-        25px;
+    margin-top: 25px;
 
-    padding:
-        15px;
+    padding: 15px;
 
-    background:
-        #fff8ef;
+    background: #fff8ef;
 
-    border-radius:
-        8px;
+    border-radius: 8px;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
 
-    font-size:
-        14px;
+    font-size: 14px;
+
 }
 
 .source a {
 
-    color:
-        #b85c00;
+    color: #b85c00;
 
-    font-weight:
-        700;
+    font-weight: 700;
+
 }
 
 .back {
 
-    display:
-        inline-block;
+    display: inline-block;
 
-    margin-top:
-        25px;
+    margin-top: 25px;
 
-    padding:
-        12px 18px;
+    padding: 12px 18px;
 
-    background:
-        var(--dark);
+    background: var(--dark);
 
-    color:
-        white;
+    color: white;
 
-    text-decoration:
-        none;
+    text-decoration: none;
 
-    border-radius:
-        7px;
+    border-radius: 7px;
 
-    font-weight:
-        700;
+    font-weight: 700;
+
 }
 
 footer {
 
-    text-align:
-        center;
+    text-align: center;
 
-    color:
-        #777;
+    color: #777;
 
-    font-size:
-        13px;
+    font-size: 13px;
 
-    margin:
-        30px 0 10px;
+    margin: 30px 0 10px;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
+
 }
 
 @media(max-width:600px) {
@@ -751,13 +819,16 @@ footer {
 
 </head>
 
+
 <body>
 
 <div class="container">
 
+
 <h1>
 🇺🇸 U.S. NAICS Code ${code}
 </h1>
+
 
 <p class="subtitle">
 
@@ -766,11 +837,14 @@ footer {
 
 </p>
 
+
 <div class="card">
+
 
 <h2>
 🏭 NAICS ${code} — ${description}
 </h2>
+
 
 <div class="data-row">
 
@@ -784,6 +858,7 @@ ${code}
 
 </div>
 
+
 <div class="data-row">
 
 <span class="label">
@@ -793,6 +868,7 @@ Industry Description
 ${description}
 
 </div>
+
 
 <div class="data-row">
 
@@ -804,6 +880,7 @@ ${sector}
 
 </div>
 
+
 <div class="data-row">
 
 <span class="label">
@@ -814,6 +891,7 @@ ${industryGroup}
 
 </div>
 
+
 <div class="data-row">
 
 <span class="label">
@@ -823,6 +901,7 @@ Industry Details
 ${details}
 
 </div>
+
 
 <div class="source">
 
@@ -838,7 +917,7 @@ U.S. Census Bureau —
 <br><br>
 
 <a
-href="${censusUrl}"
+href="${censusLink}"
 target="_blank"
 rel="noopener noreferrer">
 
@@ -848,6 +927,7 @@ View NAICS ${code} on U.S. Census Bureau →
 
 </div>
 
+
 <a
 class="back"
 href="/usa-naics-search.html">
@@ -856,17 +936,19 @@ href="/usa-naics-search.html">
 
 </a>
 
+
 </div>
+
 
 <footer>
 
 U.S. NAICS Code Search<br>
 
-2022 North American Industry Classification System<br>
-
-Source: U.S. Census Bureau
+Classification information is based on
+the official 2022 U.S. Census Bureau NAICS classification.
 
 </footer>
+
 
 </div>
 
@@ -899,80 +981,63 @@ function notFound(message) {
 <meta name="robots"
       content="noindex, follow">
 
-<title>
-U.S. NAICS Code Not Found
-</title>
+<title>U.S. NAICS Code Not Found</title>
 
 <style>
 
 body {
 
-    font-family:
-        Arial,
-        sans-serif;
+    font-family: Arial, sans-serif;
 
-    background:
-        #f9f9fb;
+    background: #f9f9fb;
 
-    padding:
-        40px 20px;
+    padding: 40px 20px;
 
-    text-align:
-        center;
+    text-align: center;
+
 }
 
 .box {
 
-    max-width:
-        650px;
+    max-width: 650px;
 
-    margin:
-        auto;
+    margin: auto;
 
-    background:
-        white;
+    background: white;
 
-    padding:
-        30px;
+    padding: 30px;
 
-    border-radius:
-        12px;
+    border-radius: 12px;
 
     box-shadow:
-        0 4px 18px
-        rgba(0,0,0,.08);
+        0 4px 18px rgba(0,0,0,.08);
+
 }
 
 h1 {
-    color:
-        #1e1e24;
+
+    color: #1e1e24;
+
 }
 
 a {
 
-    display:
-        inline-block;
+    display: inline-block;
 
-    margin-top:
-        20px;
+    margin-top: 20px;
 
-    padding:
-        12px 18px;
+    padding: 12px 18px;
 
-    background:
-        #f48120;
+    background: #f48120;
 
-    color:
-        white;
+    color: white;
 
-    text-decoration:
-        none;
+    text-decoration: none;
 
-    border-radius:
-        7px;
+    border-radius: 7px;
 
-    font-weight:
-        bold;
+    font-weight: bold;
+
 }
 
 </style>
@@ -1002,127 +1067,25 @@ ${escapeHtml(message)}
 </html>`,
 
         {
+
             status: 404,
 
             headers: {
+
                 "Content-Type":
                     "text/html; charset=UTF-8"
+
             }
+
         }
+
     );
 
 }
 
 
 /* =========================================
-   HTML STRIP
-========================================= */
-
-function stripHtml(value) {
-
-    return String(value || "")
-
-        .replace(
-            /<script[\s\S]*?<\/script>/gi,
-            " "
-        )
-
-        .replace(
-            /<style[\s\S]*?<\/style>/gi,
-            " "
-        )
-
-        .replace(
-            /<noscript[\s\S]*?<\/noscript>/gi,
-            " "
-        )
-
-        .replace(
-            /<[^>]+>/g,
-            " "
-        )
-
-        .replace(
-            /\s+/g,
-            " "
-        )
-
-        .trim();
-
-}
-
-
-/* =========================================
-   HTML DECODE
-========================================= */
-
-function decodeHtml(value) {
-
-    return String(value || "")
-
-        .replace(
-            /&nbsp;/gi,
-            " "
-        )
-
-        .replace(
-            /&amp;/gi,
-            "&"
-        )
-
-        .replace(
-            /&quot;/gi,
-            '"'
-        )
-
-        .replace(
-            /&#039;/gi,
-            "'"
-        )
-
-        .replace(
-            /&#39;/gi,
-            "'"
-        )
-
-        .replace(
-            /&lt;/gi,
-            "<"
-        )
-
-        .replace(
-            /&gt;/gi,
-            ">"
-        );
-
-}
-
-
-/* =========================================
-   TEXT CLEAN
-========================================= */
-
-function cleanText(value) {
-
-    return String(value || "")
-
-        .replace(
-            /\s+/g,
-            " "
-        )
-
-        .replace(
-            /\s+([,.])/g,
-            "$1"
-        )
-
-        .trim();
-
-}
-
-
-/* =========================================
-   REGEX ESCAPE
+   ESCAPE REGEX
 ========================================= */
 
 function escapeRegex(value) {
@@ -1142,33 +1105,51 @@ function escapeRegex(value) {
 
 function escapeHtml(value) {
 
-    return String(
-        value ?? ""
-    )
+    return String(value ?? "")
+
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================
+   CLEAN TEXT
+========================================= */
+
+function cleanText(value) {
+
+    return String(value || "")
+
+        .replace(/\s+/g, " ")
 
         .replace(
-            /&/g,
-            "&amp;"
+            /\s+([,.])/g,
+            "$1"
         )
 
-        .replace(
-            /</g,
-            "&lt;"
-        )
+        .trim();
 
-        .replace(
-            />/g,
-            "&gt;"
-        )
+}
 
-        .replace(
-            /"/g,
-            "&quot;"
-        )
 
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+/* =========================================
+   DECODE HTML
+========================================= */
+
+function decodeHtml(value) {
+
+    return String(value || "")
+
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#039;/gi, "'")
+        .replace(/&#39;/gi, "'")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">");
 
 }
