@@ -5,9 +5,9 @@ const API_BASE =
     "https://api.data.gov.in/resource/" +
     RESOURCE_ID;
 
-const PAGE_SIZE = 1000;
 const MAX_RESULTS = 100;
-const STATE_BATCH_SIZE = 5;
+
+const PAGE_SIZE = 1000;
 
 const STATES = [
     "Andhra Pradesh",
@@ -60,7 +60,10 @@ export async function onRequest(context) {
             ""
         ).trim();
 
-    if (query.length < 2) {
+
+    if (
+        query.length < 2
+    ) {
 
         return jsonResponse(
             {
@@ -73,10 +76,14 @@ export async function onRequest(context) {
 
     }
 
+
     const apiKey =
         context.env.DATA_GOV_IN_API_KEY;
 
-    if (!apiKey) {
+
+    if (
+        !apiKey
+    ) {
 
         console.error(
             "DATA_GOV_IN_API_KEY is missing."
@@ -92,112 +99,210 @@ export async function onRequest(context) {
 
     }
 
-    const searchText =
-        normalizeText(query);
 
-    const allResults = [];
-
-    const seenCodes =
-        new Set();
-
-    /*
-     * Process only a few states at a time.
-     * This prevents a huge burst of requests.
-     */
-
-    for (
-        let i = 0;
-        i < STATES.length;
-        i += STATE_BATCH_SIZE
-    ) {
-
-        if (
-            allResults.length >=
-            MAX_RESULTS
-        ) {
-            break;
-        }
-
-        const stateBatch =
-            STATES.slice(
-                i,
-                i + STATE_BATCH_SIZE
-            );
-
-        const batchResults =
-            await Promise.all(
-                stateBatch.map(
-                    function(state) {
-
-                        return searchState(
-                            context,
-                            apiKey,
-                            state,
-                            searchText
-                        );
-
-                    }
-                )
-            );
+    try {
 
         /*
-         * Add successful results.
-         * Failed states simply return [].
+         * FIRST:
+         *
+         * Search the actual LGD village-name
+         * field directly.
+         *
+         * Try several common capitalizations.
          */
 
-        for (
-            const stateResults of batchResults
+        const directResults =
+            await directVillageSearch(
+                apiKey,
+                query
+            );
+
+
+        if (
+            directResults.length > 0
         ) {
 
+            return jsonResponse({
+
+                query: query,
+
+                count:
+                    directResults.length,
+
+                results:
+                    directResults.slice(
+                        0,
+                        MAX_RESULTS
+                    )
+
+            });
+
+        }
+
+
+        /*
+         * FALLBACK:
+         *
+         * If direct field filtering does not
+         * work for this particular query,
+         * use state-based searching.
+         */
+
+        const fallbackResults =
+            await fallbackStateSearch(
+                apiKey,
+                query
+            );
+
+
+        return jsonResponse({
+
+            query: query,
+
+            count:
+                fallbackResults.length,
+
+            results:
+                fallbackResults.slice(
+                    0,
+                    MAX_RESULTS
+                )
+
+        });
+
+
+    }
+    catch (error) {
+
+        console.error(
+            "LGD village search error:",
+            error
+        );
+
+
+        return jsonResponse(
+            {
+                query: query,
+                count: 0,
+                results: []
+            },
+            500
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   DIRECT VILLAGE NAME SEARCH
+========================================= */
+
+async function directVillageSearch(
+    apiKey,
+    query
+) {
+
+    const variants =
+        buildQueryVariants(
+            query
+        );
+
+
+    const requests =
+        variants.map(
+            function(value) {
+
+                return fetchDirectFilter(
+                    apiKey,
+                    value
+                );
+
+            }
+        );
+
+
+    const responses =
+        await Promise.all(
+            requests
+        );
+
+
+    const results = [];
+
+    const seen =
+        new Set();
+
+
+    for (
+        const records of responses
+    ) {
+
+        for (
+            const record of records
+        ) {
+
+            const item =
+                convertRecord(
+                    record
+                );
+
+
             if (
-                !Array.isArray(
-                    stateResults
+                !item
+            ) {
+
+                continue;
+
+            }
+
+
+            /*
+             * Make sure the actual village
+             * name contains the search text.
+             */
+
+            if (
+                !normalizeText(
+                    item.village
+                ).includes(
+                    normalizeText(query)
                 )
             ) {
+
                 continue;
-            }
-
-            for (
-                const item of stateResults
-            ) {
-
-                if (
-                    !item ||
-                    !item.code
-                ) {
-                    continue;
-                }
-
-                if (
-                    seenCodes.has(
-                        item.code
-                    )
-                ) {
-                    continue;
-                }
-
-                seenCodes.add(
-                    item.code
-                );
-
-                allResults.push(
-                    item
-                );
-
-                if (
-                    allResults.length >=
-                    MAX_RESULTS
-                ) {
-                    break;
-                }
 
             }
+
 
             if (
-                allResults.length >=
+                seen.has(
+                    item.code
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            seen.add(
+                item.code
+            );
+
+
+            results.push(
+                item
+            );
+
+
+            if (
+                results.length >=
                 MAX_RESULTS
             ) {
-                break;
+
+                return results;
+
             }
 
         }
@@ -205,134 +310,338 @@ export async function onRequest(context) {
     }
 
 
-    allResults.sort(
-        function(a, b) {
-
-            const villageCompare =
-                String(a.village)
-                    .localeCompare(
-                        String(b.village),
-                        "en",
-                        {
-                            sensitivity:
-                                "base"
-                        }
-                    );
-
-            if (
-                villageCompare !== 0
-            ) {
-
-                return villageCompare;
-
-            }
-
-            const stateCompare =
-                String(a.state)
-                    .localeCompare(
-                        String(b.state),
-                        "en",
-                        {
-                            sensitivity:
-                                "base"
-                        }
-                    );
-
-            if (
-                stateCompare !== 0
-            ) {
-
-                return stateCompare;
-
-            }
-
-            return String(a.district)
-                .localeCompare(
-                    String(b.district),
-                    "en",
-                    {
-                        sensitivity:
-                            "base"
-                    }
-                );
-
-        }
-    );
-
-
-    return jsonResponse({
-
-        query: query,
-
-        count:
-            allResults.length,
-
-        results:
-            allResults.slice(
-                0,
-                MAX_RESULTS
-            )
-
-    });
+    return results;
 
 }
 
 
 /* =========================================
-   SEARCH ONE STATE
+   DIRECT API REQUEST
+========================================= */
+
+async function fetchDirectFilter(
+    apiKey,
+    villageName
+) {
+
+    const url =
+        API_BASE +
+        "?api-key=" +
+        encodeURIComponent(apiKey) +
+        "&format=json" +
+        "&limit=100" +
+        "&offset=0" +
+        "&filters[villageNameEnglish]=" +
+        encodeURIComponent(villageName);
+
+
+    try {
+
+        const response =
+            await fetch(
+                url,
+                {
+                    cf: {
+                        cacheTtl: 86400,
+                        cacheEverything: true
+                    },
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            console.error(
+                "Direct village filter:",
+                response.status
+            );
+
+            return [];
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        return Array.isArray(
+            data.records
+        )
+            ? data.records
+            : [];
+
+    }
+    catch (error) {
+
+        console.error(
+            "Direct village request error:",
+            error
+        );
+
+        return [];
+
+    }
+
+}
+
+
+/* =========================================
+   QUERY VARIANTS
+========================================= */
+
+function buildQueryVariants(
+    value
+) {
+
+    const original =
+        String(
+            value || ""
+        ).trim();
+
+
+    const lower =
+        original.toLowerCase();
+
+
+    const upper =
+        original.toUpperCase();
+
+
+    const title =
+        lower.replace(
+            /\b\w/g,
+            function(letter) {
+                return letter.toUpperCase();
+            }
+        );
+
+
+    return [
+        original,
+        lower,
+        upper,
+        title
+    ].filter(
+        function(item, index, array) {
+
+            return (
+                item &&
+                array.indexOf(item) === index
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   FALLBACK STATE SEARCH
+========================================= */
+
+async function fallbackStateSearch(
+    apiKey,
+    query
+) {
+
+    const results = [];
+
+    const seen =
+        new Set();
+
+
+    /*
+     * Search only 5 states simultaneously.
+     * This is much safer than starting
+     * every state request together.
+     */
+
+    const BATCH_SIZE = 5;
+
+
+    for (
+        let i = 0;
+        i < STATES.length;
+        i += BATCH_SIZE
+    ) {
+
+        if (
+            results.length >=
+            MAX_RESULTS
+        ) {
+
+            break;
+
+        }
+
+
+        const batch =
+            STATES.slice(
+                i,
+                i + BATCH_SIZE
+            );
+
+
+        const stateResults =
+            await Promise.all(
+                batch.map(
+                    function(state) {
+
+                        return searchState(
+                            apiKey,
+                            state,
+                            query
+                        );
+
+                    }
+                )
+            );
+
+
+        for (
+            const matches of stateResults
+        ) {
+
+            for (
+                const item of matches
+            ) {
+
+                if (
+                    !item ||
+                    !item.code
+                ) {
+
+                    continue;
+
+                }
+
+
+                if (
+                    seen.has(
+                        item.code
+                    )
+                ) {
+
+                    continue;
+
+                }
+
+
+                seen.add(
+                    item.code
+                );
+
+
+                results.push(
+                    item
+                );
+
+
+                if (
+                    results.length >=
+                    MAX_RESULTS
+                ) {
+
+                    break;
+
+                }
+
+            }
+
+
+            if (
+                results.length >=
+                MAX_RESULTS
+            ) {
+
+                break;
+
+            }
+
+        }
+
+    }
+
+
+    results.sort(
+        sortResults
+    );
+
+
+    return results;
+
+}
+
+
+/* =========================================
+   SEARCH STATE
 ========================================= */
 
 async function searchState(
-    context,
     apiKey,
     state,
-    searchText
+    query
 ) {
 
     const matches = [];
 
-    let offset = 0;
+    const normalizedQuery =
+        normalizeText(
+            query
+        );
+
 
     /*
-     * Prevent an unexpectedly large scan
-     * inside one visitor request.
+     * We limit the amount of one-state
+     * scanning done for a single request.
      */
 
-    const MAX_STATE_RECORDS = 50000;
+    const MAX_STATE_PAGES = 50;
 
 
-    while (
-        offset < MAX_STATE_RECORDS &&
-        matches.length < MAX_RESULTS
+    for (
+        let page = 0;
+        page < MAX_STATE_PAGES;
+        page++
     ) {
 
-        const apiUrl =
+        const offset =
+            page * PAGE_SIZE;
+
+
+        const url =
             API_BASE +
             "?api-key=" +
-            encodeURIComponent(apiKey) +
+            encodeURIComponent(
+                apiKey
+            ) +
             "&format=json" +
             "&limit=" +
             PAGE_SIZE +
             "&offset=" +
             offset +
             "&filters[stateNameEnglish]=" +
-            encodeURIComponent(state);
+            encodeURIComponent(
+                state
+            );
 
 
         let response;
 
-        try {
 
-            /*
-             * Cloudflare edge cache.
-             *
-             * The same state/page request
-             * can be reused for later searches.
-             */
+        try {
 
             response =
                 await fetch(
-                    apiUrl,
+                    url,
                     {
                         cf: {
                             cacheTtl: 86400,
@@ -350,17 +659,13 @@ async function searchState(
         catch (error) {
 
             console.error(
-                "LGD network error:",
+                "State request error:",
                 state,
-                offset,
                 error
             );
 
-            /*
-             * Do not fail the entire search.
-             */
-
             break;
+
         }
 
 
@@ -368,29 +673,19 @@ async function searchState(
             !response.ok
         ) {
 
-            const errorText =
-                await safeText(
-                    response
-                );
-
             console.error(
-                "LGD API error:",
+                "State API error:",
                 state,
-                offset,
-                response.status,
-                errorText
+                response.status
             );
 
-            /*
-             * Skip this state/page and
-             * continue with other states.
-             */
-
             break;
+
         }
 
 
         let data;
+
 
         try {
 
@@ -398,16 +693,10 @@ async function searchState(
                 await response.json();
 
         }
-        catch (error) {
-
-            console.error(
-                "LGD JSON error:",
-                state,
-                offset,
-                error
-            );
+        catch {
 
             break;
+
         }
 
 
@@ -432,14 +721,6 @@ async function searchState(
             const record of records
         ) {
 
-            if (
-                matches.length >=
-                MAX_RESULTS
-            ) {
-                break;
-            }
-
-
             const village =
                 String(
                     record.villageNameEnglish ||
@@ -450,27 +731,18 @@ async function searchState(
             if (
                 !village
             ) {
+
                 continue;
+
             }
 
 
-            /*
-             * Exact text filter:
-             *
-             * "rampur"
-             *
-             * matches:
-             *
-             * Rampur
-             * Rampur Kalan
-             * Rampur Khurd
-             */
-
             if (
-                !normalizeText(village)
-                    .includes(
-                        searchText
-                    )
+                !normalizeText(
+                    village
+                ).includes(
+                    normalizedQuery
+                )
             ) {
 
                 continue;
@@ -478,54 +750,46 @@ async function searchState(
             }
 
 
-            const code =
-                normalizeCode(
-                    record.villageCode
+            const item =
+                convertRecord(
+                    record
                 );
 
 
             if (
-                !code
+                item
             ) {
-                continue;
+
+                matches.push(
+                    item
+                );
+
             }
 
 
-            matches.push({
+            if (
+                matches.length >=
+                MAX_RESULTS
+            ) {
 
-                code: code,
+                break;
 
-                village: village,
-
-                state:
-                    String(
-                        record.stateNameEnglish ||
-                        state
-                    ).trim(),
-
-                district:
-                    String(
-                        record.districtNameEnglish ||
-                        ""
-                    ).trim(),
-
-                subDistrict:
-                    String(
-                        record.subDistrictNameEnglish ||
-                        ""
-                    ).trim()
-
-            });
+            }
 
         }
 
 
-        /*
-         * Work out whether we've reached
-         * the end of this state's records.
-         */
+        if (
+            matches.length >=
+            MAX_RESULTS
+        ) {
 
-        const reportedTotal =
+            break;
+
+        }
+
+
+        const total =
             Number(
                 data.total ||
                 data.count ||
@@ -534,20 +798,15 @@ async function searchState(
 
 
         if (
-            reportedTotal > 0 &&
+            total > 0 &&
             offset + records.length >=
-                reportedTotal
+            total
         ) {
 
             break;
+
         }
 
-
-        /*
-         * If fewer than PAGE_SIZE records
-         * came back, this is normally the
-         * last page.
-         */
 
         if (
             records.length <
@@ -555,11 +814,8 @@ async function searchState(
         ) {
 
             break;
+
         }
-
-
-        offset +=
-            records.length;
 
     }
 
@@ -570,7 +826,83 @@ async function searchState(
 
 
 /* =========================================
-   NORMALIZE SEARCH TEXT
+   CONVERT RECORD
+========================================= */
+
+function convertRecord(
+    record
+) {
+
+    if (
+        !record
+    ) {
+
+        return null;
+
+    }
+
+
+    const code =
+        normalizeCode(
+            record.villageCode
+        );
+
+
+    const village =
+        String(
+            record.villageNameEnglish ||
+            ""
+        ).trim();
+
+
+    if (
+        !code ||
+        !village
+    ) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        code:
+
+            code,
+
+        village:
+
+            village,
+
+        state:
+
+            String(
+                record.stateNameEnglish ||
+                ""
+            ).trim(),
+
+        district:
+
+            String(
+                record.districtNameEnglish ||
+                ""
+            ).trim(),
+
+        subDistrict:
+
+            String(
+                record.subDistrictNameEnglish ||
+                ""
+            ).trim()
+
+    };
+
+}
+
+
+/* =========================================
+   NORMALIZE TEXT
 ========================================= */
 
 function normalizeText(
@@ -592,7 +924,7 @@ function normalizeText(
 
 
 /* =========================================
-   NORMALIZE VILLAGE CODE
+   NORMALIZE CODE
 ========================================= */
 
 function normalizeCode(
@@ -622,23 +954,74 @@ function normalizeCode(
 
 
 /* =========================================
-   SAFE RESPONSE TEXT
+   SORT RESULTS
 ========================================= */
 
-async function safeText(
-    response
+function sortResults(
+    a,
+    b
 ) {
 
-    try {
+    const villageCompare =
+        String(
+            a.village
+        ).localeCompare(
+            String(
+                b.village
+            ),
+            "en",
+            {
+                sensitivity:
+                    "base"
+            }
+        );
 
-        return await response.text();
+
+    if (
+        villageCompare !== 0
+    ) {
+
+        return villageCompare;
 
     }
-    catch {
 
-        return "";
+
+    const stateCompare =
+        String(
+            a.state
+        ).localeCompare(
+            String(
+                b.state
+            ),
+            "en",
+            {
+                sensitivity:
+                    "base"
+            }
+        );
+
+
+    if (
+        stateCompare !== 0
+    ) {
+
+        return stateCompare;
 
     }
+
+
+    return String(
+        a.district
+    ).localeCompare(
+        String(
+            b.district
+        ),
+        "en",
+        {
+            sensitivity:
+                "base"
+        }
+    );
 
 }
 
@@ -659,17 +1042,14 @@ function jsonResponse(
         ),
 
         {
-            status: status,
+
+            status:
+                status,
 
             headers: {
 
                 "Content-Type":
                     "application/json; charset=UTF-8",
-
-                /*
-                 * Keep successful searches
-                 * at the Cloudflare edge briefly.
-                 */
 
                 "Cache-Control":
                     status === 200
