@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
@@ -14,13 +15,18 @@
       content="index, follow">
 
 <meta name="description"
-      content="Search U.S. NAICS codes by code number or industry description. Find the latest released 2022 U.S. NAICS industry classifications.">
+      content="Search U.S. NAICS codes by code number or industry description. Find 2022 North American Industry Classification System codes and industry details.">
 
 <link rel="icon"
       type="image/png"
       href="/favicon.png">
 
 <title>U.S. NAICS Code Search - Industry Classification Finder</title>
+
+<meta property="og:description"
+      content="Free U.S. NAICS Code Search. Search 2022 NAICS codes by industry name, description or code.">
+
+<!-- Google Analytics -->
 
 <script async
 src="https://www.googletagmanager.com/gtag/js?id=G-BP9YJW8LB9">
@@ -39,6 +45,7 @@ gtag('js', new Date());
 gtag('config', 'G-BP9YJW8LB9');
 
 </script>
+
 
 <style>
 
@@ -106,7 +113,7 @@ h1 {
 
 .search-card {
 
-    background: var(--white);
+    background: white;
 
     padding: 25px;
 
@@ -163,7 +170,8 @@ input {
 
 input:focus {
 
-    border-color: var(--primary);
+    border-color:
+        var(--primary);
 }
 
 button.search-submit {
@@ -332,21 +340,27 @@ footer {
 
 </head>
 
+
 <body>
 
 <div class="container">
+
 
 <h1>
 🇺🇸 U.S. NAICS Code Search
 </h1>
 
+
 <p class="intro">
 
-Search the latest released U.S. North American Industry
-Classification System (NAICS) codes by code number or
-industry description.
+Search the United States
+North American Industry Classification System
+(NAICS) codes by code number or industry description.
 
 </p>
+
+
+<!-- SEARCH BY CODE -->
 
 <div class="search-card">
 
@@ -355,9 +369,12 @@ industry description.
 </h3>
 
 <p>
-Enter a 2 to 6 digit U.S. NAICS code to view its
-2022 industry classification details.
+
+Enter a 2 to 6 digit U.S. NAICS code
+to view its 2022 industry classification details.
+
 </p>
+
 
 <div class="search-box">
 
@@ -379,13 +396,22 @@ Search
 
 </div>
 
+
 <div
     id="code-error"
     class="error">
 </div>
 
+
+<div
+    id="code-results"
+    class="results">
 </div>
 
+</div>
+
+
+<!-- SEARCH BY INDUSTRY -->
 
 <div class="search-card">
 
@@ -394,9 +420,12 @@ Search
 </h3>
 
 <p>
-Enter an industry name or description to find matching
-U.S. NAICS codes.
+
+Enter an industry name or description to find
+matching 2022 U.S. NAICS codes.
+
 </p>
+
 
 <div class="search-box">
 
@@ -416,10 +445,12 @@ Search
 
 </div>
 
+
 <div
     id="description-error"
     class="error">
 </div>
+
 
 <div
     id="description-results"
@@ -433,15 +464,20 @@ Search
 
 U.S. NAICS Code Search<br>
 
-Latest released U.S. classification: 2022 NAICS<br><br>
+2022 North American Industry Classification System
+
+<br><br>
 
 Source: U.S. Census Bureau
 
 </footer>
 
+
 </div>
 
+
 <script>
+
 
 async function searchNAICSCode() {
 
@@ -450,10 +486,15 @@ async function searchNAICSCode() {
         .value
         .trim();
 
+    const results =
+        document.getElementById("code-results");
+
     const error =
         document.getElementById("code-error");
 
+    results.style.display = "none";
     error.style.display = "none";
+
 
     if (!/^\d{2,6}$/.test(input)) {
 
@@ -464,6 +505,13 @@ async function searchNAICSCode() {
 
         return;
     }
+
+
+    /*
+     * Do not fetch the detail page here.
+     *
+     * Just open the 2022 NAICS page.
+     */
 
     window.location.href =
         "/usa-naics/" +
@@ -486,9 +534,11 @@ async function searchDescription() {
     const error =
         document.getElementById("description-error");
 
+
     results.style.display = "none";
 
     error.style.display = "none";
+
 
     if (input.length < 2) {
 
@@ -500,10 +550,12 @@ async function searchDescription() {
         return;
     }
 
+
     results.innerHTML =
-        '<div class="loading">🔄 Searching U.S. NAICS industries...</div>';
+        '<div class="loading">🔄 Searching 2022 U.S. NAICS industries...</div>';
 
     results.style.display = "block";
+
 
     try {
 
@@ -513,15 +565,19 @@ async function searchDescription() {
                 encodeURIComponent(input)
             );
 
+
         if (!response.ok) {
 
             throw new Error(
-                "Search failed"
+                "Search request failed"
             );
+
         }
+
 
         const data =
             await response.json();
+
 
         if (
             !data ||
@@ -532,20 +588,22 @@ async function searchDescription() {
             results.style.display = "none";
 
             error.innerText =
-                "No matching U.S. NAICS industries found.";
+                "No matching 2022 U.S. NAICS industries found.";
 
             error.style.display = "block";
 
             return;
         }
 
-        displayDescriptionResults(
+
+        displayResults(
             data.results,
             results,
             input
         );
 
     }
+
     catch (err) {
 
         console.error(err);
@@ -557,10 +615,11 @@ async function searchDescription() {
 
         error.style.display = "block";
     }
+
 }
 
 
-function displayDescriptionResults(
+function displayResults(
     items,
     results,
     searchText
@@ -569,9 +628,10 @@ function displayDescriptionResults(
     let html = "";
 
     html +=
-        '<h4>🔎 U.S. NAICS Results for "' +
+        '<h4>🔎 2022 U.S. NAICS Results for "' +
         escapeHtml(searchText) +
         '"</h4>';
+
 
     items.forEach(function(item) {
 
@@ -581,9 +641,11 @@ function displayDescriptionResults(
         const title =
             item.title || "";
 
-        if (!code || !title) {
+
+        if (!/^\d{2,6}$/.test(code)) {
             return;
         }
+
 
         html +=
             '<div class="match-item">' +
@@ -611,6 +673,7 @@ function displayDescriptionResults(
 
     });
 
+
     results.innerHTML = html;
 
     results.style.display = "block";
@@ -636,7 +699,9 @@ document
     function(event) {
 
         if (event.key === "Enter") {
+
             searchNAICSCode();
+
         }
 
     }
@@ -650,7 +715,9 @@ document
     function(event) {
 
         if (event.key === "Enter") {
+
             searchDescription();
+
         }
 
     }
@@ -659,4 +726,5 @@ document
 </script>
 
 </body>
+
 </html>
