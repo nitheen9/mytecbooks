@@ -5,8 +5,8 @@ export async function onRequest(context) {
 
     const query =
         (requestUrl.searchParams.get("q") || "")
-        .trim();
-
+        .trim()
+        .toLowerCase();
 
     if (query.length < 2) {
 
@@ -17,43 +17,38 @@ export async function onRequest(context) {
 
     }
 
-
     /*
-     * CURRENT ADOPTED U.S. NAICS:
+     * OFFICIAL 2022 NAICS SOURCE
      *
-     * 2022 only.
+     * U.S. Bureau of Labor Statistics
+     * QCEW NAICS 2022 Industry Crosswalk
      *
-     * Do NOT use the old 2017/2012/2007
-     * Census search pages.
+     * This page contains the complete
+     * 2022 six-digit NAICS hierarchy.
      */
 
-    const searchUrl =
-        "https://www.census.gov/naics/" +
-        "?input=" +
-        encodeURIComponent(query) +
-        "&year=2022";
-
+    const sourceUrl =
+        "https://www.bls.gov/cew/classifications/industry/qcew-naics-hierarchy-crosswalk.htm";
 
     try {
 
         const response =
             await fetch(
-                searchUrl,
+                sourceUrl,
                 {
                     headers: {
                         "User-Agent":
                             "Mozilla/5.0 (compatible; MyTecBooks NAICS Search)",
                         "Accept":
-                            "text/html,application/xhtml+xml,text/html"
+                            "text/html"
                     }
                 }
             );
 
-
         if (!response.ok) {
 
             console.error(
-                "Census HTTP status:",
+                "BLS HTTP status:",
                 response.status
             );
 
@@ -61,108 +56,198 @@ export async function onRequest(context) {
                 query: query,
                 results: []
             });
-        }
 
+        }
 
         const html =
             await response.text();
 
+        const records =
+            parseBLS2022Table(html);
 
-        const text =
-            htmlToText(html);
+        /*
+         * Search only the 2022 records.
+         *
+         * Exact code:
+         * 513210
+         *
+         * Keyword:
+         * software
+         */
 
+        let results;
 
-        const results =
-            parseSearchResults(text);
+        if (/^\d{2,6}$/.test(query)) {
+
+            results =
+                records.filter(
+                    function(item) {
+
+                        return (
+                            item.code === query ||
+                            item.code.startsWith(query)
+                        );
+
+                    }
+                );
+
+        }
+        else {
+
+            const words =
+                query
+                .split(/\s+/)
+                .filter(Boolean);
+
+            results =
+                records.filter(
+                    function(item) {
+
+                        const haystack =
+                            (
+                                item.code +
+                                " " +
+                                item.title
+                            )
+                            .toLowerCase();
+
+                        return words.every(
+                            function(word) {
+
+                                return haystack.includes(
+                                    word
+                                );
+
+                            }
+                        );
+
+                    }
+                );
+
+        }
+
+        /*
+         * Keep a maximum of 50 results.
+         */
+
+        results =
+            results.slice(
+                0,
+                50
+            );
 
 
         return jsonResponse({
 
             query: query,
 
-            results:
-                results.slice(0, 50)
+            year: 2022,
+
+            results: results
 
         });
 
     }
-
     catch (error) {
 
         console.error(
-            "NAICS search error:",
+            "2022 NAICS search error:",
             error
         );
-
 
         return jsonResponse({
 
             query: query,
+
+            year: 2022,
 
             results: []
 
         });
 
     }
-
 }
 
 
 /* =========================================
-   PARSE CENSUS SEARCH RESULTS
+   PARSE BLS 2022 TABLE
 ========================================= */
 
-function parseSearchResults(text) {
+function parseBLS2022Table(html) {
 
     const results = [];
 
     const seen =
         new Set();
 
-
     /*
-     * Current Census pages contain entries
-     * similar to:
-     *
-     * Button: 513210
-     * Software Publishers:
-     *
-     * or:
-     *
-     * Button: 541511
-     * Custom Computer Programming Services:
-     *
-     * We extract only numeric NAICS codes.
+     * Find all table rows.
      */
 
-    const regex =
-        /\[?\s*Button:\s*(\d{2,6})\s*\]?\s+([^:]+?)(?=\s*:\s*This\s+(?:U\.S\.\s+)?industry|\s*:\s*See industry description|\s+This\s+(?:U\.S\.\s+)?industry|\s+See industry description|$)/gi;
+    const rowRegex =
+        /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
 
-
-    let match;
-
+    let rowMatch;
 
     while (
-        (match = regex.exec(text)) !== null
+        (rowMatch = rowRegex.exec(html)) !== null
     ) {
 
-        const code =
-            match[1].trim();
+        const rowHtml =
+            rowMatch[1];
 
-        let title =
-            match[2].trim();
+        /*
+         * Extract cells.
+         */
 
+        const cells = [];
+
+        const cellRegex =
+            /<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi;
+
+        let cellMatch;
+
+        while (
+            (cellMatch =
+                cellRegex.exec(rowHtml)) !== null
+        ) {
+
+            cells.push(
+                cleanCell(
+                    cellMatch[1]
+                )
+            );
+
+        }
+
+        /*
+         * BLS 2022 table format:
+         *
+         * 0 = naics6_code
+         * 1 = naics6_title
+         * 2 = naics5_code
+         * 3 = naics5_title
+         * 4 = naics4_code
+         * 5 = naics4_title
+         */
 
         if (
-            !/^\d{2,6}$/.test(code)
+            cells.length < 6
         ) {
             continue;
         }
 
+        const code =
+            cells[0];
 
-        title =
-            cleanTitle(title);
+        const title =
+            cells[1];
 
+        if (
+            !/^\d{6}$/.test(code)
+        ) {
+            continue;
+        }
 
         if (
             !title ||
@@ -171,157 +256,90 @@ function parseSearchResults(text) {
             continue;
         }
 
-
         /*
-         * Do not allow year numbers to become
-         * NAICS results.
+         * Avoid duplicate entries.
          */
 
         if (
-            /^(1997|2002|2007|2012|2017|2022)$/
-            .test(code)
+            seen.has(code)
         ) {
             continue;
         }
 
-
-        const key =
-            code + "|" + title.toLowerCase();
-
-
-        if (
-            seen.has(key)
-        ) {
-            continue;
-        }
-
-
-        seen.add(key);
-
+        seen.add(code);
 
         results.push({
 
             code: code,
 
-            title: title
+            title: title,
+
+            year: 2022
 
         });
 
     }
 
-
     /*
-     * Fallback parser.
-     *
-     * Some Census responses can omit the
-     * literal [Button: ...] brackets after
-     * server-side rendering.
+     * Sort numerically.
      */
 
-    if (
-        results.length === 0
-    ) {
+    results.sort(
+        function(a, b) {
 
-        const fallbackRegex =
-            /Button:\s*(\d{2,6})\s+([A-Za-z][^:\n]{1,150})(?::|(?=\s+This industry))/gi;
-
-
-        while (
-            (match = fallbackRegex.exec(text)) !== null
-        ) {
-
-            const code =
-                match[1].trim();
-
-            let title =
-                cleanTitle(match[2]);
-
-
-            if (
-                !/^\d{2,6}$/.test(code)
-            ) {
-                continue;
-            }
-
-
-            if (
-                /^(1997|2002|2007|2012|2017|2022)$/
-                .test(code)
-            ) {
-                continue;
-            }
-
-
-            if (
-                !title
-            ) {
-                continue;
-            }
-
-
-            const key =
-                code + "|" + title.toLowerCase();
-
-
-            if (
-                seen.has(key)
-            ) {
-                continue;
-            }
-
-
-            seen.add(key);
-
-
-            results.push({
-
-                code: code,
-
-                title: title
-
-            });
+            return (
+                Number(a.code) -
+                Number(b.code)
+            );
 
         }
-
-    }
-
+    );
 
     return results;
 }
 
 
 /* =========================================
-   HTML -> TEXT
+   CLEAN CELL
 ========================================= */
 
-function htmlToText(html) {
+function cleanCell(value) {
 
-    return String(html || "")
+    return decodeHtml(
+        String(value || "")
 
-        .replace(
-            /<script[\s\S]*?<\/script>/gi,
-            " "
-        )
+            .replace(
+                /<script[\s\S]*?<\/script>/gi,
+                " "
+            )
 
-        .replace(
-            /<style[\s\S]*?<\/style>/gi,
-            " "
-        )
+            .replace(
+                /<style[\s\S]*?<\/style>/gi,
+                " "
+            )
 
-        .replace(
-            /<noscript[\s\S]*?<\/noscript>/gi,
-            " "
-        )
+            .replace(
+                /<[^>]+>/g,
+                " "
+            )
 
-        .replace(
-            /<svg[\s\S]*?<\/svg>/gi,
-            " "
-        )
+            .replace(
+                /\s+/g,
+                " "
+            )
 
-        .replace(
-            /<[^>]+>/g,
-            " "
-        )
+            .trim()
+    );
+}
+
+
+/* =========================================
+   HTML ENTITY DECODE
+========================================= */
+
+function decodeHtml(value) {
+
+    return String(value || "")
 
         .replace(
             /&nbsp;/gi,
@@ -356,41 +374,8 @@ function htmlToText(html) {
         .replace(
             /&gt;/gi,
             ">"
-        )
+        );
 
-        .replace(
-            /\s+/g,
-            " "
-        )
-
-        .trim();
-}
-
-
-/* =========================================
-   CLEAN TITLE
-========================================= */
-
-function cleanTitle(value) {
-
-    return String(value || "")
-
-        .replace(
-            /[†‡*]+/g,
-            ""
-        )
-
-        .replace(
-            /\s+/g,
-            " "
-        )
-
-        .replace(
-            /\s+$/,
-            ""
-        )
-
-        .trim();
 }
 
 
@@ -405,7 +390,6 @@ function jsonResponse(data) {
         JSON.stringify(data),
 
         {
-
             status: 200,
 
             headers: {
@@ -422,7 +406,5 @@ function jsonResponse(data) {
             }
 
         }
-
     );
-
 }
